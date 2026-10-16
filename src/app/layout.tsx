@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
 import ClientOnly from "@/components/ClientOnly";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,12 +63,10 @@ export default function RootLayout({
   return (
     <html lang="fr" dir="ltr" suppressHydrationWarning>
       <body
-        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${ibmArabic.variable} antialiased`}
       >
-        <ClientOnly>
-          <I18nProvider>{children}</I18nProvider>
-        </ClientOnly>
+        <I18nProvider>{children}</I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
