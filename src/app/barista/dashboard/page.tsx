@@ -27,6 +27,13 @@ type Order = {
   ready_at: string | null
 }
 
+type ShopInfo = {
+  id: string
+  name: string
+  tagline?: string | null
+  logo_url?: string | null
+}
+
 const DEV_LAN_IP = '192.168.0.228'
 
 export default function DashboardPage() {
@@ -34,7 +41,7 @@ export default function DashboardPage() {
   const router = useRouter()
 
   const [shopId, setShopId] = useState<string | null>(null)
-  const [shopName, setShopName] = useState('')
+  const [shop, setShop] = useState<ShopInfo | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
 
   const [newOrderOpen, setNewOrderOpen] = useState(false)
@@ -45,21 +52,47 @@ export default function DashboardPage() {
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
 
+  // auth check + shop hydration
   useEffect(() => {
     const id = localStorage.getItem('shop_id')
-    const name = localStorage.getItem('shop_name')
     if (!id) {
       router.replace('/barista')
       return
     }
     setShopId(id)
-    setShopName(name ?? '')
+
+    // Optimistic — show whatever's cached immediately
+    const cachedName = localStorage.getItem('shop_name')
+    if (cachedName) {
+      setShop({ id, name: cachedName })
+    }
+
+    // Then fetch fresh — the shop may have been renamed in customize
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/shops/${id}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const json = await res.json()
+        if (json.shop) {
+          setShop({
+            id: json.shop.id,
+            name: json.shop.name,
+            tagline: json.shop.tagline,
+            logo_url: json.shop.logo_url,
+          })
+          // keep localStorage fresh
+          localStorage.setItem('shop_name', json.shop.name)
+        }
+      } catch {
+        // silent — we already showed the cached name
+      }
+    })()
   }, [router])
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 3000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   const loadOrders = useCallback(async (id: string) => {
@@ -158,11 +191,21 @@ export default function DashboardPage() {
   }
 
   function timeAgo(iso: string) {
-    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-    if (s < 60) return t('dash.ago.s', { d: s })
-    const m = Math.floor(s / 60)
-    if (m < 60) return t('dash.ago.m', { d: m })
-    return t('dash.ago.h', { d: Math.floor(m / 60) })
+    const now = Date.now()
+    const then = new Date(iso).getTime()
+    if (!Number.isFinite(then)) return ''
+
+    const seconds = Math.max(0, Math.floor((now - then) / 1000))
+    if (seconds < 60) return t('dash.ago.s', { d: seconds })
+
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return t('dash.ago.m', { d: minutes })
+
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return t('dash.ago.h', { d: hours })
+
+    const days = Math.floor(hours / 24)
+    return `${days}d`
   }
 
   if (!shopId) {
@@ -177,20 +220,37 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900">
+      {/* HEADER */}
       <header className="sticky top-0 z-10 border-b border-stone-200 bg-[#faf7f2]/95 backdrop-blur">
-        <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between gap-3">
+        <div className="max-w-3xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
+          {/* Left: logo + shop identity */}
           <div className="flex items-center gap-3 min-w-0">
-            <CupLogo size={36} />
+            {shop?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={shop.logo_url}
+                alt={shop.name}
+                className="w-10 h-10 rounded-xl object-cover border border-stone-200 shrink-0"
+              />
+            ) : (
+              <CupLogo size={40} />
+            )}
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wider text-stone-500 font-medium">
+              <div className="text-[10px] uppercase tracking-wider text-stone-400 font-semibold leading-none mb-1">
                 {t('dash.role')}
               </div>
-              <div className="text-sm font-semibold leading-tight truncate">
-                {shopName}
+              <div className="text-base font-semibold leading-tight truncate text-stone-900">
+                {shop?.name || '…'}
               </div>
+              {shop?.tagline && (
+                <div className="text-[11px] text-stone-500 truncate leading-tight">
+                  {shop.tagline}
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Right: actions */}
           <div className="flex items-center gap-1 shrink-0">
             <LanguageSwitcher compact />
             <button

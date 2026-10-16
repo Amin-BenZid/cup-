@@ -86,9 +86,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       const dict = translations[locale] as Record<string, string>
       let str =
         dict[key] ?? (translations.fr as Record<string, string>)[key] ?? key
-      if (values) {
-        str = str.replace(/%(\w+)/g, (_, k) => String(values[k] ?? `%${k}`))
-      }
+    if (values) {
+  str = str.replace(/%(\w+)/g, (_, k) =>
+    values[k] !== undefined ? String(values[k]) : `%${k}`
+  )
+}
       return str
     },
     [locale]

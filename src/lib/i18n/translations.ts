@@ -345,9 +345,9 @@ export const translations = {
     "dash.pickedUp": "Picked up",
     "dash.customerConnected": "Customer connected",
     "dash.notScanned": "Not scanned",
-    "dash.ago.s": "%ds ago",
-    "dash.ago.m": "%dm ago",
-    "dash.ago.h": "%dh ago",
+    "dash.ago.s": "il y a %d s",
+    "dash.ago.m": "il y a %d min",
+    "dash.ago.h": "il y a %d h",
 
     // New order modal
     "order.title": "New order",
