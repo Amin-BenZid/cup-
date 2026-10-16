@@ -1,69 +1,146 @@
-import Image from "next/image";
+'use client'
+
+import Link from 'next/link'
+import { QrCode, Bell, ArrowRight, Store, User } from 'lucide-react'
+import CupLogo from '@/components/CupLogo'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useT } from '@/lib/i18n/context'
 
 export default function Home() {
+  const t = useT()
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col">
+      {/* Top bar */}
+      <header className="px-6 pt-8 pb-4">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <CupLogo size={36} />
+            <div className="text-sm font-semibold tracking-tight">Cup</div>
+          </div>
+          <LanguageSwitcher />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 px-6 pb-10">
+        <div className="max-w-md mx-auto pt-8 space-y-12">
+          <div className="space-y-4">
+            <h1 className="text-[2.25rem] leading-[1.1] font-semibold tracking-tight">
+              {t('landing.tagline')}
+            </h1>
+            <p className="text-stone-500 text-[15px] leading-relaxed max-w-sm">
+              {t('landing.subtitle')}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/setup"
+              className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-stone-900 text-amber-50 hover:bg-stone-800 active:scale-[0.99] transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Store className="w-4 h-4" strokeWidth={2} />
+                </div>
+                <div className="text-start">
+                  <div className="text-sm font-semibold">
+                    {t('landing.setup')}
+                  </div>
+                  <div className="text-[11px] text-amber-100/70">
+                    {t('landing.setupHint')}
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 opacity-60 group-hover:opacity-100 transition rtl:rotate-180" />
+            </Link>
+
+            <Link
+              href="/barista"
+              className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-white border border-stone-200 hover:border-stone-400 active:scale-[0.99] transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center">
+                  <User className="w-4 h-4 text-stone-700" strokeWidth={2} />
+                </div>
+                <div className="text-start">
+                  <div className="text-sm font-semibold">
+                    {t('landing.barista')}
+                  </div>
+                  <div className="text-[11px] text-stone-500">
+                    {t('landing.baristaHint')}
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition rtl:rotate-180" />
+            </Link>
+          </div>
+
+          <div className="pt-4">
+            <div className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold mb-5">
+              {t('landing.howItWorks')}
+            </div>
+            <div className="space-y-5">
+              <Step
+                number="1"
+                icon={<Store className="w-4 h-4" strokeWidth={2.2} />}
+                title={t('landing.step1')}
+                description={t('landing.step1Hint')}
+              />
+              <Step
+                number="2"
+                icon={<QrCode className="w-4 h-4" strokeWidth={2.2} />}
+                title={t('landing.step2')}
+                description={t('landing.step2Hint')}
+              />
+              <Step
+                number="3"
+                icon={<Bell className="w-4 h-4" strokeWidth={2.2} />}
+                title={t('landing.step3')}
+                description={t('landing.step3Hint')}
+              />
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
+
+      <footer className="px-6 pb-8 pt-4">
+        <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
+          <CupLogo size={14} />
+          <span>{t('landing.footer')}</span>
+        </div>
+      </footer>
+    </main>
+  )
+}
+
+function Step({
+  number,
+  icon,
+  title,
+  description,
+}: {
+  number: string
+  icon: React.ReactNode
+  title: string
+  description: string
+}) {
+  return (
+    <div className="flex gap-4">
+      <div className="shrink-0 flex flex-col items-center">
+        <div className="w-9 h-9 rounded-full border border-stone-200 bg-white flex items-center justify-center text-stone-700">
+          {icon}
+        </div>
+      </div>
+      <div className="min-w-0 pt-0.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-stone-400">
+            {number}
+          </span>
+          <div className="text-sm font-medium text-stone-900">{title}</div>
+        </div>
+        <div className="text-xs text-stone-500 mt-0.5">{description}</div>
+      </div>
     </div>
-  );
+  )
 }
