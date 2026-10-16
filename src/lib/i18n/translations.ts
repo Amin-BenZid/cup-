@@ -270,23 +270,23 @@ export const translations = {
   },
 
   en: {
-    'login.error.disabled': 'This café has been disabled. Contact support.',
-'pending.title': 'Waiting for approval',
-'pending.body':
-  'Thanks {name}! Your request has been received. An admin will review it shortly.',
-'pending.whatHappens': 'What happens next',
-'pending.step1': 'An admin reviews your request',
-'pending.step2': 'You get the approval — usually within 24 hours',
-'pending.step3': 'You open your barista dashboard',
-'pending.autoRefresh':
-  'This page refreshes automatically. Feel free to leave it open.',
-'pending.approved': 'Approved!',
-'pending.redirecting': 'Redirecting to your dashboard…',
-'pending.declined': 'Request declined',
-'pending.declinedBody':
-  'Unfortunately this request was not approved. Contact us if you think this is a mistake.',
-'pending.backHome': 'Back to home',
-'pending.unknown': 'Could not check status. Reload the page.',
+    "login.error.disabled": "This café has been disabled. Contact support.",
+    "pending.title": "Waiting for approval",
+    "pending.body":
+      "Thanks {name}! Your request has been received. An admin will review it shortly.",
+    "pending.whatHappens": "What happens next",
+    "pending.step1": "An admin reviews your request",
+    "pending.step2": "You get the approval — usually within 24 hours",
+    "pending.step3": "You open your barista dashboard",
+    "pending.autoRefresh":
+      "This page refreshes automatically. Feel free to leave it open.",
+    "pending.approved": "Approved!",
+    "pending.redirecting": "Redirecting to your dashboard…",
+    "pending.declined": "Request declined",
+    "pending.declinedBody":
+      "Unfortunately this request was not approved. Contact us if you think this is a mistake.",
+    "pending.backHome": "Back to home",
+    "pending.unknown": "Could not check status. Reload the page.",
     // Landing
     "landing.tagline": "Your coffee, ready when you are.",
     "landing.subtitle":
