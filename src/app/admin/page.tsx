@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import CupLogo from '@/components/CupLogo'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -11,11 +10,13 @@ import {
   Store,
   CheckCircle2,
   XCircle,
+  Clock,
   Search,
 } from 'lucide-react'
 import { Toast } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
 import SearchBar from '@/components/ui/SearchBar'
+import CupLogo from '@/components/CupLogo'
 
 type Shop = {
   id: string
@@ -27,7 +28,7 @@ type Shop = {
   stats: { total: number; last7: number; last30: number }
 }
 
-type StatusFilter = 'all' | 'active' | 'disabled'
+type StatusFilter = 'all' | 'pending' | 'active' | 'disabled'
 
 export default function AdminHome() {
   const router = useRouter()
@@ -69,24 +70,17 @@ export default function AdminHome() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return shops.filter((s) => {
-      if (statusFilter === 'active' && s.status !== 'active') return false
-      if (statusFilter === 'disabled' && s.status !== 'disabled') return false
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false
       if (!q) return true
-      const hay = [
-        s.name,
-        s.tagline ?? '',
-        s.id,
-      ]
-        .join(' ')
-        .toLowerCase()
+      const hay = [s.name, s.tagline ?? '', s.id].join(' ').toLowerCase()
       return hay.includes(q)
     })
   }, [shops, query, statusFilter])
 
-  // ---------- counts ----------
   const counts = useMemo(
     () => ({
       all: shops.length,
+      pending: shops.filter((s) => s.status === 'pending').length,
       active: shops.filter((s) => s.status === 'active').length,
       disabled: shops.filter((s) => s.status === 'disabled').length,
     }),
@@ -106,13 +100,13 @@ export default function AdminHome() {
       <header className="border-b border-stone-200 bg-white">
         <div className="max-w-4xl mx-auto px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-          <CupLogo size={36} />
-<div>
-  <div className="text-[11px] uppercase tracking-wider text-stone-500 font-medium">
-    Cup · Admin
-  </div>
-  <div className="text-sm font-semibold">Cafés</div>
-</div>
+            <CupLogo size={36} />
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-stone-500 font-medium">
+                Cup · Admin
+              </div>
+              <div className="text-sm font-semibold">Cafés</div>
+            </div>
           </div>
           <button
             onClick={logout}
@@ -143,10 +137,11 @@ export default function AdminHome() {
             />
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-stone-200/60 border border-stone-200 shrink-0">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-stone-200/60 border border-stone-200 shrink-0 overflow-x-auto">
             {(
               [
                 ['all', 'All'],
+                ['pending', 'Pending'],
                 ['active', 'Active'],
                 ['disabled', 'Disabled'],
               ] as const
@@ -220,6 +215,11 @@ export default function AdminHome() {
                             <XCircle className="w-3 h-3" />
                             Disabled
                           </span>
+                        ) : shop.status === 'pending' ? (
+                          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                            <Clock className="w-3 h-3" />
+                            Pending
+                          </span>
                         ) : (
                           <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                             <CheckCircle2 className="w-3 h-3" />
@@ -268,7 +268,6 @@ function Stat({ label, value }: { label: string; value: number }) {
   )
 }
 
-/** Highlight matching text */
 function Highlight({ text, query }: { text: string; query: string }) {
   const q = query.trim()
   if (!q) return <>{text}</>

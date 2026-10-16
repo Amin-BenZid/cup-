@@ -10,6 +10,7 @@ export async function GET(
   if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
   const { id } = await ctx.params
 
   const { data: shop, error } = await supabaseAdmin
@@ -20,8 +21,12 @@ export async function GET(
     .eq('id', id)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!shop) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  if (!shop) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
 
   const { data: orders } = await supabaseAdmin
     .from('orders')
@@ -40,18 +45,23 @@ export async function PATCH(
   if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
   const { id } = await ctx.params
   const body = await req.json().catch(() => ({}))
 
   const update: Record<string, unknown> = {}
 
-  if (typeof body.name === 'string') update.name = body.name.trim()
+  if (typeof body.name === 'string') {
+    update.name = body.name.trim()
+  }
+
   if (typeof body.status === 'string') {
-    if (!['active', 'disabled'].includes(body.status)) {
+    if (!['pending', 'active', 'disabled'].includes(body.status)) {
       return NextResponse.json({ error: 'Bad status' }, { status: 400 })
     }
     update.status = body.status
   }
+
   if (typeof body.new_pin === 'string') {
     if (body.new_pin.length < 4 || body.new_pin.length > 6) {
       return NextResponse.json({ error: 'PIN 4–6 digits' }, { status: 400 })
@@ -72,7 +82,10 @@ export async function PATCH(
     )
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
   return NextResponse.json({ shop: data })
 }
 
@@ -83,9 +96,14 @@ export async function DELETE(
   if (!(await isAdminAuthed())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
   const { id } = await ctx.params
 
   const { error } = await supabaseAdmin.from('shops').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
   return NextResponse.json({ ok: true })
 }

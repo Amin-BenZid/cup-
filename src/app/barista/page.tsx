@@ -43,11 +43,23 @@ export default function BaristaLogin() {
       })
       const json = await res.json()
 
-      if (!res.ok) {
-        setError(json.error ?? 'Login failed')
-        setPin('')
-        return
-      }
+     if (!res.ok) {
+  // Pending → send to /pending screen
+  if (json.status === 'pending') {
+    localStorage.setItem('shop_id', json.shop_id ?? '')
+    router.push('/pending')
+    return
+  }
+  // Disabled → show clear error
+  if (json.status === 'disabled') {
+    setError(t('login.error.disabled'))
+    setPin('')
+    return
+  }
+  setError(json.error ?? 'Login failed')
+  setPin('')
+  return
+}
 
       localStorage.setItem('shop_id', json.shop.id)
       localStorage.setItem('shop_name', json.shop.name)

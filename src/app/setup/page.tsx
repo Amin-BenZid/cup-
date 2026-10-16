@@ -37,10 +37,12 @@ export default function SetupPage() {
         return
       }
 
+      // Save identity so the pending page can show the shop name
       localStorage.setItem('shop_id', json.shop.id)
       localStorage.setItem('shop_name', json.shop.name)
-      localStorage.setItem('shop_pin', pin)
-      router.push('/barista/dashboard')
+
+      // Go to the pending approval screen
+      router.push('/pending')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error')
     } finally {

@@ -7,6 +7,7 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Clock,
   KeyRound,
   Trash2,
   AlertCircle,
@@ -79,10 +80,14 @@ export default function AdminShopDetail() {
 
   async function toggleStatus() {
     if (!shop) return
+    const next = shop.status === 'active' ? 'disabled' : 'active'
+    await changeStatus(next)
+  }
+
+  async function changeStatus(next: string) {
     setBusy(true)
     setError('')
     try {
-      const next = shop.status === 'active' ? 'disabled' : 'active'
       const res = await fetch(`/api/admin/shops/${shopId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -94,7 +99,15 @@ export default function AdminShopDetail() {
         return
       }
       setShop(json.shop)
-      push('success', next === 'active' ? 'Access enabled' : 'Access disabled')
+      const msg =
+        next === 'active'
+          ? 'Approved'
+          : next === 'disabled'
+          ? shop?.status === 'pending'
+            ? 'Declined'
+            : 'Access disabled'
+          : 'Updated'
+      push('success', msg)
     } finally {
       setBusy(false)
     }
@@ -225,6 +238,10 @@ export default function AdminShopDetail() {
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                     <CheckCircle2 className="w-3 h-3" /> Active
                   </span>
+                ) : shop.status === 'pending' ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    <Clock className="w-3 h-3" /> Pending
+                  </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700">
                     <XCircle className="w-3 h-3" /> Disabled
@@ -239,23 +256,46 @@ export default function AdminShopDetail() {
         <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
           <div className="text-sm font-semibold">Access</div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="text-xs text-stone-500">
               {shop.status === 'active'
                 ? 'This café can log in and take orders.'
+                : shop.status === 'pending'
+                ? 'This café is waiting for your approval.'
                 : 'This café cannot log in.'}
             </div>
-            <button
-              onClick={toggleStatus}
-              disabled={busy}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 ${
-                shop.status === 'active'
-                  ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-500'
-              }`}
-            >
-              {shop.status === 'active' ? 'Disable access' : 'Enable access'}
-            </button>
+
+            {shop.status === 'pending' ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => changeStatus('disabled')}
+                  disabled={busy}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={() => changeStatus('active')}
+                  disabled={busy}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-500 inline-flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Approve
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={toggleStatus}
+                disabled={busy}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 ${
+                  shop.status === 'active'
+                    ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                }`}
+              >
+                {shop.status === 'active' ? 'Disable access' : 'Enable access'}
+              </button>
+            )}
           </div>
 
           <div className="pt-4 border-t border-stone-100 space-y-2">
