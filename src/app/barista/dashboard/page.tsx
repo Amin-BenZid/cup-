@@ -12,6 +12,8 @@ import {
   X,
   AlertCircle,
   Settings,
+  Phone,
+  MessageSquare,
 } from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
@@ -23,6 +25,7 @@ type Order = {
   order_number: string
   status: 'preparing' | 'ready' | 'done'
   customer_connected: boolean
+  customer_phone: string | null
   created_at: string
   ready_at: string | null
 }
@@ -46,13 +49,13 @@ export default function DashboardPage() {
 
   const [newOrderOpen, setNewOrderOpen] = useState(false)
   const [orderNumber, setOrderNumber] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [creating, setCreating] = useState(false)
   const [qrOrder, setQrOrder] = useState<Order | null>(null)
 
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
 
-  // auth check + shop hydration
   useEffect(() => {
     const id = localStorage.getItem('shop_id')
     if (!id) {
@@ -61,18 +64,16 @@ export default function DashboardPage() {
     }
     setShopId(id)
 
-    // Optimistic — show whatever's cached immediately
     const cachedName = localStorage.getItem('shop_name')
-    if (cachedName) {
-      setShop({ id, name: cachedName })
-    }
+    if (cachedName) setShop({ id, name: cachedName })
 
-    // Then fetch fresh — the shop may have been renamed in customize
     ;(async () => {
       try {
         const res = await fetch(`/api/shops/${id}`, { cache: 'no-store' })
         if (!res.ok) return
-        const json = await res.json()
+        const text = await res.text()
+        if (!text) return
+        const json = JSON.parse(text)
         if (json.shop) {
           setShop({
             id: json.shop.id,
@@ -80,12 +81,9 @@ export default function DashboardPage() {
             tagline: json.shop.tagline,
             logo_url: json.shop.logo_url,
           })
-          // keep localStorage fresh
           localStorage.setItem('shop_name', json.shop.name)
         }
-      } catch {
-        // silent — we already showed the cached name
-      }
+      } catch {}
     })()
   }, [router])
 
@@ -124,13 +122,18 @@ export default function DashboardPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: shopId, order_number: num }),
+        body: JSON.stringify({
+          shop_id: shopId,
+          order_number: num,
+          customer_phone: customerPhone.trim() || undefined,
+        }),
       })
       const json = await res.json()
       if (!res.ok) return setToast(json.error ?? 'Failed')
 
       setNewOrderOpen(false)
       setOrderNumber('')
+      setCustomerPhone('')
       setQrOrder(json.order)
       await loadOrders(shopId)
     } catch (e) {
@@ -204,8 +207,27 @@ export default function DashboardPage() {
     const hours = Math.floor(minutes / 60)
     if (hours < 24) return t('dash.ago.h', { d: hours })
 
-    const days = Math.floor(hours / 24)
-    return `${days}d`
+    return `${Math.floor(hours / 24)}d`
+  }
+
+  // Build the SMS body — from the shop's custom ready message or translation
+  function smsBody(order: Order) {
+    const base = t('dash.smsBody', {
+      shop: shop?.name ?? 'Coffee',
+      order: order.order_number,
+    })
+    return base
+  }
+
+  function smsHref(order: Order) {
+    if (!order.customer_phone) return ''
+    const body = encodeURIComponent(smsBody(order))
+    return `sms:${order.customer_phone}?body=${body}`
+  }
+
+  function telHref(order: Order) {
+    if (!order.customer_phone) return ''
+    return `tel:${order.customer_phone}`
   }
 
   if (!shopId) {
@@ -220,10 +242,8 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900">
-      {/* HEADER */}
       <header className="sticky top-0 z-10 border-b border-stone-200 bg-[#faf7f2]/95 backdrop-blur">
         <div className="max-w-3xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
-          {/* Left: logo + shop identity */}
           <div className="flex items-center gap-3 min-w-0">
             {shop?.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -250,7 +270,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right: actions */}
           <div className="flex items-center gap-1 shrink-0">
             <LanguageSwitcher compact />
             <button
@@ -345,6 +364,30 @@ export default function DashboardPage() {
                           : t('dash.notScanned')}
                       </span>
                     </div>
+
+                    {/* Phone + call/SMS row — only if the order has a phone */}
+                    {order.customer_phone && (
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-stone-600 font-mono tabular-nums">
+                          <Phone className="w-3.5 h-3.5 text-stone-400" />
+                          {order.customer_phone}
+                        </span>
+                        <a
+                          href={telHref(order)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 transition"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          {t('dash.call')}
+                        </a>
+                        <a
+                          href={smsHref(order)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 transition"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          {t('dash.sms')}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -383,7 +426,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* New order modal */}
+      {/* NEW ORDER MODAL */}
       {newOrderOpen && (
         <Modal onClose={() => setNewOrderOpen(false)}>
           <div className="p-6 space-y-5">
@@ -403,15 +446,40 @@ export default function DashboardPage() {
             </div>
 
             <form onSubmit={createOrder} className="space-y-4">
-              <input
-                autoFocus
-                type="text"
-                inputMode="numeric"
-                value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder={t('order.placeholder')}
-                className="w-full px-4 py-4 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-3xl text-center font-bold tabular-nums"
-              />
+              <div>
+                <label className="text-xs font-medium text-stone-600 mb-1.5 block">
+                  {t('order.number')}
+                </label>
+                <input
+                  autoFocus
+                  type="text"
+                  inputMode="numeric"
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                  placeholder={t('order.placeholder')}
+                  className="w-full px-4 py-4 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-3xl text-center font-bold tabular-nums"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-stone-600 mb-1.5 block">
+                  {t('order.phone')}{' '}
+                  <span className="text-stone-400">
+                    ({t('order.phoneOptional')})
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+216 ..."
+                  className="w-full px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm tabular-nums"
+                />
+                <p className="text-[11px] text-stone-400 mt-1.5">
+                  {t('order.phoneHint')}
+                </p>
+              </div>
 
               <button
                 type="submit"
@@ -425,7 +493,7 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* QR modal */}
+      {/* QR MODAL */}
       {qrOrder && (
         <Modal onClose={() => setQrOrder(null)}>
           <div className="p-6 space-y-5">

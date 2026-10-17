@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const shop_id = (body?.shop_id ?? '').toString()
     const order_number = (body?.order_number ?? '').toString().trim()
+    const rawPhone = (body?.customer_phone ?? '').toString().trim()
 
     if (!shop_id) {
       return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
@@ -15,6 +16,22 @@ export async function POST(req: NextRequest) {
         { error: 'order_number required' },
         { status: 400 }
       )
+    }
+
+    // Normalize phone: strip spaces, dashes, parentheses
+    // Keep leading + if present
+    let customer_phone: string | null = null
+    if (rawPhone) {
+      const cleaned = rawPhone.replace(/[\s\-().]/g, '')
+      // Basic sanity check — 6 to 20 chars, digits and optional leading +
+      if (/^\+?\d{6,20}$/.test(cleaned)) {
+        customer_phone = cleaned
+      } else {
+        return NextResponse.json(
+          { error: 'Invalid phone number' },
+          { status: 400 }
+        )
+      }
     }
 
     const { data: shop } = await supabaseAdmin
@@ -29,7 +46,12 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .insert({ shop_id, order_number, status: 'preparing' })
+      .insert({
+        shop_id,
+        order_number,
+        status: 'preparing',
+        customer_phone,
+      })
       .select()
       .single()
 
