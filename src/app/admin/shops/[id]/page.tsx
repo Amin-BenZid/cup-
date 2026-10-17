@@ -15,6 +15,8 @@ import {
   Smile,
   Heart,
   Store,
+  ShieldCheck,
+  History as HistoryIcon,
 } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { Toast } from '@/components/ui/Toast'
@@ -77,11 +79,8 @@ export default function AdminShopDetail() {
   const [error, setError] = useState('')
   const [newPin, setNewPin] = useState('')
   
-  // Confirmation modals
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmStatus, setConfirmStatus] = useState(false)
-
-  // Filter state for recent orders
   const [orderFilter, setOrderFilter] = useState<OrderFilter>('all')
 
   const { toasts, push, dismiss } = useToasts()
@@ -140,18 +139,8 @@ export default function AdminShopDetail() {
         return
       }
       setShop(json.shop)
-      
-      // Reload to get the new history log
       await load()
-
-      const msg =
-        next === 'active'
-          ? 'Approved'
-          : next === 'disabled'
-          ? shop?.status === 'pending'
-            ? 'Declined'
-            : 'Access disabled'
-          : 'Updated'
+      const msg = next === 'active' ? 'Approved' : next === 'disabled' ? 'Access disabled' : 'Updated'
       push('success', msg)
     } finally {
       setBusy(false)
@@ -177,10 +166,7 @@ export default function AdminShopDetail() {
         return
       }
       setNewPin('')
-      
-      // Reload to get the new history log
       await load()
-      
       push('success', 'PIN updated')
     } finally {
       setBusy(false)
@@ -205,7 +191,6 @@ export default function AdminShopDetail() {
     }
   }
 
-  // Filter logic for recent orders
   const filteredOrders = orders.filter((o) => {
     if (orderFilter === 'all') return true
     return o.status === orderFilter
@@ -240,7 +225,7 @@ export default function AdminShopDetail() {
     <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col">
       {/* STICKY HEADER */}
       <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => router.push('/admin')}
             className="flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-900 transition -ml-2 p-2 rounded-lg hover:bg-stone-200/50 active:scale-95"
@@ -254,132 +239,248 @@ export default function AdminShopDetail() {
         </div>
       </header>
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-4 pb-20">
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 space-y-6 pb-24">
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3">
             {error}
           </div>
         )}
 
-        {/* HERO IDENTITY CARD */}
-        <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-sm">
-          <div className="h-20 bg-stone-100 w-full" />
-          <div className="px-5 pb-5">
-            <div className="flex items-end justify-between -mt-8 mb-3">
-              {shop.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={shop.logo_url}
-                  alt=""
-                  className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-sm bg-white"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-sm bg-stone-900 flex items-center justify-center text-amber-50 font-bold text-2xl">
-                  {(shop.name || 'C')[0].toUpperCase()}
+        {/* TOP SECTION: Identity + Management (Side by side on desktop) */}
+        <div className="grid md:grid-cols-2 gap-4">
+          
+          {/* IDENTITY CARD */}
+          <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-sm flex flex-col">
+            <div className="h-20 bg-stone-100 w-full" />
+            <div className="px-5 pb-5 flex-1 flex flex-col">
+              <div className="flex items-end justify-between -mt-8 mb-3">
+                {shop.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={shop.logo_url}
+                    alt=""
+                    className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-sm bg-white"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-sm bg-stone-900 flex items-center justify-center text-amber-50 font-bold text-2xl">
+                    {(shop.name || 'C')[0].toUpperCase()}
+                  </div>
+                )}
+                <div className="pb-1">
+                  <StatusBadge status={shop.status} />
                 </div>
+              </div>
+              
+              <h1 className="text-xl font-bold leading-tight">{shop.name}</h1>
+              <p className="text-sm text-stone-500 mt-1 flex-1">
+                {shop.tagline || 'No tagline'}
+              </p>
+            </div>
+          </div>
+
+          {/* MANAGEMENT CARD (Access + PIN) */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm space-y-5">
+            <div className="flex items-center gap-2 text-sm font-semibold border-b border-stone-100 pb-3">
+              <ShieldCheck className="w-4 h-4 text-stone-400" />
+              Management
+            </div>
+
+            {/* Access Control Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs text-stone-600 font-medium">
+                {shop.status === 'active'
+                  ? 'Café can log in and take orders.'
+                  : shop.status === 'pending'
+                  ? 'Waiting for your approval.'
+                  : 'Access is currently blocked.'}
+              </div>
+
+              {shop.status === 'pending' ? (
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => changeStatus('disabled')}
+                    disabled={busy}
+                    className="flex-1 sm:flex-none px-3 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50 bg-white border border-stone-200 text-red-600 hover:bg-red-50"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    onClick={() => changeStatus('active')}
+                    disabled={busy}
+                    className="flex-1 sm:flex-none px-3 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm inline-flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Approve
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmStatus(true)}
+                  disabled={busy}
+                  className={`w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold transition disabled:opacity-50 shadow-sm ${
+                    shop.status === 'active'
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  }`}
+                >
+                  {shop.status === 'active' ? 'Disable access' : 'Enable access'}
+                </button>
               )}
-              <div className="pb-1">
-                <StatusBadge status={shop.status} />
+            </div>
+
+            {/* Reset PIN Row */}
+            <div className="pt-4 border-t border-stone-100 space-y-2">
+              <div className="text-xs font-medium text-stone-700 flex items-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5" />
+                Reset Barista PIN
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={newPin}
+                  onChange={(e) =>
+                    setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
+                  placeholder="4–6 digits"
+                  className="flex-1 px-3 py-2 rounded-lg border border-stone-200 bg-stone-50 text-xs outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition tracking-widest font-mono"
+                />
+                <button
+                  onClick={resetPin}
+                  disabled={busy || newPin.length < 4}
+                  className="px-3 py-2 rounded-lg bg-stone-900 text-amber-50 text-xs font-semibold hover:bg-stone-800 disabled:opacity-40 transition"
+                >
+                  Save
+                </button>
               </div>
             </div>
-            
-            <h1 className="text-xl font-bold leading-tight">{shop.name}</h1>
-            <p className="text-sm text-stone-500 mt-1">
-              {shop.tagline || 'No tagline'}
-            </p>
           </div>
         </div>
 
-        {/* ACCESS / STATUS CONTROL */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4 shadow-sm">
-          <div className="text-sm font-semibold">Access Control</div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-stone-50 p-4 rounded-xl border border-stone-100">
-            <div className="text-sm text-stone-600 font-medium">
-              {shop.status === 'active'
-                ? 'Can log in and take orders.'
-                : shop.status === 'pending'
-                ? 'Waiting for your approval.'
-                : 'Access is blocked.'}
-            </div>
-
-            {shop.status === 'pending' ? (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => changeStatus('disabled')}
-                  disabled={busy}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50 bg-white border border-stone-200 text-red-600 hover:bg-red-50"
-                >
-                  Decline
-                </button>
-                <button
-                  onClick={() => changeStatus('active')}
-                  disabled={busy}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm inline-flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Approve
-                </button>
+        {/* MIDDLE SECTION: Activity & Reviews (Side by side on desktop) */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* ACTIVITY HISTORY */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm flex flex-col h-[320px]">
+            <div className="flex items-center justify-between mb-3 shrink-0">
+              <div className="text-sm font-semibold flex items-center gap-2">
+                <HistoryIcon className="w-4 h-4 text-stone-400" />
+                Activity History
               </div>
+              <div className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md tabular-nums">
+                {history.length}
+              </div>
+            </div>
+            {history.length === 0 ? (
+              <p className="text-xs text-stone-500 py-6 text-center flex-1 flex items-center justify-center">
+                No activity logged yet
+              </p>
             ) : (
-              <button
-                onClick={() => setConfirmStatus(true)}
-                disabled={busy}
-                className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50 shadow-sm ${
-                  shop.status === 'active'
-                    ? 'bg-white border border-stone-200 text-red-600 hover:bg-red-50'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
-                }`}
-              >
-                {shop.status === 'active' ? 'Disable access' : 'Enable access'}
-              </button>
+              <div className="overflow-y-auto pr-2 space-y-3 custom-scrollbar flex-1">
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-start gap-3 text-sm py-1 border-b border-stone-50 last:border-0"
+                  >
+                    <div className="shrink-0 mt-0.5">
+                      {h.action === 'created' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
+                      {h.action === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                      {h.action === 'disabled' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
+                      {h.action === 'pin_reset' && <KeyRound className="w-3.5 h-3.5 text-amber-500" />}
+                      {h.action === 'renamed' && <Store className="w-3.5 h-3.5 text-stone-500" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-stone-800 font-medium capitalize text-xs">
+                        {h.action.replace('_', ' ')}
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-0.5">
+                        {new Date(h.created_at).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* REVIEWS */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm flex flex-col h-[320px]">
+            <div className="flex items-center justify-between mb-3 shrink-0">
+              <div className="text-sm font-semibold flex items-center gap-2">
+                <Heart className="w-4 h-4 text-stone-400" />
+                Reviews
+              </div>
+              <div className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md tabular-nums">
+                {reviewStats.count > 0
+                  ? `${reviewStats.average.toFixed(1)} ★ · ${reviewStats.count}`
+                  : '0'}
+              </div>
+            </div>
+            {reviews.length === 0 ? (
+              <p className="text-xs text-stone-500 py-6 text-center flex-1 flex items-center justify-center">
+                No reviews yet
+              </p>
+            ) : (
+              <div className="overflow-y-auto pr-2 space-y-3 custom-scrollbar flex-1">
+                {reviews.map((r, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 text-sm py-1 border-b border-stone-50 last:border-0"
+                  >
+                    <span className="shrink-0 mt-0.5">
+                      {r.rating === 1 ? (
+                        <Frown className="w-3.5 h-3.5 text-red-500" strokeWidth={2} />
+                      ) : r.rating === 2 ? (
+                        <Smile className="w-3.5 h-3.5 text-amber-600" strokeWidth={2} />
+                      ) : (
+                        <Heart className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2} />
+                      )}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      {r.comment ? (
+                        <p className="text-stone-800 leading-snug text-xs">{r.comment}</p>
+                      ) : (
+                        <p className="text-stone-400 italic text-[10px]">No comment</p>
+                      )}
+                      <p className="text-[10px] text-stone-400 mt-0.5">
+                        {new Date(r.created_at).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        {/* RESET PIN */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-3 shadow-sm">
-          <div className="text-sm font-semibold flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-stone-400" />
-            Reset PIN
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={newPin}
-              onChange={(e) =>
-                setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))
-              }
-              placeholder="4–6 digits"
-              className="w-full sm:flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition tracking-widest font-mono"
-            />
-            <button
-              onClick={resetPin}
-              disabled={busy || newPin.length < 4}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-stone-900 text-amber-50 text-sm font-semibold hover:bg-stone-800 disabled:opacity-40 transition"
-            >
-              Save PIN
-            </button>
-          </div>
-        </div>
-
-        {/* RECENT ORDERS (Scrollable + Filterable) */}
+        {/* BOTTOM SECTION: Recent Orders (Full width) */}
         <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold">Recent orders</div>
-            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-1 rounded-md tabular-nums">
+          <div className="flex items-center justify-between mb-3 shrink-0">
+            <div className="text-sm font-semibold flex items-center gap-2">
+              <Clock className="w-4 h-4 text-stone-400" />
+              Recent Orders
+            </div>
+            <div className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md tabular-nums">
               {filteredOrders.length}
             </div>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0">
             {(['all', 'preparing', 'ready', 'done'] as OrderFilter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setOrderFilter(f)}
-                className={`shrink-0 px-3 py-1 text-xs font-medium rounded-lg capitalize transition ${
+                className={`shrink-0 px-3 py-1 text-[11px] font-medium rounded-lg capitalize transition ${
                   orderFilter === f
                     ? 'bg-stone-900 text-white shadow-sm'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -396,7 +497,7 @@ export default function AdminShopDetail() {
               No {orderFilter !== 'all' ? orderFilter : ''} orders found
             </p>
           ) : (
-            <div className="max-h-[280px] overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-1 custom-scrollbar">
               {filteredOrders.map((o) => (
                 <div
                   key={o.id}
@@ -426,105 +527,6 @@ export default function AdminShopDetail() {
                   >
                     {o.status}
                   </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* REVIEWS */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold">Reviews</div>
-            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-1 rounded-md tabular-nums">
-              {reviewStats.count > 0
-                ? `${reviewStats.average.toFixed(1)} ★ · ${reviewStats.count}`
-                : 'No reviews yet'}
-            </div>
-          </div>
-          {reviews.length === 0 ? (
-            <p className="text-xs text-stone-500 py-6 text-center">
-              No reviews yet
-            </p>
-          ) : (
-            <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-              {reviews.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 text-sm py-2 border-b border-stone-100 last:border-0"
-                >
-                  <span className="shrink-0 mt-0.5">
-                    {r.rating === 1 ? (
-                      <Frown className="w-4 h-4 text-red-500" strokeWidth={2} />
-                    ) : r.rating === 2 ? (
-                      <Smile className="w-4 h-4 text-amber-600" strokeWidth={2} />
-                    ) : (
-                      <Heart className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                    )}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    {r.comment ? (
-                      <p className="text-stone-800 leading-snug">{r.comment}</p>
-                    ) : (
-                      <p className="text-stone-400 italic text-xs">
-                        No comment
-                      </p>
-                    )}
-                    <p className="text-[10px] text-stone-400 mt-1">
-                      {new Date(r.created_at).toLocaleString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ACTIVITY HISTORY */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold">Activity History</div>
-            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-1 rounded-md tabular-nums">
-              {history.length}
-            </div>
-          </div>
-          {history.length === 0 ? (
-            <p className="text-xs text-stone-500 py-6 text-center">
-              No activity logged yet
-            </p>
-          ) : (
-            <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-              {history.map((h) => (
-                <div
-                  key={h.id}
-                  className="flex items-start gap-3 text-sm py-2 border-b border-stone-100 last:border-0"
-                >
-                  <div className="shrink-0 mt-0.5">
-                    {h.action === 'created' && <CheckCircle2 className="w-4 h-4 text-blue-500" />}
-                    {h.action === 'approved' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                    {h.action === 'disabled' && <XCircle className="w-4 h-4 text-red-500" />}
-                    {h.action === 'pin_reset' && <KeyRound className="w-4 h-4 text-amber-500" />}
-                    {h.action === 'renamed' && <Store className="w-4 h-4 text-stone-500" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-stone-800 font-medium capitalize">
-                      {h.action.replace('_', ' ')}
-                    </p>
-                    <p className="text-[10px] text-stone-400 mt-1">
-                      {new Date(h.created_at).toLocaleString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
                 </div>
               ))}
             </div>
