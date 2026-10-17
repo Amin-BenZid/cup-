@@ -5,6 +5,7 @@ export type PaletteId =
   | 'clay'
   | 'ink'
   | 'cream'
+  | 'cozy'
 
 export type Palette = {
   id: PaletteId
@@ -19,6 +20,8 @@ export type Palette = {
   primaryText: string
   accent: string
   accentSoft: string
+  /** Optional subtle background pattern rendered behind the customer page */
+  pattern?: 'beans' | 'dots' | null
 }
 
 export const PALETTES: Record<PaletteId, Palette> = {
@@ -35,6 +38,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#fafaf9',
     accent: '#b45309',
     accentSoft: '#fef3c7',
+    pattern: null,
   },
   espresso: {
     id: 'espresso',
@@ -49,6 +53,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#fdf8ef',
     accent: '#8a3f1c',
     accentSoft: '#f3ddc8',
+    pattern: null,
   },
   olive: {
     id: 'olive',
@@ -63,6 +68,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#f7f8f0',
     accent: '#5a6a2e',
     accentSoft: '#e5eccf',
+    pattern: null,
   },
   clay: {
     id: 'clay',
@@ -77,6 +83,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#fdf6f3',
     accent: '#a54b32',
     accentSoft: '#f1d6cd',
+    pattern: null,
   },
   ink: {
     id: 'ink',
@@ -91,6 +98,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#f8f9fb',
     accent: '#3557a4',
     accentSoft: '#dbe2f3',
+    pattern: null,
   },
   cream: {
     id: 'cream',
@@ -105,6 +113,22 @@ export const PALETTES: Record<PaletteId, Palette> = {
     primaryText: '#fdfaf3',
     accent: '#a67c2e',
     accentSoft: '#f2e4c2',
+    pattern: null,
+  },
+  cozy: {
+    id: 'cozy',
+    name: 'Cozy',
+    bg: '#f3e9dc',
+    surface: '#fdf8f0',
+    surfaceMuted: '#ebdcc6',
+    border: '#e2d3bf',
+    text: '#2c1c10',
+    textMuted: '#7a5f47',
+    primary: '#5c3a21',
+    primaryText: '#fdf8f0',
+    accent: '#b06a3b',
+    accentSoft: '#f0dac3',
+    pattern: 'beans',
   },
 }
 
