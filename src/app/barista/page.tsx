@@ -1,73 +1,106 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import CupLogo from "@/components/CupLogo";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { useT } from "@/lib/i18n/context";
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import CupLogo from '@/components/CupLogo'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useT } from '@/lib/i18n/context'
 
 export default function BaristaLogin() {
-  const t = useT();
-  const router = useRouter();
-  const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [checking, setChecking] = useState(true);
+  const t = useT()
+  const router = useRouter()
+  const [pin, setPin] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(true)
 
+  // On mount, verify the saved shop status before letting them in
   useEffect(() => {
-    const shopId = localStorage.getItem("shop_id");
-    if (shopId) {
-      router.replace("/barista/dashboard");
-    } else {
-      setChecking(false);
+    const shopId = localStorage.getItem('shop_id')
+    if (!shopId) {
+      setChecking(false)
+      return
     }
-  }, [router]);
+
+    async function verifyStatus() {
+      try {
+        const res = await fetch(`/api/shops/${shopId}`, { cache: 'no-store' })
+        if (!res.ok) {
+          // If shop is deleted or error, clear local storage
+          localStorage.removeItem('shop_id')
+          localStorage.removeItem('shop_name')
+          setChecking(false)
+          return
+        }
+
+        const json = await res.json()
+        const status = json.shop?.status
+
+        if (status === 'active') {
+          router.replace('/barista/dashboard')
+        } else if (status === 'pending') {
+          router.replace('/pending')
+        } else if (status === 'disabled') {
+          // If disabled, clear and show login
+          localStorage.removeItem('shop_id')
+          localStorage.removeItem('shop_name')
+          setChecking(false)
+        } else {
+          setChecking(false)
+        }
+      } catch {
+        setChecking(false)
+      }
+    }
+
+    verifyStatus()
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError('')
 
     if (pin.length < 4) {
-      setError(t("login.error.pinTooShort"));
-      return;
+      setError(t('login.error.pinTooShort'))
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin }),
-      });
-      const json = await res.json();
+      })
+      const json = await res.json()
 
       if (!res.ok) {
-        // Pending → send to /pending screen
-        if (json.status === "pending") {
-          localStorage.setItem("shop_id", json.shop_id ?? "");
-          router.push("/pending");
-          return;
+        // The API already handles redirecting for pending/disabled via status codes
+        if (json.status === 'pending') {
+          localStorage.setItem('shop_id', json.shop_id)
+          localStorage.setItem('shop_name', json.shop_name)
+          router.push('/pending')
+          return
         }
-        // Disabled → show clear error
-        if (json.status === "disabled") {
-          setError(t("login.error.disabled"));
-          setPin("");
-          return;
+        if (json.status === 'disabled') {
+          setError(t('login.error.disabled'))
+          return
         }
-        setError(json.error ?? "Login failed");
-        setPin("");
-        return;
+        
+        setError(json.error ?? 'Login failed')
+        setPin('')
+        return
       }
 
-      localStorage.setItem("shop_id", json.shop.id);
-      localStorage.setItem("shop_name", json.shop.name);
-      router.push("/barista/dashboard");
+      localStorage.setItem('shop_id', json.shop.id)
+      localStorage.setItem('shop_name', json.shop.name)
+      router.push('/barista/dashboard')
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(e instanceof Error ? e.message : 'Network error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -76,7 +109,7 @@ export default function BaristaLogin() {
       <main className="min-h-screen bg-[#faf7f2] flex items-center justify-center">
         <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
       </main>
-    );
+    )
   }
 
   return (
@@ -88,7 +121,7 @@ export default function BaristaLogin() {
             className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition -ms-1.5"
           >
             <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
-            {t("setup.back")}
+            {t('setup.back')}
           </Link>
           <LanguageSwitcher />
         </div>
@@ -99,10 +132,10 @@ export default function BaristaLogin() {
           <div className="space-y-3">
             <CupLogo size={44} />
             <h1 className="text-3xl font-semibold tracking-tight pt-2">
-              {t("login.title")}
+              {t('login.title')}
             </h1>
             <p className="text-stone-500 text-[15px] leading-relaxed">
-              {t("login.subtitle")}
+              {t('login.subtitle')}
             </p>
           </div>
 
@@ -114,7 +147,7 @@ export default function BaristaLogin() {
                 autoFocus
                 value={pin}
                 onChange={(e) =>
-                  setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
                 }
                 placeholder="••••"
                 maxLength={6}
@@ -135,17 +168,17 @@ export default function BaristaLogin() {
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                t("login.button")
+                t('login.button')
               )}
             </button>
 
             <p className="text-xs text-stone-400 text-center">
-              {t("login.newShop")}{" "}
+              {t('login.newShop')}{' '}
               <Link
                 href="/setup"
                 className="text-stone-700 underline underline-offset-2"
               >
-                {t("login.setupLink")}
+                {t('login.setupLink')}
               </Link>
             </p>
           </form>
@@ -155,9 +188,9 @@ export default function BaristaLogin() {
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
           <CupLogo size={14} />
-          <span>{t("login.footer")}</span>
+          <span>{t('login.footer')}</span>
         </div>
       </footer>
     </main>
-  );
+  )
 }
