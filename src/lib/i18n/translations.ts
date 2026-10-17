@@ -666,9 +666,14 @@ export type TranslationKey = keyof typeof translations.fr;
 
 export function formatTemplate(
   template: string,
-  values: Record<string, string | number>,
+  values: Record<string, string | number>
 ): string {
-  return template.replace(/%(\w+)/g, (_, key) =>
-    values[key] !== undefined ? String(values[key]) : `%${key}`,
-  );
+  // Replaces both %name and {name} formats
+  return template
+    .replace(/%(\w+)/g, (_, key) =>
+      values[key] !== undefined ? String(values[key]) : `%${key}`
+    )
+    .replace(/\{(\w+)\}/g, (_, key) =>
+      values[key] !== undefined ? String(values[key]) : `{${key}}`
+    )
 }
