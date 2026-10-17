@@ -25,6 +25,7 @@ import {
   paletteVars,
   type Shop,
 } from '@/lib/themes'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 type Order = {
   id: string
