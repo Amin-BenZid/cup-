@@ -34,6 +34,17 @@ type Order = {
   ready_at: string | null
 }
 
+type Review = {
+  rating: number
+  comment: string | null
+  created_at: string
+}
+
+type ReviewStats = {
+  count: number
+  average: number
+}
+
 export default function AdminShopDetail() {
   const router = useRouter()
   const params = useParams()
@@ -41,6 +52,11 @@ export default function AdminShopDetail() {
 
   const [shop, setShop] = useState<Shop | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewStats, setReviewStats] = useState<ReviewStats>({
+    count: 0,
+    average: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -66,7 +82,9 @@ export default function AdminShopDetail() {
         return
       }
       setShop(json.shop)
-      setOrders(json.orders)
+      setOrders(json.orders ?? [])
+      setReviews(json.reviews ?? [])
+      setReviewStats(json.reviewStats ?? { count: 0, average: 0 })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error')
     } finally {
@@ -323,6 +341,48 @@ export default function AdminShopDetail() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Reviews */}
+        <div className="rounded-2xl border border-stone-200 bg-white p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold">Reviews</div>
+            <div className="text-xs text-stone-500 tabular-nums">
+              {reviewStats.count > 0
+                ? `${reviewStats.average.toFixed(1)} ★ · ${reviewStats.count}`
+                : 'No reviews yet'}
+            </div>
+          </div>
+          {reviews.length === 0 ? (
+            <p className="text-xs text-stone-500 py-6 text-center">
+              No reviews yet
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {reviews.slice(0, 10).map((r, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 text-sm py-2 border-b border-stone-100 last:border-0"
+                >
+                  <span className="text-lg shrink-0">
+                    {r.rating === 1 ? '😐' : r.rating === 2 ? '🙂' : '🤩'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    {r.comment ? (
+                      <p className="text-stone-700">{r.comment}</p>
+                    ) : (
+                      <p className="text-stone-400 italic text-xs">
+                        No comment
+                      </p>
+                    )}
+                    <p className="text-[10px] text-stone-400 mt-0.5">
+                      {new Date(r.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Orders */}

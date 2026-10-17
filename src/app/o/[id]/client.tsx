@@ -24,6 +24,7 @@ import {
   paletteVars,
   type Shop,
 } from '@/lib/themes'
+import ReviewPrompt from '@/components/ReviewPrompt'
 
 type Order = {
   id: string
