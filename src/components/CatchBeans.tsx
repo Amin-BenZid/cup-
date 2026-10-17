@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 type Bean = {
   id: number
@@ -18,6 +19,7 @@ const CATCH_LINE = 82
 const LIVES = 3
 
 export default function CatchBeans() {
+  const t = useT()
   const [playing, setPlaying] = useState(false)
   const [gameOver, setGameOver] = useState(false)
   const [score, setScore] = useState(0)
@@ -55,7 +57,10 @@ export default function CatchBeans() {
     if (!area) return
     const rect = area.getBoundingClientRect()
     const pct = ((clientX - rect.left) / rect.width) * 100
-    cupTarget.current = Math.max(CUP_WIDTH / 2, Math.min(100 - CUP_WIDTH / 2, pct))
+    cupTarget.current = Math.max(
+      CUP_WIDTH / 2,
+      Math.min(100 - CUP_WIDTH / 2, pct)
+    )
   }, [])
 
   const onDown = (e: React.PointerEvent) => {
@@ -144,7 +149,8 @@ export default function CatchBeans() {
 
         for (const b of prev) {
           const ny = b.y + b.vy * dt
-          const hit = ny >= CATCH_LINE && b.x >= center - half && b.x <= center + half
+          const hit =
+            ny >= CATCH_LINE && b.x >= center - half && b.x <= center + half
 
           if (hit) {
             setScore((s) => {
@@ -196,13 +202,14 @@ export default function CatchBeans() {
       {/* HUD */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-stone-100">
         <div className="flex items-center gap-3 text-xs text-stone-500">
-          <span className="font-medium">Score</span>
+          <span className="font-medium">{t('game.score')}</span>
           <span className="font-semibold text-stone-900 tabular-nums">
             {score}
           </span>
           <span className="text-stone-300">·</span>
           <span>
-            Best <span className="text-stone-700 tabular-nums">{best}</span>
+            {t('game.best')}{' '}
+            <span className="text-stone-700 tabular-nums">{best}</span>
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -274,7 +281,6 @@ export default function CatchBeans() {
           style={{ left: `${cupX}%`, width: `${CUP_WIDTH}%` }}
         >
           <svg viewBox="0 0 100 66" className="w-full h-auto">
-            {/* handle */}
             <path
               d="M78 22 Q96 22 96 36 Q96 50 78 50"
               fill="none"
@@ -282,14 +288,11 @@ export default function CatchBeans() {
               strokeWidth="6"
               strokeLinecap="round"
             />
-            {/* body */}
             <path
               d="M6 14 L94 14 L86 58 Q85 64 78 64 L22 64 Q15 64 14 58 Z"
               fill="#1c1917"
             />
-            {/* rim */}
             <rect x="2" y="10" width="96" height="8" rx="4" fill="#0c0a09" />
-            {/* highlight */}
             <rect
               x="10"
               y="12"
@@ -306,14 +309,14 @@ export default function CatchBeans() {
         {!playing && !gameOver && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <p className="text-xs text-stone-500 text-center px-8">
-              Drag to move the cup. Catch the beans, miss three and it&apos;s over.
+              {t('game.instructions')}
             </p>
             <button
               onClick={start}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition"
             >
               <Play className="w-3.5 h-3.5" />
-              Play
+              {t('game.play')}
             </button>
           </div>
         )}
@@ -323,13 +326,15 @@ export default function CatchBeans() {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90">
             <div className="text-center">
               <p className="text-[11px] uppercase tracking-wider text-stone-500">
-                Final score
+                {t('game.finalScore')}
               </p>
               <p className="text-3xl font-semibold text-stone-900 tabular-nums">
                 {score}
               </p>
               <p className="text-xs text-stone-500 mt-0.5">
-                {score === best && score > 0 ? 'New best' : `Best ${best}`}
+                {score === best && score > 0
+                  ? t('game.newBest')
+                  : t('game.best') + ' ' + best}
               </p>
             </div>
             <button
@@ -337,7 +342,7 @@ export default function CatchBeans() {
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-stone-300 text-stone-800 text-sm font-medium hover:bg-stone-100 transition"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Play again
+              {t('game.playAgain')}
             </button>
           </div>
         )}
