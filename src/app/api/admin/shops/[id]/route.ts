@@ -42,6 +42,13 @@ export async function GET(
     .order('created_at', { ascending: false })
     .limit(100)
 
+  const { data: history } = await supabaseAdmin
+    .from('shop_history')
+    .select('id, action, details, created_at')
+    .eq('shop_id', id)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
   const reviewCount = reviews?.length ?? 0
   const ratingSum = (reviews ?? []).reduce((s, r) => s + r.rating, 0)
   const avgRating = reviewCount > 0 ? ratingSum / reviewCount : 0
@@ -50,6 +57,7 @@ export async function GET(
     shop,
     orders: orders ?? [],
     reviews: reviews ?? [],
+    history: history ?? [],
     reviewStats: {
       count: reviewCount,
       average: Math.round(avgRating * 10) / 10,
@@ -69,9 +77,13 @@ export async function PATCH(
   const body = await req.json().catch(() => ({}))
 
   const update: Record<string, unknown> = {}
+  let logAction = ''
+  let logDetails: Record<string, unknown> = {}
 
   if (typeof body.name === 'string') {
     update.name = body.name.trim()
+    logAction = 'renamed'
+    logDetails = { new_name: body.name.trim() }
   }
 
   if (typeof body.status === 'string') {
@@ -79,6 +91,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Bad status' }, { status: 400 })
     }
     update.status = body.status
+    logAction = body.status === 'active' ? 'approved' : 'disabled'
   }
 
   if (typeof body.new_pin === 'string') {
@@ -86,6 +99,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'PIN 4–6 digits' }, { status: 400 })
     }
     update.pin_hash = await hashPin(body.new_pin)
+    logAction = 'pin_reset'
   }
 
   if (Object.keys(update).length === 0) {
@@ -105,6 +119,14 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  if (logAction) {
+    await supabaseAdmin.from('shop_history').insert({
+      shop_id: id,
+      action: logAction,
+      details: logDetails,
+    })
+  }
+
   return NextResponse.json({ shop: data })
 }
 
@@ -117,7 +139,6 @@ export async function DELETE(
   }
 
   const { id } = await ctx.params
-
   const { error } = await supabaseAdmin.from('shops').delete().eq('id', id)
 
   if (error) {

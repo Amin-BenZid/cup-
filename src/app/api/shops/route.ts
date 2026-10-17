@@ -18,35 +18,28 @@ export async function POST(req: NextRequest) {
       )
     }
 
-   const pin_hash = await hashPin(pin)
+    const pin_hash = await hashPin(pin)
 
-// Reject if another shop already uses this PIN
-const { data: existing } = await supabaseAdmin
-  .from('shops')
-  .select('id')
-  .eq('pin_hash', pin_hash)
-  .limit(1)
-
-if (existing && existing.length > 0) {
-  return NextResponse.json(
-    { error: 'This PIN is already taken. Please choose another.' },
-    { status: 409 }
-  )
-}
-
-const { data, error } = await supabaseAdmin
-  .from('shops')
-  .insert({
-    name,
-    pin_hash,
-    status: 'pending',
-  })
-  .select('id, name, status')
-  .single()
+    const { data, error } = await supabaseAdmin
+      .from('shops')
+      .insert({
+        name,
+        pin_hash,
+        status: 'pending',
+      })
+      .select('id, name, status')
+      .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Log the creation event
+    await supabaseAdmin.from('shop_history').insert({
+      shop_id: data.id,
+      action: 'created',
+      details: { name: data.name },
+    })
 
     return NextResponse.json({ shop: data })
   } catch (e: unknown) {

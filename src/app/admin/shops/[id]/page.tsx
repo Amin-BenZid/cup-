@@ -14,6 +14,7 @@ import {
   Frown,
   Smile,
   Heart,
+  Store,
 } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { Toast } from '@/components/ui/Toast'
@@ -48,6 +49,13 @@ type ReviewStats = {
   average: number
 }
 
+type History = {
+  id: string
+  action: string
+  details: any
+  created_at: string
+}
+
 type OrderFilter = 'all' | 'ready' | 'done' | 'preparing'
 
 export default function AdminShopDetail() {
@@ -62,6 +70,8 @@ export default function AdminShopDetail() {
     count: 0,
     average: 0,
   })
+  const [history, setHistory] = useState<History[]>([])
+  
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -96,6 +106,7 @@ export default function AdminShopDetail() {
       setOrders(json.orders ?? [])
       setReviews(json.reviews ?? [])
       setReviewStats(json.reviewStats ?? { count: 0, average: 0 })
+      setHistory(json.history ?? [])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error')
     } finally {
@@ -129,6 +140,10 @@ export default function AdminShopDetail() {
         return
       }
       setShop(json.shop)
+      
+      // Reload to get the new history log
+      await load()
+
       const msg =
         next === 'active'
           ? 'Approved'
@@ -162,6 +177,10 @@ export default function AdminShopDetail() {
         return
       }
       setNewPin('')
+      
+      // Reload to get the new history log
+      await load()
+      
       push('success', 'PIN updated')
     } finally {
       setBusy(false)
@@ -455,6 +474,52 @@ export default function AdminShopDetail() {
                       {new Date(r.created_at).toLocaleString(undefined, {
                         month: 'short',
                         day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ACTIVITY HISTORY */}
+        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold">Activity History</div>
+            <div className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-1 rounded-md tabular-nums">
+              {history.length}
+            </div>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-stone-500 py-6 text-center">
+              No activity logged yet
+            </p>
+          ) : (
+            <div className="max-h-[280px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+              {history.map((h) => (
+                <div
+                  key={h.id}
+                  className="flex items-start gap-3 text-sm py-2 border-b border-stone-100 last:border-0"
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {h.action === 'created' && <CheckCircle2 className="w-4 h-4 text-blue-500" />}
+                    {h.action === 'approved' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    {h.action === 'disabled' && <XCircle className="w-4 h-4 text-red-500" />}
+                    {h.action === 'pin_reset' && <KeyRound className="w-4 h-4 text-amber-500" />}
+                    {h.action === 'renamed' && <Store className="w-4 h-4 text-stone-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-stone-800 font-medium capitalize">
+                      {h.action.replace('_', ' ')}
+                    </p>
+                    <p className="text-[10px] text-stone-400 mt-1">
+                      {new Date(h.created_at).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
                         hour: 'numeric',
                         minute: '2-digit'
                       })}
