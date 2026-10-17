@@ -16,6 +16,7 @@ import Logo from '@/components/Logo'
 import CupLogo from '@/components/CupLogo'
 import CozyPattern from '@/components/CozyPattern'
 import ReviewPrompt from '@/components/ReviewPrompt'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 import { setBadge, clearBadge } from '@/lib/badge'
 import { useElapsed, formatElapsed } from '@/hooks/useElapsed'
@@ -25,7 +26,6 @@ import {
   paletteVars,
   type Shop,
 } from '@/lib/themes'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 type Order = {
   id: string
@@ -386,28 +386,33 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
             background: 'var(--surface)',
           }}
         >
-          <div className="max-w-md mx-auto flex items-center gap-3">
-            <Logo
-              url={shop?.logo_url ?? null}
-              name={shop?.name ?? 'Coffee'}
-              size={34}
-              scale={Number(shop?.logo_scale ?? 1)}
-              offsetX={Number(shop?.logo_offset_x ?? 0)}
-              offsetY={Number(shop?.logo_offset_y ?? 0)}
-              radius={9}
-            />
-            <div className="min-w-0">
-              <div className="text-sm font-semibold truncate">
-                {shop?.name ?? 'Coffee shop'}
-              </div>
-              {shop?.tagline && (
-                <div
-                  className="text-[11px] truncate"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {shop.tagline}
+          <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Logo
+                url={shop?.logo_url ?? null}
+                name={shop?.name ?? 'Coffee'}
+                size={34}
+                scale={Number(shop?.logo_scale ?? 1)}
+                offsetX={Number(shop?.logo_offset_x ?? 0)}
+                offsetY={Number(shop?.logo_offset_y ?? 0)}
+                radius={9}
+              />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold truncate">
+                  {shop?.name ?? 'Coffee shop'}
                 </div>
-              )}
+                {shop?.tagline && (
+                  <div
+                    className="text-[11px] truncate"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {shop.tagline}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="shrink-0">
+              <LanguageSwitcher compact />
             </div>
           </div>
         </header>
