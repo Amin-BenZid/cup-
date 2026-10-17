@@ -129,6 +129,8 @@ export const translations = {
     'cust.keepOpen':
       'Gardez cette page ouverte. Elle se met à jour automatiquement.',
     'cust.poweredBy': 'Propulsé par Cup',
+    'cust.waitingFor': 'En attente depuis',
+    'cust.readyIn': 'Prêt en',
 
     // Notifications
     'notif.title': "Soyez notifié quand c'est prêt",
@@ -337,6 +339,8 @@ export const translations = {
     'cust.whileYouWait': 'في أثناء الانتظار',
     'cust.keepOpen': 'أبقِ هذه الصفحة مفتوحة. يتم تحديثها تلقائياً.',
     'cust.poweredBy': 'بدعم من Cup',
+    'cust.waitingFor': 'في الانتظار منذ',
+    'cust.readyIn': 'جاهز خلال',
 
     // Notifications
     'notif.title': 'أشعرني عندما يصبح جاهزاً',
@@ -541,6 +545,8 @@ export const translations = {
     'cust.whileYouWait': 'While you wait',
     'cust.keepOpen': 'Keep this page open. It updates automatically.',
     'cust.poweredBy': 'Powered by Cup',
+    'cust.waitingFor': 'Waiting for',
+    'cust.readyIn': 'Ready in',
 
     // Notifications
     'notif.title': "Get notified when it's ready",

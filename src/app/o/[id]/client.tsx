@@ -8,6 +8,7 @@ import {
   BellRing,
   Loader2,
   AlertCircle,
+  Clock,
 } from 'lucide-react'
 import CatchBeans from '@/components/CatchBeans'
 import NotificationSetup from '@/components/NotificationSetup'
@@ -16,6 +17,7 @@ import CupLogo from '@/components/CupLogo'
 import CozyPattern from '@/components/CozyPattern'
 import { useT } from '@/lib/i18n/context'
 import { setBadge, clearBadge } from '@/lib/badge'
+import { useElapsed, formatElapsed } from '@/hooks/useElapsed'
 import {
   getFont,
   getPalette,
@@ -73,12 +75,10 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         setOrder(orderData)
         setLoading(false)
 
-        // Remember this as the customer's active order
         try {
           localStorage.setItem('cup-active-order', orderId)
         } catch {}
 
-        // shop loads in the background
         supabase
           .from('shops')
           .select(
@@ -90,7 +90,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
             if (!cancelled && data) setShop(data as Shop)
           })
 
-        // ping connect in the background
         fetch(`/api/orders/${orderId}/connect`, { method: 'POST' }).catch(
           () => {}
         )
@@ -269,12 +268,8 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     } else if (order.status === 'preparing') {
       setBadge()
     }
-    return () => {
-      // don't clear on every re-render — only when this component unmounts
-    }
   }, [order, acknowledged])
 
-  // Clear the active order id when the customer taps "Got it"
   useEffect(() => {
     if (!acknowledged) return
     clearBadge()
@@ -283,7 +278,15 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     } catch {}
   }, [acknowledged])
 
-  // ---------- UI ----------
+  // ---------- timers ----------
+  // Live while preparing; frozen at ready_at when ready
+  const elapsedLive = useElapsed(order?.created_at ?? null, null)
+  const elapsedFinal = useElapsed(
+    order?.created_at ?? null,
+    order?.ready_at ?? null
+  )
+
+  // ---------- loading UI ----------
   if (loading) {
     return (
       <main
@@ -313,7 +316,9 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
               >
                 <Coffee className="w-4 h-4" strokeWidth={2.5} />
               </div>
-              <div className="text-sm font-semibold">{t('common.loading')}</div>
+              <div className="text-sm font-semibold">
+                {t('common.loading')}
+              </div>
             </div>
           </header>
           <div className="flex-1 flex items-center justify-center">
@@ -460,6 +465,19 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                     {t('cust.pickup')}
                   </p>
+                  <p
+                    className="text-xs inline-flex items-center gap-1.5 tabular-nums pt-1"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    {t('cust.readyIn')}{' '}
+                    <span
+                      className="font-semibold"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      {formatElapsed(elapsedFinal)}
+                    </span>
+                  </p>
                 </div>
                 <button
                   onClick={() => {
@@ -519,6 +537,21 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                       style={{ background: 'var(--border)' }}
                     />
                   </div>
+                </div>
+
+                {/* Live elapsed timer */}
+                <div
+                  className="pt-4 flex items-center justify-center gap-1.5 text-xs tabular-nums"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{t('cust.waitingFor')}</span>
+                  <span
+                    className="font-semibold"
+                    style={{ color: 'var(--text)' }}
+                  >
+                    {formatElapsed(elapsedLive)}
+                  </span>
                 </div>
               </div>
             )}

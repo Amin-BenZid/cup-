@@ -14,10 +14,12 @@ import {
   Settings,
   Phone,
   MessageSquare,
+  Clock,
 } from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { useElapsed, formatElapsed } from '@/hooks/useElapsed'
 
 type Order = {
   id: string
@@ -193,36 +195,18 @@ export default function DashboardPage() {
     return `${protocol}//${hostname}${port ? ':' + port : ''}/o/${orderId}`
   }
 
-  function timeAgo(iso: string) {
-    const now = Date.now()
-    const then = new Date(iso).getTime()
-    if (!Number.isFinite(then)) return ''
-
-    const seconds = Math.max(0, Math.floor((now - then) / 1000))
-    if (seconds < 60) return t('dash.ago.s', { d: seconds })
-
-    const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return t('dash.ago.m', { d: minutes })
-
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return t('dash.ago.h', { d: hours })
-
-    return `${Math.floor(hours / 24)}d`
-  }
-
-  // Build the SMS body — from the shop's custom ready message or translation
   function smsBody(order: Order) {
-    const base = t('dash.smsBody', {
+    return t('dash.smsBody', {
       shop: shop?.name ?? 'Coffee',
       order: order.order_number,
     })
-    return base
   }
 
   function smsHref(order: Order) {
     if (!order.customer_phone) return ''
-    const body = encodeURIComponent(smsBody(order))
-    return `sms:${order.customer_phone}?body=${body}`
+    return `sms:${order.customer_phone}?body=${encodeURIComponent(
+      smsBody(order)
+    )}`
   }
 
   function telHref(order: Order) {
@@ -349,8 +333,12 @@ export default function DashboardPage() {
                         {ready ? t('dash.ready') : t('dash.preparing')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-stone-500">
-                      <span>{timeAgo(order.created_at)}</span>
+                    <div className="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
+                      <OrderTimer
+                        createdAt={order.created_at}
+                        readyAt={order.ready_at}
+                        ready={ready}
+                      />
                       <span className="flex items-center gap-1.5">
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
@@ -365,7 +353,6 @@ export default function DashboardPage() {
                       </span>
                     </div>
 
-                    {/* Phone + call/SMS row — only if the order has a phone */}
                     {order.customer_phone && (
                       <div className="flex items-center gap-2 mt-3 flex-wrap">
                         <span className="inline-flex items-center gap-1.5 text-xs text-stone-600 font-mono tabular-nums">
@@ -426,7 +413,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* NEW ORDER MODAL */}
       {newOrderOpen && (
         <Modal onClose={() => setNewOrderOpen(false)}>
           <div className="p-6 space-y-5">
@@ -493,7 +479,6 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* QR MODAL */}
       {qrOrder && (
         <Modal onClose={() => setQrOrder(null)}>
           <div className="p-6 space-y-5">
@@ -549,6 +534,25 @@ export default function DashboardPage() {
         </div>
       )}
     </main>
+  )
+}
+
+function OrderTimer({
+  createdAt,
+  readyAt,
+  ready,
+}: {
+  createdAt: string
+  readyAt: string | null
+  ready: boolean
+}) {
+  const elapsed = useElapsed(createdAt, ready ? readyAt : null)
+  const label = formatElapsed(elapsed)
+  return (
+    <span className="inline-flex items-center gap-1 tabular-nums">
+      <Clock className="w-3 h-3" />
+      {label}
+    </span>
   )
 }
 
