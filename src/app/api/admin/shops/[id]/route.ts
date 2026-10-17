@@ -35,7 +35,26 @@ export async function GET(
     .order('created_at', { ascending: false })
     .limit(50)
 
-  return NextResponse.json({ shop, orders: orders ?? [] })
+  const { data: reviews } = await supabaseAdmin
+    .from('reviews')
+    .select('rating, comment, created_at')
+    .eq('shop_id', id)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const reviewCount = reviews?.length ?? 0
+  const ratingSum = (reviews ?? []).reduce((s, r) => s + r.rating, 0)
+  const avgRating = reviewCount > 0 ? ratingSum / reviewCount : 0
+
+  return NextResponse.json({
+    shop,
+    orders: orders ?? [],
+    reviews: reviews ?? [],
+    reviewStats: {
+      count: reviewCount,
+      average: Math.round(avgRating * 10) / 10,
+    },
+  })
 }
 
 export async function PATCH(

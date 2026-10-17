@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Coffee,
   Loader2,
   LogOut,
   Store,
@@ -66,7 +65,6 @@ export default function AdminHome() {
     router.replace('/admin/login')
   }
 
-  // ---------- filtering ----------
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return shops.filter((s) => {
@@ -91,53 +89,45 @@ export default function AdminHome() {
     return new Date(iso).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     })
   }
 
   return (
-    <main className="min-h-screen bg-stone-100 text-stone-900">
-      <header className="border-b border-stone-200 bg-white">
-        <div className="max-w-4xl mx-auto px-5 py-4 flex items-center justify-between">
+    <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col">
+      {/* HEADER */}
+      <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CupLogo size={36} />
+            <div className="w-8 h-8 rounded-[10px] bg-stone-900 flex items-center justify-center shadow-sm">
+              <CupLogo size={18} />
+            </div>
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-stone-500 font-medium">
-                Cup · Admin
+              <div className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold leading-none mb-1">
+                Admin
               </div>
-              <div className="text-sm font-semibold">Cafés</div>
+              <div className="text-sm font-semibold leading-none">Cafés</div>
             </div>
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition px-3 py-2 rounded-lg hover:bg-stone-100"
+            className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 active:scale-95 transition"
+            aria-label="Log out"
           >
-            <LogOut className="w-4 h-4" />
-            Log out
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-5 py-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">All cafés</h1>
-          <span className="text-xs text-stone-500 tabular-nums">
-            {filtered.length} of {shops.length}
-          </span>
-        </div>
-
-        {/* Search + filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex-1">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              placeholder="Search by name, tagline or ID…"
-              hotkey="k"
-            />
-          </div>
-
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-stone-200/60 border border-stone-200 shrink-0 overflow-x-auto">
+      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-5">
+        {/* SEARCH & FILTER */}
+        <div className="space-y-3">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="Search cafés..."
+          />
+          
+          <div className="-mx-4 px-4 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(
               [
                 ['all', 'All'],
@@ -152,18 +142,16 @@ export default function AdminHome() {
                 <button
                   key={id}
                   onClick={() => setStatusFilter(id)}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full text-sm font-medium transition active:scale-95 ${
                     active
-                      ? 'bg-white text-stone-900 shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
+                      ? 'bg-stone-900 text-white shadow-sm'
+                      : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-100'
                   }`}
                 >
                   {label}
                   <span
                     className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-md ${
-                      active
-                        ? 'bg-stone-100 text-stone-500'
-                        : 'bg-stone-300/60 text-stone-600'
+                      active ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
                     }`}
                   >
                     {count}
@@ -174,74 +162,74 @@ export default function AdminHome() {
           </div>
         </div>
 
-        {/* List */}
+        {/* 2-COLUMN GRID */}
         {loading ? (
           <div className="py-20 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-stone-300" />
           </div>
         ) : shops.length === 0 ? (
-          <EmptyNoCafes />
+          <EmptyState
+            icon={<Store className="w-10 h-10 text-stone-300" />}
+            title="No cafés yet"
+            description="Share the setup link with a café to get started."
+          />
         ) : filtered.length === 0 ? (
-          <EmptyNoResults query={query} onClear={() => setQuery('')} />
+          <EmptyState
+            icon={<Search className="w-10 h-10 text-stone-300" />}
+            title="No matches found"
+            description={`No cafés match "${query}".`}
+            action={
+              <button
+                onClick={() => setQuery('')}
+                className="mt-4 px-5 py-2.5 rounded-xl bg-stone-200 text-stone-800 text-sm font-medium hover:bg-stone-300 transition"
+              >
+                Clear search
+              </button>
+            }
+          />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             {filtered.map((shop) => (
               <Link
                 key={shop.id}
                 href={`/admin/shops/${shop.id}`}
-                className="block rounded-2xl border border-stone-200 bg-white p-4 hover:border-stone-400 transition"
+                className="group flex flex-col bg-white rounded-2xl border border-stone-200 p-3 hover:border-stone-300 hover:shadow-sm transition active:scale-[0.97]"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {shop.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={shop.logo_url}
-                        alt=""
-                        className="w-10 h-10 rounded-lg object-cover border border-stone-200 shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-stone-900 flex items-center justify-center text-amber-50 font-bold shrink-0">
-                        {(shop.name || 'C')[0].toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold truncate">
-                          <Highlight text={shop.name} query={query} />
-                        </span>
-                        {shop.status === 'disabled' ? (
-                          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-700">
-                            <XCircle className="w-3 h-3" />
-                            Disabled
-                          </span>
-                        ) : shop.status === 'pending' ? (
-                          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                            <Clock className="w-3 h-3" />
-                            Pending
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-stone-500 mt-0.5 truncate">
-                        {shop.tagline ? (
-                          <Highlight text={shop.tagline} query={query} />
-                        ) : (
-                          'No tagline'
-                        )}{' '}
-                        · {dateLabel(shop.created_at)}
-                      </div>
+                {/* Top row: Logo + Status icon */}
+                <div className="flex items-start justify-between mb-3">
+                  {shop.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={shop.logo_url}
+                      alt=""
+                      className="w-10 h-10 rounded-xl object-cover border border-stone-100 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-amber-50 font-bold text-sm shadow-sm">
+                      {(shop.name || 'C')[0].toUpperCase()}
                     </div>
-                  </div>
+                  )}
+                  <StatusDot status={shop.status} />
+                </div>
 
-                  <div className="flex items-center gap-4 shrink-0">
-                    <Stat label="7d" value={shop.stats.last7} />
-                    <Stat label="30d" value={shop.stats.last30} />
-                    <Stat label="Total" value={shop.stats.total} />
+                {/* Name & Tagline */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold truncate leading-tight">
+                    <Highlight text={shop.name} query={query} />
+                  </div>
+                  <div className="text-[11px] text-stone-500 truncate mt-0.5">
+                    {shop.tagline || 'No tagline'}
+                  </div>
+                </div>
+
+                {/* Bottom row: Stats */}
+                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[10px] text-stone-400">
+                  <div>
+                    <span className="font-semibold text-stone-800">{shop.stats.last30}</span> 30d
+                  </div>
+                  <div className="text-stone-300">•</div>
+                  <div>
+                    <span className="font-semibold text-stone-800">{shop.stats.total}</span> total
                   </div>
                 </div>
               </Link>
@@ -255,15 +243,24 @@ export default function AdminHome() {
   )
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function StatusDot({ status }: { status: string }) {
+  if (status === 'disabled') {
+    return (
+      <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+        <XCircle className="w-3.5 h-3.5" />
+      </div>
+    )
+  }
+  if (status === 'pending') {
+    return (
+      <div className="w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+        <Clock className="w-3.5 h-3.5" />
+      </div>
+    )
+  }
   return (
-    <div className="text-right">
-      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">
-        {label}
-      </div>
-      <div className="text-sm font-semibold tabular-nums text-stone-900">
-        {value}
-      </div>
+    <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+      <CheckCircle2 className="w-3.5 h-3.5" />
     </div>
   )
 }
@@ -276,7 +273,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-amber-200/60 rounded px-0.5 text-stone-900">
+      <mark className="bg-amber-200/60 rounded-sm px-0.5 text-stone-900">
         {text.slice(idx, idx + q.length)}
       </mark>
       {text.slice(idx + q.length)}
@@ -284,37 +281,25 @@ function Highlight({ text, query }: { text: string; query: string }) {
   )
 }
 
-function EmptyNoCafes() {
-  return (
-    <div className="text-center py-20 border border-dashed border-stone-300 rounded-2xl">
-      <Store className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-      <p className="text-sm text-stone-500">No cafés yet</p>
-      <p className="text-xs text-stone-400 mt-1">
-        Share the setup link with a café to get started
-      </p>
-    </div>
-  )
-}
-
-function EmptyNoResults({
-  query,
-  onClear,
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
 }: {
-  query: string
-  onClear: () => void
+  icon: React.ReactNode
+  title: string
+  description: string
+  action?: React.ReactNode
 }) {
   return (
-    <div className="text-center py-20 border border-dashed border-stone-300 rounded-2xl">
-      <Search className="w-8 h-8 text-stone-300 mx-auto mb-3" />
-      <p className="text-sm text-stone-500">
-        No cafés match &ldquo;{query}&rdquo;
+    <div className="text-center py-24 px-6 col-span-2">
+      <div className="flex justify-center mb-4">{icon}</div>
+      <h3 className="text-base font-semibold text-stone-900">{title}</h3>
+      <p className="text-sm text-stone-500 mt-1 max-w-[240px] mx-auto">
+        {description}
       </p>
-      <button
-        onClick={onClear}
-        className="mt-3 text-xs text-stone-500 hover:text-stone-900 underline underline-offset-2"
-      >
-        Clear search
-      </button>
+      {action}
     </div>
   )
 }

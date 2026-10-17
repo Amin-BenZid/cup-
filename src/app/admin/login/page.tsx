@@ -1,36 +1,36 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Coffee, Loader2, ArrowRight } from "lucide-react";
-import CupLogo from "@/components/CupLogo";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import CupLogo from '@/components/CupLogo' 
+import { Loader2, ArrowRight } from 'lucide-react'
 
 export default function AdminLogin() {
-  const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
-      });
-      const json = await res.json();
+      })
+      const json = await res.json()
       if (!res.ok) {
-        setError(json.error ?? "Login failed");
-        return;
+        setError(json.error ?? 'Login failed')
+        return
       }
-      router.push("/admin");
+      router.push('/admin')
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      setError(e instanceof Error ? e.message : 'Network error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -45,7 +45,9 @@ export default function AdminLogin() {
             <CupLogo size={48} />
           </div>
           <h1 className="text-lg font-semibold text-stone-900">Cup Admin</h1>
-          <p className="text-xs text-stone-500">Sign in to manage cafés</p>
+          <p className="text-xs text-stone-500">
+            Sign in to manage cafés
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -81,5 +83,5 @@ export default function AdminLogin() {
         </button>
       </form>
     </main>
-  );
+  )
 }

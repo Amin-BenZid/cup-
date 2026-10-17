@@ -15,6 +15,7 @@ import NotificationSetup from '@/components/NotificationSetup'
 import Logo from '@/components/Logo'
 import CupLogo from '@/components/CupLogo'
 import CozyPattern from '@/components/CozyPattern'
+import ReviewPrompt from '@/components/ReviewPrompt'
 import { useT } from '@/lib/i18n/context'
 import { setBadge, clearBadge } from '@/lib/badge'
 import { useElapsed, formatElapsed } from '@/hooks/useElapsed'
@@ -24,7 +25,6 @@ import {
   paletteVars,
   type Shop,
 } from '@/lib/themes'
-import ReviewPrompt from '@/components/ReviewPrompt'
 
 type Order = {
   id: string
@@ -280,7 +280,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
   }, [acknowledged])
 
   // ---------- timers ----------
-  // Live while preparing; frozen at ready_at when ready
   const elapsedLive = useElapsed(order?.created_at ?? null, null)
   const elapsedFinal = useElapsed(
     order?.created_at ?? null,
@@ -429,21 +428,28 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
 
             {/* STATUS */}
             {acknowledged ? (
-              <div className="text-center space-y-3 py-8">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-                  style={{ background: '#d1fae5' }}
-                >
-                  <Check
-                    className="w-10 h-10"
-                    style={{ color: '#059669' }}
-                    strokeWidth={2.5}
-                  />
+              <div className="space-y-4">
+                <div className="text-center space-y-3 py-4">
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
+                    style={{ background: '#d1fae5' }}
+                  >
+                    <Check
+                      className="w-10 h-10"
+                      style={{ color: '#059669' }}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <p className="text-lg font-semibold">{t('cust.enjoy')}</p>
+                  <p
+                    className="text-sm"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {t('cust.canClose')}
+                  </p>
                 </div>
-                <p className="text-lg font-semibold">{t('cust.enjoy')}</p>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                  {t('cust.canClose')}
-                </p>
+
+                <ReviewPrompt orderId={orderId} />
               </div>
             ) : ready ? (
               <div className="space-y-5 py-4">
@@ -463,7 +469,10 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                   >
                     {readyMsg}
                   </h1>
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  <p
+                    className="text-sm"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
                     {t('cust.pickup')}
                   </p>
                   <p

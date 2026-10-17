@@ -1,18 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, Frown, Smile, Heart } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
 
 type Rating = 1 | 2 | 3
 
 const STORAGE_KEY = 'cup-review-'
-
-const EMOJIS: Record<Rating, string> = {
-  1: '😐',
-  2: '🙂',
-  3: '🤩',
-}
 
 export default function ReviewPrompt({ orderId }: { orderId: string }) {
   const t = useT()
@@ -22,7 +16,6 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
-  // Remember if the customer already reviewed this order
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -36,7 +29,6 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
     if (!rating) return
     setSubmitting(true)
     setError('')
-
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
@@ -90,10 +82,7 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
       }}
     >
       <div>
-        <p
-          className="text-sm font-medium"
-          style={{ color: 'var(--text)' }}
-        >
+        <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
           {t('review.title')}
         </p>
         <p
@@ -104,35 +93,28 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
         </p>
       </div>
 
-      {/* Rating — 3 big emoji buttons */}
+      {/* Rating — icons instead of emojis */}
       <div className="flex items-center justify-center gap-3">
-        {([1, 2, 3] as Rating[]).map((r) => {
-          const active = rating === r
-          return (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRating(r)}
-              className={`w-16 h-16 rounded-2xl text-3xl transition active:scale-95 ${
-                active
-                  ? 'ring-2 ring-stone-900 bg-stone-100 scale-105'
-                  : 'bg-stone-50 hover:bg-stone-100'
-              }`}
-              aria-label={
-                r === 1
-                  ? t('review.ratingLow')
-                  : r === 2
-                  ? t('review.ratingOk')
-                  : t('review.ratingGreat')
-              }
-            >
-              {EMOJIS[r]}
-            </button>
-          )
-        })}
+        <RatingButton
+          active={rating === 1}
+          onClick={() => setRating(1)}
+          icon={<Frown className="w-6 h-6" strokeWidth={1.8} />}
+          label={t('review.ratingLow')}
+        />
+        <RatingButton
+          active={rating === 2}
+          onClick={() => setRating(2)}
+          icon={<Smile className="w-6 h-6" strokeWidth={1.8} />}
+          label={t('review.ratingOk')}
+        />
+        <RatingButton
+          active={rating === 3}
+          onClick={() => setRating(3)}
+          icon={<Heart className="w-6 h-6" strokeWidth={1.8} />}
+          label={t('review.ratingGreat')}
+        />
       </div>
 
-      {/* Optional comment */}
       {rating !== null && (
         <div className="space-y-2 pt-1">
           <textarea
@@ -176,9 +158,36 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
         </div>
       )}
 
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
+  )
+}
+
+function RatingButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={`w-16 h-16 rounded-2xl flex items-center justify-center transition active:scale-95 ${
+        active ? 'ring-2 ring-stone-900 scale-105' : 'hover:scale-105'
+      }`}
+      style={{
+        background: active ? 'var(--primary)' : 'var(--surface-muted)',
+        color: active ? 'var(--primary-text)' : 'var(--text)',
+      }}
+    >
+      {icon}
+    </button>
   )
 }
