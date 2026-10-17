@@ -3,10 +3,18 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Clock, ArrowLeft, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  Clock,
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+} from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { formatTemplate } from '@/lib/i18n/translations'
 
 type Status = 'pending' | 'active' | 'disabled' | 'unknown'
 
@@ -15,6 +23,7 @@ export default function PendingPage() {
   const router = useRouter()
   const [status, setStatus] = useState<Status>('pending')
   const [shopName, setShopName] = useState('')
+  const [shopId, setShopId] = useState<string | null>(null)
 
   useEffect(() => {
     const id = localStorage.getItem('shop_id')
@@ -23,33 +32,41 @@ export default function PendingPage() {
       router.replace('/setup')
       return
     }
+    setShopId(id)
     setShopName(name ?? '')
   }, [router])
 
   useEffect(() => {
-    const id = localStorage.getItem('shop_id')
-    if (!id) return
+    if (!shopId) return
 
     let cancelled = false
 
     async function check() {
       try {
-        const res = await fetch(`/api/shops/${id}`, { cache: 'no-store' })
-        if (!res.ok) return
+        const res = await fetch(`/api/shops/${shopId}`, {
+          cache: 'no-store',
+        })
+
+        if (res.status === 404) {
+          if (!cancelled) setStatus('disabled')
+          return
+        }
+
+        if (!res.ok) {
+          return
+        }
+
         const json = await res.json()
         if (cancelled) return
 
         const s = json?.shop?.status as Status | undefined
         if (s === 'active') {
           setStatus('active')
-          // Wait a beat so the user sees the checkmark, then go to dashboard
           setTimeout(() => router.push('/barista/dashboard'), 1200)
         } else if (s === 'disabled') {
           setStatus('disabled')
         } else if (s === 'pending') {
           setStatus('pending')
-        } else {
-          setStatus('unknown')
         }
       } catch {
         // network glitch — keep polling
@@ -62,7 +79,22 @@ export default function PendingPage() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [router])
+  }, [shopId, router])
+
+  function retry() {
+    setStatus('pending')
+    if (shopId) {
+      fetch(`/api/shops/${shopId}`, { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((j) => {
+          const s = j?.shop?.status
+          if (s === 'active') setStatus('active')
+          else if (s === 'disabled') setStatus('disabled')
+          else setStatus('pending')
+        })
+        .catch(() => setStatus('pending'))
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col">
@@ -97,7 +129,7 @@ export default function PendingPage() {
                   {t('pending.title')}
                 </h1>
                 <p className="text-stone-500 text-[15px] leading-relaxed max-w-sm mx-auto">
-                  {t('pending.body', { name: shopName })}
+                  {formatTemplate(t('pending.body'), { name: shopName || 'Café' })}
                 </p>
               </div>
 
@@ -190,12 +222,21 @@ export default function PendingPage() {
               <p className="text-stone-500 text-sm">
                 {t('pending.unknown')}
               </p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm underline text-stone-700"
-              >
-                {t('pending.backHome')}
-              </Link>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={retry}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-stone-900 text-amber-50 text-sm font-medium hover:bg-stone-800 transition"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry
+                </button>
+                <Link
+                  href="/"
+                  className="text-sm underline text-stone-700"
+                >
+                  {t('pending.backHome')}
+                </Link>
+              </div>
             </>
           )}
         </div>
