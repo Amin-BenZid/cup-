@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { X, Send, LifeBuoy, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { useT } from '@/lib/i18n/context'
 
-type Message = { id: string; message: string; created_at: string; status: string }
+type Message = { id: string; message: string; created_at: string; sender: string }
 
 export default function SupportModal({ shopId, onClose }: { shopId: string; onClose: () => void }) {
   const t = useT()
@@ -13,11 +14,35 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  async function load() {
+    try {
+      const res = await fetch(`/api/support?shop_id=${shopId}`)
+      const json = await res.json()
+      setMessages(json.messages ?? [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    fetch(`/api/support?shop_id=${shopId}`)
-      .then((r) => r.json())
-      .then((j) => setMessages(j.messages ?? []))
-      .finally(() => setLoading(false))
+    load()
+    
+    // Mark admin messages as read when opening
+    fetch('/api/support', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop_id: shopId }),
+    })
+
+    const channel = supabase
+      .channel('support-chat')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'support_messages', filter: `shop_id=eq.${shopId}` }, 
+        () => load()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [shopId])
 
   async function send(e: React.FormEvent) {
@@ -53,23 +78,20 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/50">
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/50 flex flex-col-reverse">
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin mx-auto text-stone-400 mt-10" />
           ) : messages.length === 0 ? (
             <p className="text-center text-xs text-stone-500 py-6">{t('support.noHistory')}</p>
           ) : (
             messages.map((m) => (
-              <div key={m.id} className="bg-white p-3 rounded-xl border border-stone-200 shadow-sm">
+              <div key={m.id} className={`p-3 rounded-xl border shadow-sm max-w-[85%] ${
+                m.sender === 'admin' 
+                  ? 'bg-emerald-50 border-emerald-100 self-start' 
+                  : 'bg-white border-stone-200 self-end'
+              }`}>
                 <p className="text-sm text-stone-800">{m.message}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-[10px] text-stone-400">{new Date(m.created_at).toLocaleString()}</span>
-                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md ${
-                    m.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'
-                  }`}>
-                    {m.status}
-                  </span>
-                </div>
+                <div className="text-[10px] text-stone-400 mt-1">{new Date(m.created_at).toLocaleString()}</div>
               </div>
             ))
           )}
