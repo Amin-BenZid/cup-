@@ -158,11 +158,14 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       audio.play().catch(() => {})
     }
 
+    // VIBRATION LOGIC
     const buzz = () => {
-      if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500])
+      if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]) // Vibrate, pause, vibrate
+      }
     }
     buzz()
-    vibrateIntervalRef.current = setInterval(buzz, 2000)
+    vibrateIntervalRef.current = setInterval(buzz, 2000) // Repeat every 2 seconds
 
     const originalTitle = document.title
     let on = false
@@ -178,6 +181,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         clearInterval(vibrateIntervalRef.current)
         vibrateIntervalRef.current = null
       }
+      if (navigator.vibrate) navigator.vibrate(0)
     }
   }, [ringing, acknowledged])
 
