@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -40,7 +40,7 @@ type DeviceId = 'phone' | 'desktop'
 const INPUT_CLASS =
   'w-full px-3.5 py-2.5 rounded-lg border border-stone-200 bg-white text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition'
 
-export default function CustomizePage() {
+function CustomizeContent() {
   const t = useT()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -52,7 +52,6 @@ export default function CustomizePage() {
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [error, setError] = useState('')
   
-  // Read the initial tab from the URL (e.g. ?tab=theme)
   const initialTab = (searchParams.get('tab') as TabId) || 'branding'
   const [tab, setTab] = useState<TabId>(
     ['branding', 'theme', 'game', 'messages'].includes(initialTab) ? initialTab : 'branding'
@@ -948,5 +947,19 @@ function CustomerPreview({
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CustomizePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-[#faf7f2]">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-700" />
+        </main>
+      }
+    >
+      <CustomizeContent />
+    </Suspense>
   )
 }
