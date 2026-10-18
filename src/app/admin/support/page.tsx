@@ -23,6 +23,7 @@ type Conversation = {
   shop_logo: string | null
   messages: Message[]
   unread: number
+  lastMessage: Message
 }
 
 export default function AdminSupportPage() {
@@ -39,7 +40,7 @@ export default function AdminSupportPage() {
       const res = await fetch('/api/admin/support', { cache: 'no-store' })
       if (res.status === 401) return router.replace('/admin/login')
       const json = await res.json()
-      if (res.ok) setMessages(json.messages)
+      if (res.ok) setMessages(json.messages ?? [])
     } finally {
       setLoading(false)
     }
@@ -49,32 +50,35 @@ export default function AdminSupportPage() {
 
   async function openChat(shopId: string) {
     setActiveShop(shopId)
-    // Mark messages as read
     await fetch('/api/admin/support', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ shop_id: shopId }),
     })
-    await load() // reload to update sidebar counters
+    await load()
   }
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault()
-    if (!replyText.trim() || !activeShop) return
+    if (!replyText.trim() || !activeShop || sending) return
+    
     setSending(true)
+    const text = replyText.trim()
+    setReplyText('')
+
     try {
       await fetch('/api/admin/support', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: activeShop, message: replyText.trim() }),
+        body: JSON.stringify({ shop_id: activeShop, message: text }),
       })
-      setReplyText('')
       await load()
     } finally {
       setSending(false)
     }
   }
 
+  // Group by shop and get the newest message
   const conversations = messages.reduce((acc, msg) => {
     if (!acc[msg.shop_id]) {
       acc[msg.shop_id] = {
@@ -83,6 +87,7 @@ export default function AdminSupportPage() {
         shop_logo: msg.shops?.logo_url ?? null,
         messages: [],
         unread: 0,
+        lastMessage: msg,
       }
     }
     acc[msg.shop_id].messages.push(msg)
@@ -92,9 +97,10 @@ export default function AdminSupportPage() {
     return acc
   }, {} as Record<string, Conversation>)
 
+  // Sort conversations by the newest message
   const convList = Object.values(conversations).sort((a, b) => {
-    const aLast = new Date(a.messages[a.messages.length - 1].created_at).getTime()
-    const bLast = new Date(b.messages[b.messages.length - 1].created_at).getTime()
+    const aLast = new Date(a.lastMessage.created_at).getTime()
+    const bLast = new Date(b.lastMessage.created_at).getTime()
     return bLast - aLast
   })
 
@@ -129,39 +135,36 @@ export default function AdminSupportPage() {
               <p className="text-sm text-stone-500">{t('admin.support.noMessages')}</p>
             </div>
           ) : (
-            convList.map((conv) => {
-              const lastMsg = conv.messages[conv.messages.length - 1]
-              return (
-                <button
-                  key={conv.shop_id}
-                  onClick={() => openChat(conv.shop_id)}
-                  className={`w-full text-start p-4 border-b border-stone-100 hover:bg-stone-50 transition flex gap-3 ${
-                    activeShop === conv.shop_id ? 'bg-stone-50' : ''
-                  }`}
-                >
-                  {conv.shop_logo ? (
-                    <img src={conv.shop_logo} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-amber-50 font-bold shrink-0">
-                      {conv.shop_name[0]}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold truncate">{conv.shop_name}</span>
-                      {conv.unread > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
-                          {conv.unread}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-stone-500 truncate mt-0.5">
-                      {lastMsg.sender === 'admin' ? 'You: ' : ''}{lastMsg.message}
-                    </p>
+            convList.map((conv) => (
+              <button
+                key={conv.shop_id}
+                onClick={() => openChat(conv.shop_id)}
+                className={`w-full text-start p-4 border-b border-stone-100 hover:bg-stone-50 transition flex gap-3 ${
+                  activeShop === conv.shop_id ? 'bg-stone-50' : ''
+                }`}
+              >
+                {conv.shop_logo ? (
+                  <img src={conv.shop_logo} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-amber-50 font-bold shrink-0">
+                    {conv.shop_name[0]}
                   </div>
-                </button>
-              )
-            })
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold truncate">{conv.shop_name}</span>
+                    {conv.unread > 0 && (
+                      <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+                        {conv.unread}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500 truncate mt-0.5">
+                    {conv.lastMessage.sender === 'admin' ? 'You: ' : ''}{conv.lastMessage.message}
+                  </p>
+                </div>
+              </button>
+            ))
           )}
         </div>
 

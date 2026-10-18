@@ -16,6 +16,7 @@ import {
   Star,
   TrendingUp,
   LifeBuoy,
+  Megaphone,
 } from 'lucide-react'
 import { Toast } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
@@ -53,7 +54,10 @@ export default function AdminHome() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  
+  // New state for unread support messages
   const [unreadSupport, setUnreadSupport] = useState(0)
+  
   const { toasts, push, dismiss } = useToasts()
 
   useEffect(() => {
@@ -80,6 +84,7 @@ export default function AdminHome() {
     load()
   }, [router, push])
 
+  // Fetch unread support count
   useEffect(() => {
     const check = async () => {
       try {
@@ -89,7 +94,7 @@ export default function AdminHome() {
       } catch {}
     }
     check()
-    const interval = setInterval(check, 30000)
+    const interval = setInterval(check, 30000) // Check every 30 seconds
     return () => clearInterval(interval)
   }, [])
 
@@ -143,6 +148,8 @@ export default function AdminHome() {
               <Activity className="w-3.5 h-3.5" />
               Live
             </Link>
+            
+            {/* SUPPORT INBOX WITH RED COUNTER */}
             <Link
               href="/admin/support"
               className="relative p-2 text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 rounded-lg transition"
@@ -154,6 +161,13 @@ export default function AdminHome() {
                   {unreadSupport}
                 </span>
               )}
+            </Link>
+
+            <Link
+              href="/admin/broadcast"
+              className="p-2 text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 rounded-lg transition"
+            >
+              <Megaphone className="w-5 h-5" />
             </Link>
             <LanguageSwitcher compact />
             <button
@@ -168,44 +182,61 @@ export default function AdminHome() {
       </header>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-6">
+        {/* GLOBAL STATS */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
               <div className="flex items-center gap-1.5 text-stone-400 mb-1">
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.today')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  {t('admin.stats.today')}
+                </span>
               </div>
-              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.ordersToday}</div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">
+                {stats.ordersToday}
+              </div>
             </div>
-            
+
             <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
               <div className="flex items-center gap-1.5 text-stone-400 mb-1">
                 <TrendingUp className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.total')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  {t('admin.stats.total')}
+                </span>
               </div>
-              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.totalOrders}</div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">
+                {stats.totalOrders}
+              </div>
             </div>
 
             <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
               <div className="flex items-center gap-1.5 text-stone-400 mb-1">
                 <Store className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.shops')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  {t('admin.stats.shops')}
+                </span>
               </div>
-              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.totalShops}</div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">
+                {stats.totalShops}
+              </div>
             </div>
 
             <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
               <div className="flex items-center gap-1.5 text-stone-400 mb-1">
                 <Star className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.rating')}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  {t('admin.stats.rating')}
+                </span>
               </div>
               <div className="text-xl font-bold text-stone-900 tabular-nums">
-                {stats.avgRating} <span className="text-sm text-stone-400">★</span>
+                {stats.avgRating}{' '}
+                <span className="text-sm text-stone-400">★</span>
               </div>
             </div>
           </div>
         )}
 
+        {/* SEARCH & FILTER */}
         <div className="space-y-3">
           <SearchBar
             value={query}
@@ -250,6 +281,7 @@ export default function AdminHome() {
           </div>
         </div>
 
+        {/* SHOPS GRID */}
         {loading ? (
           <div className="py-20 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-stone-300" />
