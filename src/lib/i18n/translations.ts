@@ -37,7 +37,7 @@ export const translations = {
     'game.playAgain': 'Rejouer',
 
     // Review
-    'review.title': 'Comment était votre café ?',
+    'review.title': 'Comment était votre commande ?',
     'review.subtitle': 'Une seule touche, ça nous aide beaucoup.',
     'review.ratingLow': 'Pas terrible',
     'review.ratingOk': 'Bien',
@@ -52,57 +52,57 @@ export const translations = {
     'noOrder.body':
       "Vous n'avez pas de commande en cours. Scannez le QR code au comptoir pour commencer.",
     'noOrder.scanPrompt': 'Scannez le QR au comptoir',
-    'noOrder.scanHint': 'Il apparaît sur la tablette du barista',
+    'noOrder.scanHint': 'Il apparaît sur la tablette du personnel',
 
     // Landing
-    'landing.tagline': "Votre café, prêt quand vous l'êtes.",
+    'landing.tagline': "Votre commande, prête quand vous l'êtes.",
     'landing.subtitle':
-      "Transformez n'importe quel téléphone en bipeur de café. Aucun matériel à acheter, aucun bipeur à perdre.",
-    'landing.setup': 'Créer un café',
+      "Transformez n'importe quel téléphone en bipeur. Aucun matériel à acheter, aucun bipeur à perdre. Idéal pour les cafés, boulangeries et fast-foods.",
+    'landing.setup': 'Créer un commerce',
     'landing.setupHint': 'Ouvrez votre boutique en 30 secondes',
-    'landing.barista': 'Connexion barista',
-    'landing.baristaHint': 'Connectez-vous avec le code de la boutique',
+    'landing.barista': 'Connexion personnel',
+    'landing.baristaHint': 'Connectez-vous avec le code du commerce',
     'landing.howItWorks': 'Comment ça marche',
-    'landing.step1': 'Le barista encaisse la commande',
+    'landing.step1': "L'équipe encaisse la commande",
     'landing.step1Hint': 'Un QR code apparaît sur la tablette',
     'landing.step2': 'Le client le scanne',
     'landing.step2Hint':
       'Son téléphone devient le bipeur, sans rien installer',
     'landing.step3': "Le téléphone sonne quand c'est prêt",
     'landing.step3Hint': 'Fort, distinct, impossible à manquer',
-    'landing.footer': 'Conçu pour les cafés qui préfèrent faire du café',
+    'landing.footer': 'Conçu pour les commerces qui préfèrent servir',
 
     // Setup
     'setup.back': 'Retour',
-    'setup.title': 'Créez votre café',
+    'setup.title': 'Créez votre commerce',
     'setup.subtitle':
       "Deux champs et c'est parti. Vous pourrez tout personnaliser plus tard.",
-    'setup.shopName': 'Nom du café',
+    'setup.shopName': 'Nom du commerce',
     'setup.shopNameHint': 'Ce que verront vos clients',
-    'setup.shopNamePlaceholder': 'Café Nomad',
-    'setup.pin': 'Code barista',
+    'setup.shopNamePlaceholder': 'Boulangerie Nomad',
+    'setup.pin': 'Code personnel',
     'setup.pinHint':
-      "4 à 6 chiffres. Les baristas l'utilisent pour se connecter.",
-    'setup.create': 'Créer le café',
+      "4 à 6 chiffres. Votre équipe l'utilise pour se connecter.",
+    'setup.create': 'Créer le commerce',
     'setup.creating': 'Création…',
-    'setup.haveAccount': 'Vous avez déjà un café ?',
+    'setup.haveAccount': 'Vous avez déjà un commerce ?',
     'setup.loginLink': 'Connectez-vous',
-    'setup.error.nameRequired': 'Le nom du café est requis.',
+    'setup.error.nameRequired': 'Le nom du commerce est requis.',
     'setup.error.pinTooShort': 'Le code doit comporter au moins 4 chiffres.',
 
-    // Barista login
-    'login.title': 'Connexion barista',
+    // Staff Login
+    'login.title': 'Connexion personnel',
     'login.subtitle':
-      'Entrez le code de votre café pour ouvrir le tableau de bord.',
+      'Entrez le code de votre commerce pour ouvrir le tableau de bord.',
     'login.button': 'Se connecter',
     'login.error.pinTooShort': 'Le code doit comporter au moins 4 chiffres.',
-    'login.newShop': 'Nouveau café ?',
+    'login.newShop': 'Nouveau commerce ?',
     'login.setupLink': 'Créez-en un',
     'login.footer': 'Gardez cet onglet ouvert pendant votre service',
-    'login.error.disabled': 'Ce café a été désactivé. Contactez le support.',
+    'login.error.disabled': 'Ce commerce a été désactivé. Contactez le support.',
 
     // Dashboard
-    'dash.role': 'Cup · Barista',
+    'dash.role': 'Cup · Équipe',
     'dash.customize': 'Personnaliser',
     'dash.logout': 'Déconnexion',
     'dash.newOrder': 'Nouvelle commande',
@@ -141,7 +141,7 @@ export const translations = {
     'cust.ready': 'Votre commande est prête',
     'cust.pickup': 'À récupérer au comptoir',
     'cust.gotIt': 'Compris',
-    'cust.enjoy': 'Bon café',
+    'cust.enjoy': 'Bon appétit',
     'cust.canClose': 'Vous pouvez fermer cette page.',
     'cust.received': 'Reçue',
     'cust.preparingStep': 'En préparation',
@@ -165,7 +165,7 @@ export const translations = {
     'common.loading': 'Chargement…',
     'common.justAMoment': 'Un instant',
     'common.orderNotFound': 'Commande introuvable',
-    'common.askBarista': 'Demandez au barista.',
+    'common.askBarista': 'Demandez au personnel.',
     'common.back': 'Retour',
 
     // Pending
@@ -176,7 +176,7 @@ export const translations = {
     'pending.step1': 'Un administrateur examine votre demande',
     'pending.step2':
       "Vous recevez l'approbation — généralement sous 24h",
-    'pending.step3': 'Vous accédez à votre tableau de bord barista',
+    'pending.step3': 'Vous accédez à votre tableau de bord',
     'pending.autoRefresh':
       'Cette page se met à jour automatiquement. Vous pouvez la laisser ouverte.',
     'pending.approved': 'Approuvé !',
@@ -202,7 +202,7 @@ export const translations = {
     'cz.tab.theme': 'Thème',
     'cz.tab.game': 'Jeu',
     'cz.tab.messages': 'Messages',
-    'cz.branding.shopName': 'Nom du café',
+    'cz.branding.shopName': 'Nom du commerce',
     'cz.branding.shopNameHint': 'Le nom que voient vos clients',
     'cz.branding.tagline': 'Slogan',
     'cz.branding.taglineHint': 'Une courte ligne sous votre nom',
@@ -274,7 +274,7 @@ export const translations = {
     'game.playAgain': 'العب مرة أخرى',
 
     // Review
-    'review.title': 'كيف كانت قهوتك؟',
+    'review.title': 'كيف كان طلبك؟',
     'review.subtitle': 'لمسة واحدة تساعدنا كثيراً.',
     'review.ratingLow': 'ليست جيدة',
     'review.ratingOk': 'جيدة',
@@ -288,54 +288,54 @@ export const translations = {
     'noOrder.title': 'لا يوجد طلب نشط',
     'noOrder.body': 'ليس لديك طلب حالي. امسح رمز QR على الكاونتر للبدء.',
     'noOrder.scanPrompt': 'امسح رمز QR على الكاونتر',
-    'noOrder.scanHint': 'يظهر على جهاز الباريستا',
+    'noOrder.scanHint': 'يظهر على جهاز الموظف',
 
     // Landing
-    'landing.tagline': 'قهوتك جاهزة عندما تكون أنت جاهزاً.',
+    'landing.tagline': 'طلبك جاهز عندما تكون أنت جاهزاً.',
     'landing.subtitle':
-      'حوّل أي هاتف إلى جهاز تنبيه للمقهى. لا أجهزة تشتريها، ولا أجهزة تفقدها.',
-    'landing.setup': 'أنشئ مقهى',
+      'حوّل أي هاتف إلى جهاز تنبيه. لا أجهزة تشتريها، ولا أجهزة تفقدها. مثالي للمقاهي والمخابز والوجبات السريعة.',
+    'landing.setup': 'أنشئ متجر',
     'landing.setupHint': 'افتح متجرك في 30 ثانية',
-    'landing.barista': 'دخول الباريستا',
-    'landing.baristaHint': 'سجّل الدخول برمز المقهى',
+    'landing.barista': 'دخول الموظفين',
+    'landing.baristaHint': 'سجّل الدخول برمز المتجر',
     'landing.howItWorks': 'كيف يعمل',
-    'landing.step1': 'الباريستا يسجّل الطلب',
+    'landing.step1': 'الموظف يسجّل الطلب',
     'landing.step1Hint': 'يظهر رمز QR على الجهاز اللوحي',
     'landing.step2': 'العميل يمسحه',
     'landing.step2Hint': 'هاتفه يصبح جهاز التنبيه، بدون أي تطبيق',
     'landing.step3': 'الهاتف يرن عندما يصبح جاهزاً',
     'landing.step3Hint': 'بصوت عالٍ وواضح لا يمكن تفويته',
-    'landing.footer': 'صُمم للمقاهي التي تفضّل صناعة القهوة',
+    'landing.footer': 'صُمم للمتاجر التي تفضّل خدمة العملاء',
 
     // Setup
     'setup.back': 'رجوع',
-    'setup.title': 'أنشئ مقهىك',
+    'setup.title': 'أنشئ متجرك',
     'setup.subtitle': 'حقلان وتبدأ. يمكنك تخصيص كل شيء لاحقاً.',
-    'setup.shopName': 'اسم المقهى',
+    'setup.shopName': 'اسم المتجر',
     'setup.shopNameHint': 'ما يراه عملاؤك',
-    'setup.shopNamePlaceholder': 'مقهى نوماد',
-    'setup.pin': 'رمز الباريستا',
+    'setup.shopNamePlaceholder': 'مخبز نوماد',
+    'setup.pin': 'رمز الموظفين',
     'setup.pinHint':
-      'من 4 إلى 6 أرقام. يستخدمه الباريستا لتسجيل الدخول.',
-    'setup.create': 'إنشاء المقهى',
+      'من 4 إلى 6 أرقام. يستخدمه فريقك لتسجيل الدخول.',
+    'setup.create': 'إنشاء المتجر',
     'setup.creating': 'جارٍ الإنشاء…',
-    'setup.haveAccount': 'لديك مقهى بالفعل؟',
+    'setup.haveAccount': 'لديك متجر بالفعل؟',
     'setup.loginLink': 'سجّل الدخول',
-    'setup.error.nameRequired': 'اسم المقهى مطلوب.',
+    'setup.error.nameRequired': 'اسم المتجر مطلوب.',
     'setup.error.pinTooShort': 'يجب أن يكون الرمز 4 أرقام على الأقل.',
 
-    // Barista login
-    'login.title': 'دخول الباريستا',
-    'login.subtitle': 'أدخل رمز مقهىك لفتح لوحة التحكم.',
+    // Staff login
+    'login.title': 'دخول الموظفين',
+    'login.subtitle': 'أدخل رمز متجرك لفتح لوحة التحكم.',
     'login.button': 'تسجيل الدخول',
     'login.error.pinTooShort': 'يجب أن يكون الرمز 4 أرقام على الأقل.',
-    'login.newShop': 'مقهى جديد؟',
+    'login.newShop': 'متجر جديد؟',
     'login.setupLink': 'أنشئ واحداً',
     'login.footer': 'أبقِ هذه الصفحة مفتوحة خلال نوبتك',
-    'login.error.disabled': 'تم تعطيل هذا المقهى. تواصل مع الدعم.',
+    'login.error.disabled': 'تم تعطيل هذا المتجر. تواصل مع الدعم.',
 
     // Dashboard
-    'dash.role': 'Cup · باريستا',
+    'dash.role': 'Cup · الفريق',
     'dash.customize': 'تخصيص',
     'dash.logout': 'خروج',
     'dash.newOrder': 'طلب جديد',
@@ -373,7 +373,7 @@ export const translations = {
     'cust.ready': 'طلبك جاهز',
     'cust.pickup': 'استلمه من الكاونتر',
     'cust.gotIt': 'فهمت',
-    'cust.enjoy': 'استمتع بقهوتك',
+    'cust.enjoy': 'استمتع بطلبك',
     'cust.canClose': 'يمكنك إغلاق هذه الصفحة الآن.',
     'cust.received': 'تم الاستلام',
     'cust.preparingStep': 'قيد التحضير',
@@ -395,7 +395,7 @@ export const translations = {
     'common.loading': 'جارٍ التحميل…',
     'common.justAMoment': 'لحظة من فضلك',
     'common.orderNotFound': 'الطلب غير موجود',
-    'common.askBarista': 'اسأل الباريستا.',
+    'common.askBarista': 'اسأل الموظف.',
     'common.back': 'رجوع',
 
     // Pending
@@ -405,7 +405,7 @@ export const translations = {
     'pending.whatHappens': 'ما الذي يحدث بعد ذلك',
     'pending.step1': 'يراجع المشرف طلبك',
     'pending.step2': 'تتلقى الموافقة — عادةً خلال 24 ساعة',
-    'pending.step3': 'تفتح لوحة تحكم الباريستا الخاصة بك',
+    'pending.step3': 'تفتح لوحة تحكم الموظفين الخاصة بك',
     'pending.autoRefresh':
       'يتم تحديث هذه الصفحة تلقائياً. يمكنك إبقاؤها مفتوحة.',
     'pending.approved': 'تمت الموافقة!',
@@ -430,7 +430,7 @@ export const translations = {
     'cz.tab.theme': 'المظهر',
     'cz.tab.game': 'اللعبة',
     'cz.tab.messages': 'الرسائل',
-    'cz.branding.shopName': 'اسم المقهى',
+    'cz.branding.shopName': 'اسم المتجر',
     'cz.branding.shopNameHint': 'الاسم الذي يراه عملاؤك',
     'cz.branding.tagline': 'الشعار',
     'cz.branding.taglineHint': 'سطر قصير تحت اسمك',
@@ -498,7 +498,7 @@ export const translations = {
     'game.playAgain': 'Play again',
 
     // Review
-    'review.title': 'How was your coffee?',
+    'review.title': 'How was your order?',
     'review.subtitle': 'One tap helps us a lot.',
     'review.ratingLow': 'Not great',
     'review.ratingOk': 'Good',
@@ -513,56 +513,56 @@ export const translations = {
     'noOrder.body':
       "You don't have an order in progress. Scan the QR at the counter to start one.",
     'noOrder.scanPrompt': 'Scan the QR at the counter',
-    'noOrder.scanHint': 'It appears on the barista tablet',
+    'noOrder.scanHint': 'It appears on the staff tablet',
 
     // Landing
-    'landing.tagline': 'Your coffee, ready when you are.',
+    'landing.tagline': 'Your order, ready when you are.',
     'landing.subtitle':
-      'Turn any phone into a café pager. No hardware to buy, no pagers to lose.',
-    'landing.setup': 'Set up a café',
+      'Turn any phone into a pager. No hardware to buy, no pagers to lose. Perfect for cafés, bakeries and fast food.',
+    'landing.setup': 'Set up a shop',
     'landing.setupHint': 'Create your shop in 30 seconds',
-    'landing.barista': 'Barista login',
+    'landing.barista': 'Staff login',
     'landing.baristaHint': 'Sign in with your shop PIN',
     'landing.howItWorks': 'How it works',
-    'landing.step1': 'The barista rings up an order',
-    'landing.step1Hint': 'A QR code appears on the shop tablet',
+    'landing.step1': 'Staff takes the order',
+    'landing.step1Hint': 'A QR code appears on the tablet',
     'landing.step2': 'The customer scans it',
     'landing.step2Hint':
       'Their phone becomes the pager — no app to install',
     'landing.step3': "The phone rings when it's ready",
     'landing.step3Hint': 'Loud, distinct, impossible to miss',
-    'landing.footer': 'Built for cafés that would rather make coffee',
+    'landing.footer': 'Built for shops that would rather serve',
 
     // Setup
     'setup.back': 'Back',
-    'setup.title': 'Set up your café',
+    'setup.title': 'Set up your shop',
     'setup.subtitle':
       "Two fields and you're running. You can customize everything later.",
-    'setup.shopName': 'Café name',
+    'setup.shopName': 'Shop name',
     'setup.shopNameHint': 'Shown to your customers',
-    'setup.shopNamePlaceholder': 'Café Nomad',
-    'setup.pin': 'Barista PIN',
-    'setup.pinHint': '4 to 6 digits. Baristas use this to log in.',
-    'setup.create': 'Create café',
+    'setup.shopNamePlaceholder': 'Nomad Bakery',
+    'setup.pin': 'Staff PIN',
+    'setup.pinHint': '4 to 6 digits. Your team uses this to log in.',
+    'setup.create': 'Create shop',
     'setup.creating': 'Creating…',
-    'setup.haveAccount': 'Already have a café?',
+    'setup.haveAccount': 'Already have a shop?',
     'setup.loginLink': 'Log in',
     'setup.error.nameRequired': 'Shop name is required.',
     'setup.error.pinTooShort': 'PIN must be at least 4 digits.',
 
-    // Barista login
-    'login.title': 'Barista login',
-    'login.subtitle': "Enter your café's PIN to open the dashboard.",
+    // Staff login
+    'login.title': 'Staff login',
+    'login.subtitle': "Enter your shop's PIN to open the dashboard.",
     'login.button': 'Log in',
     'login.error.pinTooShort': 'PIN must be at least 4 digits.',
-    'login.newShop': 'New café?',
+    'login.newShop': 'New shop?',
     'login.setupLink': 'Set one up',
     'login.footer': 'Keep this tab open during your shift',
     'login.error.disabled':
-      'This café has been disabled. Contact support.',
+      'This shop has been disabled. Contact support.',
 
     // Dashboard
-    'dash.role': 'Cup · Barista',
+    'dash.role': 'Cup · Staff',
     'dash.customize': 'Customize',
     'dash.logout': 'Log out',
     'dash.newOrder': 'New Order',
@@ -600,7 +600,7 @@ export const translations = {
     'cust.ready': 'Your order is ready',
     'cust.pickup': 'Pick it up at the counter',
     'cust.gotIt': 'Got it',
-    'cust.enjoy': 'Enjoy your coffee',
+    'cust.enjoy': 'Enjoy',
     'cust.canClose': 'You can close this page now.',
     'cust.received': 'Order received',
     'cust.preparingStep': 'Preparing',
@@ -623,7 +623,7 @@ export const translations = {
     'common.loading': 'Loading…',
     'common.justAMoment': 'Just a moment',
     'common.orderNotFound': 'Order not found',
-    'common.askBarista': 'Ask the barista for help.',
+    'common.askBarista': 'Ask the staff for help.',
     'common.back': 'Back',
 
     // Pending
@@ -633,7 +633,7 @@ export const translations = {
     'pending.whatHappens': 'What happens next',
     'pending.step1': 'An admin reviews your request',
     'pending.step2': 'You get the approval — usually within 24 hours',
-    'pending.step3': 'You open your barista dashboard',
+    'pending.step3': 'You open your dashboard',
     'pending.autoRefresh':
       'This page refreshes automatically. Feel free to leave it open.',
     'pending.approved': 'Approved!',
