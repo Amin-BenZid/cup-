@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import {
@@ -15,6 +15,10 @@ import {
   Phone,
   MessageSquare,
   Clock,
+  Image as ImageIcon,
+  Palette as PaletteIcon,
+  Gamepad2,
+  MessageCircle,
 } from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
@@ -57,6 +61,10 @@ export default function DashboardPage() {
 
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
+  
+  // Customize menu state
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const customizeRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const id = localStorage.getItem('shop_id')
@@ -94,6 +102,18 @@ export default function DashboardPage() {
     const timer = setTimeout(() => setToast(null), 3000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  // Close customize dropdown when clicking outside
+  useEffect(() => {
+    if (!customizeOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (!customizeRef.current?.contains(e.target as Node)) {
+        setCustomizeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [customizeOpen])
 
   const loadOrders = useCallback(async (id: string) => {
     try {
@@ -226,7 +246,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900">
-      <header className="sticky top-0 z-10 border-b border-stone-200 bg-[#faf7f2]/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-stone-200 bg-[#faf7f2]/95 backdrop-blur">
         <div className="max-w-3xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {shop?.logo_url ? (
@@ -254,16 +274,81 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 relative" ref={customizeRef}>
             <LanguageSwitcher compact />
+            
+            {/* CUSTOMIZE DROPDOWN TRIGGER */}
             <button
-              onClick={() => router.push('/barista/customize')}
-              className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition px-3 py-2 rounded-lg hover:bg-stone-100"
+              onClick={() => setCustomizeOpen((v) => !v)}
+              className={`flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition px-3 py-2 rounded-lg hover:bg-stone-100 ${
+                customizeOpen ? 'bg-stone-100 text-stone-900' : ''
+              }`}
               title={t('dash.customize')}
             >
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">{t('dash.customize')}</span>
             </button>
+
+            {/* CUSTOMIZE DROPDOWN MENU */}
+            {customizeOpen && (
+              <div className="absolute top-full end-0 mt-2 w-60 bg-white border border-stone-200 rounded-2xl shadow-xl overflow-hidden z-50">
+                <div className="p-1.5 flex flex-col gap-0.5">
+                  <button
+                    onClick={() => {
+                      setCustomizeOpen(false)
+                      router.push('/barista/customize?tab=branding')
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 transition text-start"
+                  >
+                    <ImageIcon className="w-4 h-4 text-stone-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-stone-900">{t('cz.tab.branding')}</div>
+                      <div className="text-[10px] text-stone-500 truncate">{t('cz.branding.logoHint')}</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomizeOpen(false)
+                      router.push('/barista/customize?tab=theme')
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 transition text-start"
+                  >
+                    <PaletteIcon className="w-4 h-4 text-stone-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-stone-900">{t('cz.tab.theme')}</div>
+                      <div className="text-[10px] text-stone-500 truncate">{t('cz.theme.paletteHint')}</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomizeOpen(false)
+                      router.push('/barista/customize?tab=game')
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 transition text-start"
+                  >
+                    <Gamepad2 className="w-4 h-4 text-stone-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-stone-900">{t('cz.tab.game')}</div>
+                      <div className="text-[10px] text-stone-500 truncate">{t('cz.game.waitingGameHint')}</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomizeOpen(false)
+                      router.push('/barista/customize?tab=messages')
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 transition text-start"
+                  >
+                    <MessageCircle className="w-4 h-4 text-stone-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-stone-900">{t('cz.tab.messages')}</div>
+                      <div className="text-[10px] text-stone-500 truncate">{t('cz.messages.preparingHint')}</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={logout}
               className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition px-3 py-2 rounded-lg hover:bg-stone-100"

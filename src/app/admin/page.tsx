@@ -11,11 +11,15 @@ import {
   XCircle,
   Clock,
   Search,
+  Activity,
 } from 'lucide-react'
 import { Toast } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
 import SearchBar from '@/components/ui/SearchBar'
 import CupLogo from '@/components/CupLogo'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useT } from '@/lib/i18n/context'
+import { formatTemplate } from '@/lib/i18n/translations'
 
 type Shop = {
   id: string
@@ -30,6 +34,7 @@ type Shop = {
 type StatusFilter = 'all' | 'pending' | 'active' | 'disabled'
 
 export default function AdminHome() {
+  const t = useT()
   const router = useRouter()
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,16 +90,8 @@ export default function AdminHome() {
     [shops]
   )
 
-  function dateLabel(iso: string) {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-
   return (
     <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col">
-      {/* HEADER */}
       <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -103,37 +100,49 @@ export default function AdminHome() {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-widest text-stone-400 font-semibold leading-none mb-1">
-                Admin
+                {t('admin.title')}
               </div>
-              <div className="text-sm font-semibold leading-none">Cafés</div>
+              <div className="text-sm font-semibold leading-none">
+                {t('admin.cafes')}
+              </div>
             </div>
           </div>
-          <button
-            onClick={logout}
-            className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 active:scale-95 transition"
-            aria-label="Log out"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* NEW: Live Monitor Link */}
+            <Link
+              href="/admin/live"
+              className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-200 transition"
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Live
+            </Link>
+            <LanguageSwitcher compact />
+            <button
+              onClick={logout}
+              className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 active:scale-95 transition"
+              aria-label={t('admin.logout')}
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-5">
-        {/* SEARCH & FILTER */}
         <div className="space-y-3">
           <SearchBar
             value={query}
             onChange={setQuery}
-            placeholder="Search cafés..."
+            placeholder={t('admin.search')}
           />
-          
+
           <div className="-mx-4 px-4 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(
               [
-                ['all', 'All'],
-                ['pending', 'Pending'],
-                ['active', 'Active'],
-                ['disabled', 'Disabled'],
+                ['all', t('admin.all')],
+                ['pending', t('admin.pending')],
+                ['active', t('admin.active')],
+                ['disabled', t('admin.disabled')],
               ] as const
             ).map(([id, label]) => {
               const active = statusFilter === id
@@ -151,7 +160,9 @@ export default function AdminHome() {
                   {label}
                   <span
                     className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-md ${
-                      active ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
+                      active
+                        ? 'bg-white/20 text-white'
+                        : 'bg-stone-100 text-stone-500'
                     }`}
                   >
                     {count}
@@ -162,7 +173,6 @@ export default function AdminHome() {
           </div>
         </div>
 
-        {/* 2-COLUMN GRID */}
         {loading ? (
           <div className="py-20 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-stone-300" />
@@ -170,20 +180,20 @@ export default function AdminHome() {
         ) : shops.length === 0 ? (
           <EmptyState
             icon={<Store className="w-10 h-10 text-stone-300" />}
-            title="No cafés yet"
-            description="Share the setup link with a café to get started."
+            title={t('admin.noCafes')}
+            description={t('admin.noCafesHint')}
           />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Search className="w-10 h-10 text-stone-300" />}
-            title="No matches found"
-            description={`No cafés match "${query}".`}
+            title={formatTemplate(t('admin.noMatches'), { query })}
+            description=""
             action={
               <button
                 onClick={() => setQuery('')}
                 className="mt-4 px-5 py-2.5 rounded-xl bg-stone-200 text-stone-800 text-sm font-medium hover:bg-stone-300 transition"
               >
-                Clear search
+                {t('admin.clearSearch')}
               </button>
             }
           />
@@ -195,7 +205,6 @@ export default function AdminHome() {
                 href={`/admin/shops/${shop.id}`}
                 className="group flex flex-col bg-white rounded-2xl border border-stone-200 p-3 hover:border-stone-300 hover:shadow-sm transition active:scale-[0.97]"
               >
-                {/* Top row: Logo + Status icon */}
                 <div className="flex items-start justify-between mb-3">
                   {shop.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -212,24 +221,28 @@ export default function AdminHome() {
                   <StatusDot status={shop.status} />
                 </div>
 
-                {/* Name & Tagline */}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold truncate leading-tight">
                     <Highlight text={shop.name} query={query} />
                   </div>
                   <div className="text-[11px] text-stone-500 truncate mt-0.5">
-                    {shop.tagline || 'No tagline'}
+                    {shop.tagline || '-'}
                   </div>
                 </div>
 
-                {/* Bottom row: Stats */}
                 <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[10px] text-stone-400">
                   <div>
-                    <span className="font-semibold text-stone-800">{shop.stats.last30}</span> 30d
+                    <span className="font-semibold text-stone-800">
+                      {shop.stats.last30}
+                    </span>{' '}
+                    30d
                   </div>
                   <div className="text-stone-300">•</div>
                   <div>
-                    <span className="font-semibold text-stone-800">{shop.stats.total}</span> total
+                    <span className="font-semibold text-stone-800">
+                      {shop.stats.total}
+                    </span>{' '}
+                    {t('admin.all').toLowerCase()}
                   </div>
                 </div>
               </Link>
@@ -296,9 +309,11 @@ function EmptyState({
     <div className="text-center py-24 px-6 col-span-2">
       <div className="flex justify-center mb-4">{icon}</div>
       <h3 className="text-base font-semibold text-stone-900">{title}</h3>
-      <p className="text-sm text-stone-500 mt-1 max-w-[240px] mx-auto">
-        {description}
-      </p>
+      {description && (
+        <p className="text-sm text-stone-500 mt-1 max-w-[240px] mx-auto">
+          {description}
+        </p>
+      )}
       {action}
     </div>
   )
