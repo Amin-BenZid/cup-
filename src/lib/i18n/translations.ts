@@ -300,6 +300,12 @@ export const translations = {
     'live.noResults': 'Aucun résultat',
     'live.adjustFilters': 'Essayez d\'ajuster vos filtres.',
     'live.clearFilters': 'Effacer les filtres',
+
+        // Admin Stats
+    'admin.stats.today': "Aujourd'hui",
+    'admin.stats.total': 'Total',
+    'admin.stats.shops': 'Commerces',
+    'admin.stats.rating': 'Note',
   },
 
   ar: {
@@ -575,6 +581,12 @@ export const translations = {
     'live.noResults': 'لا توجد نتائج',
     'live.adjustFilters': 'حاول تعديل عوامل التصفية.',
     'live.clearFilters': 'مسح التصفية',
+
+        // Admin Stats
+    'admin.stats.today': 'اليوم',
+    'admin.stats.total': 'الإجمالي',
+    'admin.stats.shops': 'المتاجر',
+    'admin.stats.rating': 'التقييم',
   },
 
   en: {
@@ -854,6 +866,12 @@ export const translations = {
     'live.noResults': 'No results found',
     'live.adjustFilters': 'Try adjusting your search or shop filter.',
     'live.clearFilters': 'Clear Filters',
+
+        // Admin Stats
+    'admin.stats.today': 'Today',
+    'admin.stats.total': 'Total',
+    'admin.stats.shops': 'Shops',
+    'admin.stats.rating': 'Rating',
   },
 } as const
 

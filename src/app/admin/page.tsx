@@ -12,6 +12,9 @@ import {
   Clock,
   Search,
   Activity,
+  ShoppingBag,
+  Star,
+  TrendingUp,
 } from 'lucide-react'
 import { Toast } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
@@ -31,12 +34,21 @@ type Shop = {
   stats: { total: number; last7: number; last30: number }
 }
 
+type GlobalStats = {
+  totalOrders: number
+  ordersToday: number
+  totalShops: number
+  totalReviews: number
+  avgRating: string
+}
+
 type StatusFilter = 'all' | 'pending' | 'active' | 'disabled'
 
 export default function AdminHome() {
   const t = useT()
   const router = useRouter()
   const [shops, setShops] = useState<Shop[]>([])
+  const [stats, setStats] = useState<GlobalStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -56,6 +68,7 @@ export default function AdminHome() {
           return
         }
         setShops(json.shops)
+        setStats(json.globalStats)
       } catch (e) {
         push('error', e instanceof Error ? e.message : 'Network error')
       } finally {
@@ -108,7 +121,6 @@ export default function AdminHome() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* NEW: Live Monitor Link */}
             <Link
               href="/admin/live"
               className="flex items-center gap-1.5 text-xs font-semibold bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-200 transition"
@@ -119,16 +131,57 @@ export default function AdminHome() {
             <LanguageSwitcher compact />
             <button
               onClick={logout}
-              className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 active:scale-95 transition"
+              className="p-2 -me-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 active:scale-95 transition"
               aria-label={t('admin.logout')}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-5 h-5 rtl:rotate-180" />
             </button>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-5">
+      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-5 space-y-6">
+        
+        {/* GLOBAL STATS */}
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.today')}</span>
+              </div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.ordersToday}</div>
+            </div>
+            
+            <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.total')}</span>
+              </div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.totalOrders}</div>
+            </div>
+
+            <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+                <Store className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.shops')}</span>
+              </div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">{stats.totalShops}</div>
+            </div>
+
+            <div className="bg-white border border-stone-200 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+                <Star className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">{t('admin.stats.rating')}</span>
+              </div>
+              <div className="text-xl font-bold text-stone-900 tabular-nums">
+                {stats.avgRating} <span className="text-sm text-stone-400">★</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH & FILTER */}
         <div className="space-y-3">
           <SearchBar
             value={query}
@@ -173,6 +226,7 @@ export default function AdminHome() {
           </div>
         </div>
 
+        {/* SHOPS GRID */}
         {loading ? (
           <div className="py-20 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-stone-300" />
