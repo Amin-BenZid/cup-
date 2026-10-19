@@ -90,8 +90,7 @@ export const translations = {
     "setup.shopNameHint": "Ce que verront vos clients",
     "setup.shopNamePlaceholder": "Nomad",
     "setup.pin": "Code personnel",
-    "setup.pinHint":
-      "6 chiffres. Votre équipe l'utilise pour se connecter.",
+    "setup.pinHint": "6 chiffres. Votre équipe l'utilise pour se connecter.",
     "setup.create": "Créer le commerce",
     "setup.creating": "Création…",
     "setup.haveAccount": "Vous avez déjà un commerce ?",
@@ -141,6 +140,8 @@ export const translations = {
     "order.create": "Créer et afficher le QR",
     "order.creating": "Création…",
     "order.error.required": "Entrez un numéro de commande",
+    "order.error.duplicate":
+      "Ce numéro est déjà pris par une commande en cours. Choisissez-en un autre.",
 
     // QR modal
     "qr.title": "Commande",
@@ -355,7 +356,6 @@ export const translations = {
     "onboarding.orderDesc": "Voyez comment fonctionne le QR code.",
     "onboarding.go": "Aller",
     "onboarding.tryIt": "Essayer",
-
     "billing.whatsappMsg":
       "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
   },
@@ -480,7 +480,7 @@ export const translations = {
     "order.create": "إنشاء وعرض QR",
     "order.creating": "جارٍ الإنشاء…",
     "order.error.required": "أدخل رقم الطلب",
-
+    "order.error.duplicate": "هذا الرقم مستخدم في طلب قائم. اختر رقماً آخر.",
     // QR modal
     "qr.title": "الطلب",
     "qr.subtitle": "يمسح العميل هذا للتنبيه",
@@ -821,6 +821,8 @@ export const translations = {
     "order.create": "Create & show QR",
     "order.creating": "Creating…",
     "order.error.required": "Enter an order number",
+    "order.error.duplicate":
+      "That number is already taken by an active order. Pick another one.",
 
     // QR modal
     "qr.title": "Order",
