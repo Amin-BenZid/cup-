@@ -61,7 +61,13 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) {
+       if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { code: 'DUPLICATE_ORDER_NUMBER', error: error.message },
+          { status: 409 }
+        )
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
