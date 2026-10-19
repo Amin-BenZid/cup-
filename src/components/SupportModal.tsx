@@ -17,8 +17,12 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
   async function load() {
     try {
       const res = await fetch(`/api/support?shop_id=${shopId}`)
-      const json = await res.json()
-      setMessages(json.messages ?? [])
+      if (res.ok) {
+        const json = await res.json()
+        setMessages(json.messages ?? [])
+      }
+    } catch (e) {
+      console.error(e)
     } finally {
       setLoading(false)
     }
@@ -27,13 +31,14 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
   useEffect(() => {
     load()
     
-    // Mark admin messages as read when opening
+    // Mark admin messages as read
     fetch('/api/support', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ shop_id: shopId }),
-    })
+    }).catch(() => {})
 
+    // Listen for new messages
     const channel = supabase
       .channel('support-chat')
       .on('postgres_changes', 
@@ -42,24 +47,42 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // LOCK BACKGROUND SCROLL
+    document.body.style.overflow = 'hidden'
+
+    return () => { 
+      supabase.removeChannel(channel) 
+      // UNLOCK BACKGROUND SCROLL
+      document.body.style.overflow = ''
+    }
   }, [shopId])
 
   async function send(e: React.FormEvent) {
     e.preventDefault()
-    if (!text.trim()) return
+    if (!text.trim() || sending) return
+    
     setSending(true)
+    const msgText = text.trim()
+    setText('') // Clear input immediately for better UX
+
     try {
       const res = await fetch('/api/support', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: shopId, message: text.trim() }),
+        body: JSON.stringify({ shop_id: shopId, message: msgText }),
       })
+      
       if (res.ok) {
         const newMsg = await res.json()
-        setMessages([newMsg.message, ...messages])
-        setText('')
+        // Add to UI immediately
+        setMessages((prev) => [newMsg.message, ...prev])
+      } else {
+        setText(msgText)
+        alert('Failed to send message. Please try again.')
       }
+    } catch (err) {
+      setText(msgText)
+      console.error(err)
     } finally {
       setSending(false)
     }
@@ -78,7 +101,7 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/50 flex flex-col-reverse">
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/50 flex flex-col-reverse overscroll-contain">
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin mx-auto text-stone-400 mt-10" />
           ) : messages.length === 0 ? (

@@ -18,8 +18,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Ensure order number is strictly max 4 digits
+    if (!/^\d{1,4}$/.test(order_number)) {
+      return NextResponse.json(
+        { error: 'Order number must be 1 to 4 digits' },
+        { status: 400 }
+      )
+    }
+
     // Normalize phone: strip spaces, dashes, parentheses
-    // Keep leading + if present
     let customer_phone: string | null = null
     if (rawPhone) {
       const cleaned = rawPhone.replace(/[\s\-().]/g, '')

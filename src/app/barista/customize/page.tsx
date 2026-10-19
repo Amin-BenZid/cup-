@@ -662,6 +662,7 @@ function CustomizeContent() {
               primaryOverride={theme.primary}
               preparing={messages.preparing || t('cust.preparing')}
               ready={messages.ready || t('cust.ready')}
+              game={game}
               labelOrder={t('cz.messages.orderLabel')}
               labelYourOrder={t('cust.yourOrder')}
               labelWhileWait={t('cust.whileYouWait')}
@@ -712,6 +713,7 @@ function CustomerPreview({
   primaryOverride,
   preparing,
   ready,
+  game,
   labelOrder,
   labelYourOrder,
   labelWhileWait,
@@ -732,6 +734,7 @@ function CustomerPreview({
   primaryOverride?: string
   preparing: string
   ready: string
+  game: string
   labelOrder: string
   labelYourOrder: string
   labelWhileWait: string
@@ -742,10 +745,6 @@ function CustomerPreview({
 }) {
   const [mode, setMode] = useState<'preparing' | 'ready'>('preparing')
   const primary = primaryOverride ?? palette.primary
-
-  const bodyFont = font.body.includes('serif')
-    ? 'ui-serif, Georgia, serif'
-    : 'ui-sans-serif, system-ui, sans-serif'
 
   const wrapClass =
     device === 'phone' ? 'w-full max-w-[320px] mx-auto' : 'w-full'
@@ -763,7 +762,9 @@ function CustomerPreview({
           background: palette.bg,
           color: palette.text,
           borderColor: palette.border,
-          fontFamily: bodyFont,
+          fontFamily: font.body.includes('serif')
+            ? 'ui-serif, Georgia, serif'
+            : 'ui-sans-serif, system-ui, sans-serif',
         }}
       >
         {palette.pattern === 'beans' && (
@@ -886,40 +887,43 @@ function CustomerPreview({
               </div>
             )}
 
-            <div
-              className="rounded-xl border overflow-hidden"
-              style={{
-                borderColor: palette.border,
-                background: palette.surface,
-              }}
-            >
+            {/* GAME PREVIEW - ONLY SHOW IF GAME IS NOT 'none' */}
+            {game !== 'none' && (
               <div
-                className="px-3 py-2 border-b flex items-center justify-between text-[10px] uppercase tracking-wider font-semibold"
+                className="rounded-xl border overflow-hidden"
                 style={{
                   borderColor: palette.border,
-                  color: palette.textMuted,
-                }}
-              >
-                <span>{labelWhileWait}</span>
-                <span>Score 12</span>
-              </div>
-              <div
-                className="h-24 relative"
-                style={{
-                  background:
-                    'radial-gradient(circle at 50% 120%, rgba(217,119,6,0.08), transparent 60%)',
+                  background: palette.surface,
                 }}
               >
                 <div
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-10 h-6 rounded-b-[999px] rounded-t-sm"
-                  style={{ background: primary }}
-                />
+                  className="px-3 py-2 border-b flex items-center justify-between text-[10px] uppercase tracking-wider font-semibold"
+                  style={{
+                    borderColor: palette.border,
+                    color: palette.textMuted,
+                  }}
+                >
+                  <span>{labelWhileWait}</span>
+                  <span>Score 12</span>
+                </div>
                 <div
-                  className="absolute top-3 left-[30%] w-3 h-3 rounded-full"
-                  style={{ background: '#78350f' }}
-                />
+                  className="h-24 relative"
+                  style={{
+                    background:
+                      'radial-gradient(circle at 50% 120%, rgba(217,119,6,0.08), transparent 60%)',
+                  }}
+                >
+                  <div
+                    className="absolute bottom-2 left-1/2 -translate-x-1/2 w-10 h-6 rounded-b-[999px] rounded-t-sm"
+                    style={{ background: primary }}
+                  />
+                  <div
+                    className="absolute top-3 left-[30%] w-3 h-3 rounded-full"
+                    style={{ background: '#78350f' }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

@@ -54,6 +54,15 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     if (!orderId) return
     let cancelled = false
 
+    // Check if this order was already acknowledged
+    try {
+      const ack = localStorage.getItem(`cup-ack-${orderId}`)
+      if (ack === '1') {
+        setAcknowledged(true)
+        setRinging(false)
+      }
+    } catch {}
+
     async function load() {
       try {
         const { data: orderData, error: orderErr } = await supabase
@@ -96,7 +105,11 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
           () => {}
         )
 
-        if (orderData.status === 'ready') setRinging(true)
+        // Only ring if it's ready AND not already acknowledged
+        const ack = localStorage.getItem(`cup-ack-${orderId}`)
+        if (orderData.status === 'ready' && ack !== '1') {
+          setRinging(true)
+        }
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load order')
@@ -127,7 +140,12 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         (payload) => {
           const updated = payload.new as Order
           setOrder(updated)
-          if (updated.status === 'ready') setRinging(true)
+          
+          // Only ring if it became ready AND not acknowledged
+          const ack = localStorage.getItem(`cup-ack-${orderId}`)
+          if (updated.status === 'ready' && ack !== '1') {
+            setRinging(true)
+          }
         }
       )
       .subscribe()
@@ -158,14 +176,11 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       audio.play().catch(() => {})
     }
 
-    // VIBRATION LOGIC
     const buzz = () => {
-      if (navigator.vibrate) {
-        navigator.vibrate([500, 200, 500, 200, 500]) // Vibrate, pause, vibrate
-      }
+      if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500])
     }
     buzz()
-    vibrateIntervalRef.current = setInterval(buzz, 2000) // Repeat every 2 seconds
+    vibrateIntervalRef.current = setInterval(buzz, 2000)
 
     const originalTitle = document.title
     let on = false
@@ -213,7 +228,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     }
   }, [])
 
-  // ---------- resume audio on tap ----------
   const resumeAudio = useCallback(() => {
     if (ringing && audioRef.current) {
       audioRef.current.play().catch(() => {})
@@ -229,7 +243,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     }
   }, [resumeAudio])
 
-  // ---------- theme ----------
   const palette = useMemo(
     () => getPalette(shop?.theme?.palette),
     [shop?.theme?.palette]
@@ -262,7 +275,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
   const preparingMsg = shop?.messages?.preparing || t('cust.preparing')
   const readyMsg = shop?.messages?.ready || t('cust.ready')
 
-  // ---------- app badge ----------
   useEffect(() => {
     if (!order) return
     if (acknowledged) {
@@ -284,14 +296,21 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     } catch {}
   }, [acknowledged])
 
-  // ---------- timers ----------
   const elapsedLive = useElapsed(order?.created_at ?? null, null)
   const elapsedFinal = useElapsed(
     order?.created_at ?? null,
     order?.ready_at ?? null
   )
 
-  // ---------- loading UI ----------
+  function handleAcknowledge() {
+    setAcknowledged(true)
+    setRinging(false)
+    try {
+      // Save that this specific order was acknowledged so it persists on reload
+      localStorage.setItem(`cup-ack-${orderId}`, '1')
+    } catch {}
+  }
+
   if (loading) {
     return (
       <main
@@ -431,7 +450,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
               >
                 {t('cust.yourOrder')}
               </div>
-              <div className="text-6xl font-bold tabular-nums">
+              <div className="text-6xl font-bold tabular-nums break-all">
                 #{order.order_number}
               </div>
             </div>
@@ -500,10 +519,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                   </p>
                 </div>
                 <button
-                  onClick={() => {
-                    setAcknowledged(true)
-                    setRinging(false)
-                  }}
+                  onClick={handleAcknowledge}
                   className="w-full py-4 rounded-2xl font-bold text-lg active:scale-[0.99] transition"
                   style={{
                     background: '#059669',

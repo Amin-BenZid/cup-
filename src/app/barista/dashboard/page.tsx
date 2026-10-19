@@ -556,8 +556,13 @@ export default function DashboardPage() {
                   type="text"
                   inputMode="numeric"
                   value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
+                  onChange={(e) => {
+                    // Strip non-numeric characters and limit to 4 digits
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4)
+                    setOrderNumber(val)
+                  }}
                   placeholder={t('order.placeholder')}
+                  maxLength={4}
                   className="w-full px-4 py-4 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-3xl text-center font-bold tabular-nums"
                 />
               </div>
