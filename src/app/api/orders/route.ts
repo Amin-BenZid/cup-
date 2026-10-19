@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
     let customer_phone: string | null = null
     if (rawPhone) {
       const cleaned = rawPhone.replace(/[\s\-().]/g, '')
-      // Basic sanity check — 6 to 20 chars, digits and optional leading +
       if (/^\+?\d{6,20}$/.test(cleaned)) {
         customer_phone = cleaned
       } else {
@@ -65,6 +64,12 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Mark the shop as "has created an order" (for the onboarding checklist)
+    await supabaseAdmin
+      .from('shops')
+      .update({ has_created_order: true })
+      .eq('id', shop_id)
 
     return NextResponse.json({ order: data })
   } catch (e: unknown) {

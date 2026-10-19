@@ -60,6 +60,7 @@ export const translations = {
       "Transformez n'importe quel téléphone en bipeur. Aucun matériel à acheter, aucun bipeur à perdre. Idéal pour les cafés, boulangeries et fast-foods.",
     'landing.setup': 'Créer un commerce',
     'landing.setupHint': 'Ouvrez votre boutique en 30 secondes',
+    'landing.freeTrial': 'Essai gratuit de 15 jours',
     'landing.barista': 'Connexion personnel',
     'landing.baristaHint': 'Connectez-vous avec le code du commerce',
     'landing.howItWorks': 'Comment ça marche',
@@ -250,7 +251,7 @@ export const translations = {
     'cz.logo.error.process': "Échec du traitement de l'image",
     'cz.logo.error.upload': 'Échec du téléchargement',
 
-        // Admin
+    // Admin
     'admin.title': 'Admin',
     'admin.cafes': 'Commerces',
     'admin.logout': 'Déconnexion',
@@ -291,7 +292,7 @@ export const translations = {
     'admin.delete': 'Supprimer',
     'admin.cancel': 'Annuler',
 
-        // Live Feed
+    // Live Feed
     'live.title': 'Moniteur en direct',
     'live.allShops': 'Tous les commerces',
     'live.searchPlaceholder': 'Rechercher n° ou commerce...',
@@ -301,13 +302,13 @@ export const translations = {
     'live.adjustFilters': 'Essayez d\'ajuster vos filtres.',
     'live.clearFilters': 'Effacer les filtres',
 
-        // Admin Stats
+    // Admin Stats
     'admin.stats.today': "Aujourd'hui",
     'admin.stats.total': 'Total',
     'admin.stats.shops': 'Commerces',
     'admin.stats.rating': 'Note',
 
-        // Support & Broadcast
+    // Support & Broadcast
     'support.button': 'Aide & Support',
     'support.title': 'Contacter le support',
     'support.placeholder': 'Décrivez votre problème...',
@@ -327,6 +328,20 @@ export const translations = {
     'admin.broadcast.save': 'Mettre à jour',
     'admin.broadcast.saved': 'Bannière mise à jour',
     'banner.dismiss': 'Fermer',
+
+        // Onboarding
+    'onboarding.title': 'Bienvenue sur Cup !',
+    'onboarding.subtitle': 'Préparons votre commerce en 3 étapes simples.',
+    'onboarding.logo': 'Téléchargez votre logo',
+    'onboarding.logoDesc': 'Montrez votre marque à vos clients.',
+    'onboarding.theme': 'Personnalisez votre thème',
+    'onboarding.themeDesc': 'Choisissez les couleurs et polices de votre page.',
+    'onboarding.order': 'Créez une commande test',
+    'onboarding.orderDesc': 'Voyez comment fonctionne le QR code.',
+    'onboarding.go': 'Aller',
+    'onboarding.tryIt': 'Essayer',
+
+        'billing.whatsappMsg': 'Bonjour %name, c\'est Mark de Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?',
   },
 
   ar: {
@@ -374,6 +389,7 @@ export const translations = {
       'حوّل أي هاتف إلى جهاز تنبيه. لا أجهزة تشتريها، ولا أجهزة تفقدها. مثالي للمقاهي والمخابز والوجبات السريعة.',
     'landing.setup': 'أنشئ متجر',
     'landing.setupHint': 'افتح متجرك في 30 ثانية',
+    'landing.freeTrial': 'تجربة مجانية لمدة 15 يوماً',
     'landing.barista': 'دخول الموظفين',
     'landing.baristaHint': 'سجّل الدخول برمز المتجر',
     'landing.howItWorks': 'كيف يعمل',
@@ -552,7 +568,7 @@ export const translations = {
     'cz.logo.error.process': 'فشل معالجة الصورة',
     'cz.logo.error.upload': 'فشل الرفع',
 
-        // Admin
+    // Admin
     'admin.title': 'المشرف',
     'admin.cafes': 'المتاجر',
     'admin.logout': 'خروج',
@@ -593,7 +609,7 @@ export const translations = {
     'admin.delete': 'حذف',
     'admin.cancel': 'إلغاء',
 
-        // Live Feed
+    // Live Feed
     'live.title': 'المراقبة المباشرة',
     'live.allShops': 'جميع المتاجر',
     'live.searchPlaceholder': 'ابحث عن رقم أو متجر...',
@@ -603,13 +619,13 @@ export const translations = {
     'live.adjustFilters': 'حاول تعديل عوامل التصفية.',
     'live.clearFilters': 'مسح التصفية',
 
-        // Admin Stats
+    // Admin Stats
     'admin.stats.today': 'اليوم',
     'admin.stats.total': 'الإجمالي',
     'admin.stats.shops': 'المتاجر',
     'admin.stats.rating': 'التقييم',
 
-        // Support & Broadcast
+    // Support & Broadcast
     'support.button': 'المساعدة والدعم',
     'support.title': 'اتصل بالدعم',
     'support.placeholder': 'صف مشكلتك...',
@@ -629,6 +645,19 @@ export const translations = {
     'admin.broadcast.save': 'تحديث',
     'admin.broadcast.saved': 'تم تحديث الشريط',
     'banner.dismiss': 'إغلاق',
+
+        // Onboarding
+    'onboarding.title': 'مرحباً بك في Cup!',
+    'onboarding.subtitle': 'لنجهز متجرك في 3 خطوات سهلة.',
+    'onboarding.logo': 'ارفع شعارك',
+    'onboarding.logoDesc': 'أظهر علامتك التجارية لعملائك.',
+    'onboarding.theme': 'خصص مظهرك',
+    'onboarding.themeDesc': 'اختر الألوان والخطوط لصفحتك.',
+    'onboarding.order': 'أنشئ طلباً تجريبياً',
+    'onboarding.orderDesc': 'اكتشف كيف يعمل رمز QR.',
+    'onboarding.go': 'اذهب',
+    'onboarding.tryIt': 'جرب',
+        'billing.whatsappMsg': 'مرحباً %name، أنا مارك من Cup. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟',
   },
 
   en: {
@@ -677,6 +706,7 @@ export const translations = {
       'Turn any phone into a pager. No hardware to buy, no pagers to lose. Perfect for cafés, bakeries and fast food.',
     'landing.setup': 'Set up a shop',
     'landing.setupHint': 'Create your shop in 30 seconds',
+    'landing.freeTrial': '15-Day Free Trial',
     'landing.barista': 'Staff login',
     'landing.baristaHint': 'Sign in with your shop PIN',
     'landing.howItWorks': 'How it works',
@@ -858,7 +888,7 @@ export const translations = {
     'cz.logo.error.process': 'Failed to process image',
     'cz.logo.error.upload': 'Upload failed',
 
-        // Admin
+    // Admin
     'admin.title': 'Admin',
     'admin.cafes': 'Shops',
     'admin.logout': 'Log out',
@@ -899,7 +929,7 @@ export const translations = {
     'admin.delete': 'Delete',
     'admin.cancel': 'Cancel',
 
-        // Live Feed
+    // Live Feed
     'live.title': 'Live Monitor',
     'live.allShops': 'All Shops',
     'live.searchPlaceholder': 'Search order # or shop...',
@@ -909,13 +939,13 @@ export const translations = {
     'live.adjustFilters': 'Try adjusting your search or shop filter.',
     'live.clearFilters': 'Clear Filters',
 
-        // Admin Stats
+    // Admin Stats
     'admin.stats.today': 'Today',
     'admin.stats.total': 'Total',
     'admin.stats.shops': 'Shops',
     'admin.stats.rating': 'Rating',
 
-        // Support & Broadcast
+    // Support & Broadcast
     'support.button': 'Help & Support',
     'support.title': 'Contact Support',
     'support.placeholder': 'Describe your issue...',
@@ -935,6 +965,18 @@ export const translations = {
     'admin.broadcast.save': 'Update',
     'admin.broadcast.saved': 'Banner updated',
     'banner.dismiss': 'Dismiss',
+
+        // Onboarding
+    'onboarding.title': 'Welcome to Cup!',
+    'onboarding.subtitle': "Let's get your shop ready in 3 easy steps.",
+    'onboarding.logo': 'Upload your logo',
+    'onboarding.logoDesc': 'Show your brand to customers.',
+    'onboarding.theme': 'Customize your theme',
+    'onboarding.themeDesc': 'Pick colors and fonts for your page.',
+    'onboarding.order': 'Create a test order',
+    'onboarding.orderDesc': 'See how the QR code and screen work.',
+    'onboarding.go': 'Go',
+    'onboarding.tryIt': 'Try it',
   },
 } as const
 

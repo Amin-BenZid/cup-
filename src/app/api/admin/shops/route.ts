@@ -10,7 +10,7 @@ export async function GET() {
   // 1. Fetch shops
   const { data: shops, error: shopsErr } = await supabaseAdmin
     .from('shops')
-    .select('id, name, tagline, status, created_at, logo_url, theme, game')
+    .select('id, name, tagline, status, created_at, logo_url, theme, game, trial_ends_at, subscription_ends_at, billing_status, phone, paid_current_month')
     .order('created_at', { ascending: false })
 
   if (shopsErr) {

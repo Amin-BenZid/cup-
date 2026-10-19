@@ -25,6 +25,7 @@ import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import SupportModal from '@/components/SupportModal'
 import BroadcastBanner from '@/components/BroadcastBanner'
+import OnboardingChecklist from '@/components/OnboardingChecklist'
 import { useT } from '@/lib/i18n/context'
 import { useElapsed, formatElapsed } from '@/hooks/useElapsed'
 
@@ -67,6 +68,8 @@ export default function DashboardPage() {
   
   const [supportOpen, setSupportOpen] = useState(false)
   const [unreadSupport, setUnreadSupport] = useState(0)
+  
+  const [showOnboarding, setShowOnboarding] = useState(true)
   
   const [customizeOpen, setCustomizeOpen] = useState(false)
   const customizeRef = useRef<HTMLDivElement | null>(null)
@@ -392,6 +395,15 @@ export default function DashboardPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-5 py-6 space-y-6">
+        
+        {/* ONBOARDING CHECKLIST */}
+        {shop && showOnboarding && (
+          <OnboardingChecklist 
+            shopId={shop.id} 
+            onDismiss={() => setShowOnboarding(false)} 
+          />
+        )}
+
         <button
           onClick={() => setNewOrderOpen(true)}
           className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl bg-stone-900 text-amber-50 font-semibold text-lg hover:bg-stone-800 active:scale-[0.99] transition shadow-sm"

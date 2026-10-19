@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-/**
- * Public read endpoint — used by the /pending and /barista/customize pages.
- * Returns only safe, public-facing fields. Never exposes pin_hash.
- */
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> | { id: string } }
@@ -20,7 +16,7 @@ export async function GET(
     const { data, error } = await supabaseAdmin
       .from('shops')
       .select(
-        'id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages'
+        'id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, has_created_order'
       )
       .eq('id', id)
       .maybeSingle()
@@ -42,11 +38,6 @@ export async function GET(
   }
 }
 
-/**
- * Public PATCH — used by the /barista/customize page to update theme,
- * logo, messages, etc. Barista session is enforced client-side; the server
- * only accepts a safe whitelist of fields.
- */
 export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> | { id: string } }
@@ -69,7 +60,6 @@ export async function PATCH(
       )
     }
 
-    // Whitelist of what the customizer is allowed to update
     const allowed = [
       'name',
       'tagline',
@@ -80,6 +70,7 @@ export async function PATCH(
       'theme',
       'game',
       'messages',
+      'has_created_order',
     ] as const
 
     const update: Record<string, unknown> = {}
@@ -101,7 +92,7 @@ export async function PATCH(
       .update(update)
       .eq('id', id)
       .select(
-        'id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages'
+        'id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, has_created_order'
       )
       .single()
 

@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
         name,
         pin_hash,
         status: 'pending',
+        billing_status: 'trial',
+        trial_ends_at: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select('id, name, status')
       .single()
@@ -34,7 +36,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Log the creation event
     await supabaseAdmin.from('shop_history').insert({
       shop_id: data.id,
       action: 'created',

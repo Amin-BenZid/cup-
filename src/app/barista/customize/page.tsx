@@ -133,8 +133,14 @@ function CustomizeContent() {
       const payload: Record<string, unknown> = {}
       if (name !== (shop?.name ?? '')) payload.name = name
       if (tagline !== (shop?.tagline ?? '')) payload.tagline = tagline
-      if (JSON.stringify(theme) !== JSON.stringify(shop?.theme ?? DEFAULT_THEME))
+      
+      // ONLY SAVE THEME IF IT'S DIFFERENT FROM DEFAULT
+      const currentThemeString = JSON.stringify(theme)
+      const defaultThemeString = JSON.stringify(DEFAULT_THEME)
+      if (currentThemeString !== defaultThemeString) {
         payload.theme = theme
+      }
+
       if (game !== (shop?.game ?? 'catch-beans')) payload.game = game
       if (JSON.stringify(messages) !== JSON.stringify(shop?.messages ?? {}))
         payload.messages = messages
@@ -746,6 +752,10 @@ function CustomerPreview({
   const [mode, setMode] = useState<'preparing' | 'ready'>('preparing')
   const primary = primaryOverride ?? palette.primary
 
+  const bodyFont = font.body.includes('serif')
+    ? 'ui-serif, Georgia, serif'
+    : 'ui-sans-serif, system-ui, sans-serif'
+
   const wrapClass =
     device === 'phone' ? 'w-full max-w-[320px] mx-auto' : 'w-full'
   const heightClass = device === 'phone' ? 'h-[560px]' : 'h-[460px]'
@@ -762,9 +772,7 @@ function CustomerPreview({
           background: palette.bg,
           color: palette.text,
           borderColor: palette.border,
-          fontFamily: font.body.includes('serif')
-            ? 'ui-serif, Georgia, serif'
-            : 'ui-sans-serif, system-ui, sans-serif',
+          fontFamily: bodyFont,
         }}
       >
         {palette.pattern === 'beans' && (
@@ -887,7 +895,6 @@ function CustomerPreview({
               </div>
             )}
 
-            {/* GAME PREVIEW - ONLY SHOW IF GAME IS NOT 'none' */}
             {game !== 'none' && (
               <div
                 className="rounded-xl border overflow-hidden"

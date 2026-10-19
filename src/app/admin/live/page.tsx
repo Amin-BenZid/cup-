@@ -107,54 +107,52 @@ export default function LiveFeedPage() {
 
   function timeSince(iso: string) {
     const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-    if (s < 60) return `${s}s`
+    if (s < 60) return `${s}s ago`
     const m = Math.floor(s / 60)
-    if (m < 60) return `${m}m`
-    return `${Math.floor(m / 60)}h`
+    if (m < 60) return `${m}m ago`
+    return `${Math.floor(m / 60)}h ago`
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+    <main className="min-h-screen bg-zinc-50 text-zinc-900 flex flex-col">
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <button
             onClick={() => router.push('/admin')}
-            className="flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-900 transition -ms-2 p-2 rounded-lg hover:bg-stone-200/50 active:scale-95"
+            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition -ms-2 p-2 rounded-md hover:bg-zinc-100"
           >
             <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
             {t('common.back')}
           </button>
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
-            <span className="text-sm font-semibold text-stone-900">{t('live.title')}</span>
+            <span className="text-sm font-semibold">{t('live.title')}</span>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher compact />
-            <div className="w-8 h-8 rounded-[10px] bg-stone-900 flex items-center justify-center shadow-sm">
-              <CupLogo size={18} />
-            </div>
+            <CupLogo size={20} />
           </div>
         </div>
       </header>
 
       {/* FILTER BAR */}
-      <div className="sticky top-[57px] z-10 bg-stone-50 border-b border-stone-200/50">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
+      <div className="sticky top-[53px] z-10 bg-zinc-50 border-b border-zinc-200">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-2">
           
           {/* Search Bar */}
           <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('live.searchPlaceholder')}
-              className="w-full ps-9 pe-8 py-2 bg-white border border-stone-200 rounded-xl text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition"
+              className="w-full ps-9 pe-8 py-2 bg-white border border-zinc-200 rounded-md text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 transition"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-700"
+                className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -165,10 +163,10 @@ export default function LiveFeedPage() {
           <div className="relative shrink-0">
             <button
               onClick={() => setShopMenuOpen((v) => !v)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border transition ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border transition ${
                 selectedShop !== 'all'
-                  ? 'bg-stone-900 text-white border-stone-900'
-                  : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
               }`}
             >
               <Store className="w-4 h-4" />
@@ -185,14 +183,14 @@ export default function LiveFeedPage() {
                   className="fixed inset-0 z-30"
                   onClick={() => setShopMenuOpen(false)}
                 />
-                <div className="absolute end-0 top-full mt-2 w-56 bg-white border border-stone-200 rounded-2xl shadow-xl overflow-hidden z-40 max-h-64 overflow-y-auto custom-scrollbar">
+                <div className="absolute end-0 top-full mt-2 w-56 bg-white border border-zinc-200 rounded-md shadow-lg overflow-hidden z-40 max-h-64 overflow-y-auto">
                   <button
                     onClick={() => {
                       setSelectedShop('all')
                       setShopMenuOpen(false)
                     }}
-                    className={`w-full text-start px-4 py-2.5 text-sm hover:bg-stone-50 transition ${
-                      selectedShop === 'all' ? 'font-semibold text-stone-900 bg-stone-50/50' : 'text-stone-600'
+                    className={`w-full text-start px-4 py-2.5 text-sm hover:bg-zinc-50 transition ${
+                      selectedShop === 'all' ? 'font-semibold text-zinc-900 bg-zinc-50' : 'text-zinc-600'
                     }`}
                   >
                     {t('live.allShops')}
@@ -204,8 +202,8 @@ export default function LiveFeedPage() {
                         setSelectedShop(shop.id)
                         setShopMenuOpen(false)
                       }}
-                      className={`w-full text-start px-4 py-2.5 text-sm hover:bg-stone-50 transition truncate ${
-                        selectedShop === shop.id ? 'font-semibold text-stone-900 bg-stone-50/50' : 'text-stone-600'
+                      className={`w-full text-start px-4 py-2.5 text-sm hover:bg-zinc-50 transition truncate ${
+                        selectedShop === shop.id ? 'font-semibold text-zinc-900 bg-zinc-50' : 'text-zinc-600'
                       }`}
                     >
                       {shop.name}
@@ -218,21 +216,19 @@ export default function LiveFeedPage() {
         </div>
       </div>
 
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-6">
         {loading ? (
           <div className="py-20 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-300" />
+            <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-24 border border-dashed border-stone-300 rounded-2xl bg-white">
-            <Activity className="w-10 h-10 text-stone-300 mx-auto mb-4" />
-            <h3 className="text-base font-semibold text-stone-900">
+          <div className="text-center py-24 bg-white border border-dashed border-zinc-300 rounded-lg">
+            <Activity className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+            <h3 className="text-sm font-medium text-zinc-900">
               {orders.length === 0 ? t('live.noOrders') : t('live.noResults')}
             </h3>
-            <p className="text-sm text-stone-500 mt-1 max-w-xs mx-auto">
-              {orders.length === 0 
-                ? t('live.waiting')
-                : t('live.adjustFilters')}
+            <p className="text-xs text-zinc-500 mt-1">
+              {orders.length === 0 ? t('live.waiting') : t('live.adjustFilters')}
             </p>
             {(search || selectedShop !== 'all') && (
               <button
@@ -240,71 +236,41 @@ export default function LiveFeedPage() {
                   setSearch('')
                   setSelectedShop('all')
                 }}
-                className="mt-4 px-4 py-2 rounded-lg bg-stone-100 text-stone-700 text-sm font-medium hover:bg-stone-200 transition"
+                className="mt-4 text-sm text-zinc-500 hover:text-zinc-900 underline"
               >
                 {t('live.clearFilters')}
               </button>
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden divide-y divide-zinc-100">
             {filteredOrders.map((order) => (
               <div
                 key={order.id}
-                className={`rounded-2xl border p-4 bg-white shadow-sm transition-all duration-500 ${
-                  order.status === 'ready'
-                    ? 'border-emerald-300 bg-emerald-50/30'
-                    : order.status === 'done'
-                    ? 'border-stone-200 opacity-60'
-                    : 'border-amber-200'
-                }`}
+                className={`flex items-center justify-between gap-4 px-4 py-3 transition ${
+                  order.status === 'ready' ? 'bg-emerald-50/30' : ''
+                } ${order.status === 'done' ? 'opacity-60' : ''}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {order.shops?.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={order.shops.logo_url}
-                        alt=""
-                        className="w-10 h-10 rounded-xl object-cover border border-stone-200 shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-amber-50 font-bold shrink-0">
-                        {(order.shops?.name || 'C')[0].toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <Link 
-                        href={`/admin/shops/${order.shop_id}`}
-                        className="text-sm font-semibold truncate hover:underline block text-start"
-                      >
-                        {order.shops?.name || 'Shop'}
-                      </Link>
-                      <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-2">
-                        <span className="font-bold text-stone-900">#{order.order_number}</span>
-                        <span>•</span>
-                        <span>{timeSince(order.created_at)}</span>
-                      </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  {order.shops?.logo_url ? (
+                    <img src={order.shops.logo_url} alt="" className="w-8 h-8 rounded-md object-cover border border-zinc-200 shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-md bg-zinc-900 flex items-center justify-center text-zinc-100 font-semibold text-[10px] shrink-0">
+                      {order.shops?.name?.[0] || 'S'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <Link href={`/admin/shops/${order.shop_id}`} className="text-sm font-medium text-zinc-900 truncate hover:underline block">
+                      {order.shops?.name || 'Unknown Shop'}
+                    </Link>
+                    <div className="text-[11px] text-zinc-500 tabular-nums">
+                      #{order.order_number} · {timeSince(order.created_at)}
                     </div>
                   </div>
+                </div>
 
-                  <div className="shrink-0">
-                    {order.status === 'preparing' && (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 shadow-sm">
-                        <Clock className="w-3.5 h-3.5" /> {t('dash.preparing')}
-                      </span>
-                    )}
-                    {order.status === 'ready' && (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 shadow-sm">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> {t('dash.ready')}
-                      </span>
-                    )}
-                    {order.status === 'done' && (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-stone-100 text-stone-600 shadow-sm">
-                        <Package className="w-3.5 h-3.5" /> {t('dash.pickedUp')}
-                      </span>
-                    )}
-                  </div>
+                <div className="shrink-0">
+                  <OrderStatusBadge status={order.status} />
                 </div>
               </div>
             ))}
@@ -313,4 +279,11 @@ export default function LiveFeedPage() {
       </div>
     </main>
   )
+}
+
+function OrderStatusBadge({ status }: { status: string }) {
+  const base = 'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded'
+  if (status === 'ready') return <span className={`${base} bg-emerald-100 text-emerald-700`}>Ready</span>
+  if (status === 'done') return <span className={`${base} bg-zinc-100 text-zinc-600`}>Picked up</span>
+  return <span className={`${base} bg-amber-100 text-amber-800`}>Preparing</span>
 }

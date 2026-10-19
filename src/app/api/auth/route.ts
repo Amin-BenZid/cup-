@@ -7,19 +7,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const pin = (body?.pin ?? '').toString().trim()
 
-    if (!pin || pin.length < 4) {
-      return NextResponse.json(
-        { error: 'PIN must be at least 4 digits' },
-        { status: 400 }
-      )
+    if (!pin) {
+      return NextResponse.json({ error: 'PIN required' }, { status: 400 })
     }
 
     const pin_hash = await hashPin(pin)
 
-    // Use .limit(2) so we can detect duplicates without crashing
     const { data, error } = await supabaseAdmin
       .from('shops')
-      .select('id, name, status')
+      .select('id, name, status, trial_ends_at, subscription_ends_at')
       .eq('pin_hash', pin_hash)
       .limit(2)
 
@@ -28,17 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!data || data.length === 0) {
-      // Wrong PIN — return a clean, safe error
       return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
-    }
-
-    if (data.length > 1) {
-      // Two shops share this PIN. Pick the oldest one deterministically.
-      // (We'll prevent this from happening at creation time going forward.)
-      // For now, warn and continue with the first.
-      console.warn(
-        `[auth] PIN collision — ${data.length} shops share this PIN hash`
-      )
     }
 
     const shop = data[0]
@@ -58,6 +44,21 @@ export async function POST(req: NextRequest) {
     if (shop.status === 'disabled') {
       return NextResponse.json(
         { error: 'disabled', status: 'disabled' },
+        { status: 403 }
+      )
+    }
+
+    // BILLING CHECK
+    const now = new Date()
+    const trialEnds = shop.trial_ends_at ? new Date(shop.trial_ends_at) : null
+    const subEnds = shop.subscription_ends_at ? new Date(shop.subscription_ends_at) : null
+
+    const isTrialExpired = trialEnds && now > trialEnds
+    const isSubExpired = subEnds ? now > subEnds : true
+
+    if (isTrialExpired && isSubExpired) {
+      return NextResponse.json(
+        { error: 'expired', status: 'expired' },
         { status: 403 }
       )
     }

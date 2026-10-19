@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, LifeBuoy, MessageSquare, Send } from 'lucide-react'
+import {
+  ArrowLeft,
+  Loader2,
+  LifeBuoy,
+  MessageSquare,
+  Send,
+} from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
@@ -46,7 +52,9 @@ export default function AdminSupportPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   async function openChat(shopId: string) {
     setActiveShop(shopId)
@@ -61,7 +69,7 @@ export default function AdminSupportPage() {
   async function sendReply(e: React.FormEvent) {
     e.preventDefault()
     if (!replyText.trim() || !activeShop || sending) return
-    
+
     setSending(true)
     const text = replyText.trim()
     setReplyText('')
@@ -78,7 +86,6 @@ export default function AdminSupportPage() {
     }
   }
 
-  // Group by shop and get the newest message
   const conversations = messages.reduce((acc, msg) => {
     if (!acc[msg.shop_id]) {
       acc[msg.shop_id] = {
@@ -97,7 +104,6 @@ export default function AdminSupportPage() {
     return acc
   }, {} as Record<string, Conversation>)
 
-  // Sort conversations by the newest message
   const convList = Object.values(conversations).sort((a, b) => {
     const aLast = new Date(a.lastMessage.created_at).getTime()
     const bLast = new Date(b.lastMessage.created_at).getTime()
@@ -107,60 +113,81 @@ export default function AdminSupportPage() {
   const activeConv = activeShop ? conversations[activeShop] : null
 
   if (loading) {
-    return <main className="min-h-screen bg-stone-50 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></main>
+    return (
+      <main className="min-h-screen bg-zinc-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+      </main>
+    )
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900 flex flex-col h-screen overflow-hidden">
-      <header className="shrink-0 border-b border-stone-200 bg-white px-4 py-3 flex items-center justify-between">
-        <button onClick={() => router.push('/admin')} className="flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-900 transition -ms-2 p-2 rounded-lg hover:bg-stone-100">
-          <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {t('common.back')}
+    <main className="min-h-screen bg-zinc-50 text-zinc-900 flex flex-col h-screen overflow-hidden">
+      <header className="shrink-0 border-b border-zinc-200 bg-zinc-50 px-6 py-3 flex items-center justify-between">
+        <button
+          onClick={() => router.push('/admin')}
+          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition -ms-2 p-2 rounded-md hover:bg-zinc-100"
+        >
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+          Back
         </button>
         <div className="flex items-center gap-2">
-          <LifeBuoy className="w-4 h-4 text-stone-400" />
-          <span className="text-sm font-semibold">{t('admin.support.inbox')}</span>
+          <LifeBuoy className="w-4 h-4 text-zinc-400" />
+          <span className="text-sm font-semibold">Support</span>
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher compact />
-          <div className="w-8 h-8 rounded-[10px] bg-stone-900 flex items-center justify-center"><CupLogo size={18} /></div>
+          <CupLogo size={20} />
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
         {/* INBOX LIST */}
-        <div className={`w-full md:w-80 border-e border-stone-200 bg-white overflow-y-auto ${activeShop ? 'hidden md:block' : 'block'}`}>
+        <div
+          className={`w-full md:w-80 border-e border-zinc-200 bg-white overflow-y-auto ${
+            activeShop ? 'hidden md:block' : 'block'
+          }`}
+        >
           {convList.length === 0 ? (
             <div className="text-center py-20 px-6">
-              <MessageSquare className="w-10 h-10 text-stone-300 mx-auto mb-4" />
-              <p className="text-sm text-stone-500">{t('admin.support.noMessages')}</p>
+              <MessageSquare className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+              <p className="text-sm text-zinc-500">
+                {t('admin.support.noMessages')}
+              </p>
             </div>
           ) : (
             convList.map((conv) => (
               <button
                 key={conv.shop_id}
                 onClick={() => openChat(conv.shop_id)}
-                className={`w-full text-start p-4 border-b border-stone-100 hover:bg-stone-50 transition flex gap-3 ${
-                  activeShop === conv.shop_id ? 'bg-stone-50' : ''
+                className={`w-full text-start px-4 py-3 border-b border-zinc-100 hover:bg-zinc-50 transition flex gap-3 ${
+                  activeShop === conv.shop_id ? 'bg-zinc-50' : ''
                 }`}
               >
                 {conv.shop_logo ? (
-                  <img src={conv.shop_logo} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                  <img
+                    src={conv.shop_logo}
+                    alt=""
+                    className="w-9 h-9 rounded-md object-cover border border-zinc-200 shrink-0"
+                  />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-amber-50 font-bold shrink-0">
-                    {conv.shop_name[0]}
+                  <div className="w-9 h-9 rounded-md bg-zinc-900 flex items-center justify-center text-zinc-100 font-semibold text-xs shrink-0">
+                    {conv.shop_name[0].toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold truncate">{conv.shop_name}</span>
+                    <span className="text-sm font-medium text-zinc-900 truncate">
+                      {conv.shop_name}
+                    </span>
                     {conv.unread > 0 && (
-                      <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+                      <span className="bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0">
                         {conv.unread}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-stone-500 truncate mt-0.5">
-                    {conv.lastMessage.sender === 'admin' ? 'You: ' : ''}{conv.lastMessage.message}
+                  <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                    {conv.lastMessage.sender === 'admin' ? 'You: ' : ''}
+                    {conv.lastMessage.message}
                   </p>
                 </div>
               </button>
@@ -169,58 +196,96 @@ export default function AdminSupportPage() {
         </div>
 
         {/* CHAT VIEW */}
-        <div className={`flex-1 flex flex-col bg-stone-50 ${!activeShop ? 'hidden md:flex' : 'flex'}`}>
+        <div
+          className={`flex-1 flex flex-col bg-white ${
+            !activeShop ? 'hidden md:flex' : 'flex'
+          }`}
+        >
           {activeConv ? (
             <>
-              <div className="shrink-0 p-4 border-b border-stone-200 bg-white flex items-center gap-3">
-                <button onClick={() => setActiveShop(null)} className="md:hidden p-2 -ms-2 text-stone-500">
-                  <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+              {/* Chat Header */}
+              <div className="shrink-0 px-5 py-3 border-b border-zinc-200 flex items-center gap-3">
+                <button
+                  onClick={() => setActiveShop(null)}
+                  className="md:hidden p-1 -ms-2 text-zinc-500"
+                >
+                  <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
                 </button>
                 {activeConv.shop_logo ? (
-                  <img src={activeConv.shop_logo} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                  <img
+                    src={activeConv.shop_logo}
+                    alt=""
+                    className="w-8 h-8 rounded-md object-cover border border-zinc-200"
+                  />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg bg-stone-900 flex items-center justify-center text-amber-50 text-xs font-bold">
-                    {activeConv.shop_name[0]}
+                  <div className="w-8 h-8 rounded-md bg-zinc-900 flex items-center justify-center text-zinc-100 text-xs font-semibold">
+                    {activeConv.shop_name[0].toUpperCase()}
                   </div>
                 )}
-                <div className="text-sm font-semibold">{activeConv.shop_name}</div>
+                <div className="text-sm font-medium text-zinc-900">
+                  {activeConv.shop_name}
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col-reverse">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-3 flex flex-col-reverse bg-zinc-50/50">
                 {activeConv.messages.map((m) => (
-                  <div key={m.id} className={`p-3 rounded-xl border shadow-sm max-w-[80%] ${
-                    m.sender === 'admin' 
-                      ? 'bg-emerald-50 border-emerald-100 self-end' 
-                      : 'bg-white border-stone-200 self-start'
-                  }`}>
-                    <p className="text-sm text-stone-800">{m.message}</p>
-                    <div className="text-[10px] text-stone-400 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+                  <div
+                    key={m.id}
+                    className={`max-w-[75%] rounded-lg px-3 py-2 ${
+                      m.sender === 'admin'
+                        ? 'bg-zinc-900 text-white self-end'
+                        : 'bg-white border border-zinc-200 text-zinc-900 self-start'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed">{m.message}</p>
+                    <div
+                      className={`text-[10px] mt-1 tabular-nums ${
+                        m.sender === 'admin' ? 'text-zinc-400' : 'text-zinc-500'
+                      }`}
+                    >
+                      {new Date(m.created_at).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <form onSubmit={sendReply} className="shrink-0 p-4 border-t border-stone-200 bg-white">
+              {/* Input */}
+              <form
+                onSubmit={sendReply}
+                className="shrink-0 p-3 border-t border-zinc-200 bg-white"
+              >
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Type your reply..."
-                    className="flex-1 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition"
+                    className="flex-1 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 transition"
                   />
                   <button
                     type="submit"
                     disabled={sending || !replyText.trim()}
-                    className="w-12 h-12 rounded-xl bg-stone-900 text-white flex items-center justify-center hover:bg-stone-800 disabled:opacity-40 transition"
+                    className="px-4 py-2 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 disabled:opacity-50 transition flex items-center gap-2"
                   >
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                    {sending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    Send
                   </button>
                 </div>
               </form>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-stone-400 text-sm">
-              Select a conversation to reply
+            <div className="flex-1 flex items-center justify-center text-sm text-zinc-400 bg-zinc-50/50">
+              Select a conversation
             </div>
           )}
         </div>
