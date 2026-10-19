@@ -37,26 +37,29 @@ export default function Home() {
 
           {/* Actions */}
           <div className="space-y-3">
-            <Link
-              href="/setup"
-              className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-stone-900 text-amber-50 hover:bg-stone-800 active:scale-[0.99] transition shadow-sm relative overflow-hidden"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                  <Store className="w-4 h-4" strokeWidth={2} />
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-semibold">
-                    {t('landing.setup')}
-                  </div>
-                  <div className="text-[11px] text-amber-100/70 flex items-center gap-1.5 mt-0.5">
-                    <Gift className="w-3 h-3" />
-                    {t('landing.freeTrial')}
-                  </div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 opacity-60 group-hover:opacity-100 transition rtl:rotate-180 shrink-0" />
-            </Link>
+          <Link
+  href="/setup"
+  className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-stone-900 text-amber-50 hover:bg-stone-800 active:scale-[0.99] transition shadow-sm relative overflow-hidden"
+>
+  <div className="flex items-center gap-3">
+    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+      <Store className="w-4 h-4" strokeWidth={2} />
+    </div>
+
+    <div className="text-left rtl:text-right">
+      <div className="text-sm font-semibold">
+        {t('landing.setup')}
+      </div>
+
+      <div className="text-[11px] text-amber-100/70 flex items-center gap-1.5 mt-0.5">
+        <Gift className="w-3 h-3 shrink-0" />
+        {t('landing.freeTrial')}
+      </div>
+    </div>
+  </div>
+
+  <ArrowRight className="w-4 h-4 opacity-60 group-hover:opacity-100 transition rtl:rotate-180 shrink-0" />
+</Link>
 
             <Link
               href="/barista"
