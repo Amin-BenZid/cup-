@@ -15,6 +15,15 @@ export const DEFAULT_LOCALE: Locale = "fr";
 
 export const translations = {
   fr: {
+    "setup.codeLabel": "Code du commerce",
+    "setup.codePlaceholder": "ex. boutique-nomad",
+    "setup.codeHint": "Ceci sera utilisé par le personnel pour se connecter.",
+    "setup.pinLabel": "PIN à 6 chiffres",
+    "setup.pinPlaceholder": "••••••",
+    "setup.error.codeLength":
+      "Le code du commerce doit comporter au moins 3 caractères.",
+    "setup.error.pinLength": "Le PIN doit contenir exactement 6 chiffres.",
+
     // Order with phone
     "order.number": "Numéro de commande",
     "order.phone": "Téléphone du client",
@@ -57,7 +66,7 @@ export const translations = {
     // Landing
     "landing.tagline": "Votre commande, prête quand vous l'êtes.",
     "landing.subtitle":
-      "Transformez n'importe quel téléphone en bipeur. Aucun matériel à acheter, aucun bipeur à perdre. Idéal pour les cafés, boulangeries et fast-foods.",
+      "Transformez n'importe quel téléphone en bipeur. Aucun matériel à acheter, aucun bipeur à perdre. Idéal pour les boutiques, boulangeries et fast-foods.",
     "landing.setup": "Créer un commerce",
     "landing.setupHint": "Ouvrez votre boutique en 30 secondes",
     "landing.freeTrial": "Essai gratuit de 15 jours",
@@ -72,7 +81,7 @@ export const translations = {
     "landing.step3Hint": "Fort, distinct, impossible à manquer",
     "landing.footer": "Conçu pour les commerces qui préfèrent servir",
 
-    // Setup
+    // Setup / Sign Up
     "setup.back": "Retour",
     "setup.title": "Créez votre commerce",
     "setup.subtitle":
@@ -87,8 +96,12 @@ export const translations = {
     "setup.creating": "Création…",
     "setup.haveAccount": "Vous avez déjà un commerce ?",
     "setup.loginLink": "Connectez-vous",
+    "setup.nameLabel": "Nom du commerce",
+    "setup.namePlaceholder": "ex. Boutique Nomad",
     "setup.error.nameRequired": "Le nom du commerce est requis.",
     "setup.error.pinTooShort": "Le code doit comporter au moins 4 chiffres.",
+    "setup.error.failedCreate": "Échec de la création du commerce",
+    "setup.error.network": "Erreur réseau",
 
     // Staff Login
     "login.title": "Connexion personnel",
@@ -306,6 +319,9 @@ export const translations = {
     "admin.stats.total": "Total",
     "admin.stats.shops": "Commerces",
     "admin.stats.rating": "Note",
+    "login.error.expired":
+      "Votre essai ou abonnement a expiré. Veuillez contacter le support pour renouveler.",
+    "login.error.failed": "Échec de la connexion",
 
     // Support & Broadcast
     "support.button": "Aide & Support",
@@ -345,6 +361,13 @@ export const translations = {
   },
 
   ar: {
+    "setup.codeLabel": "رمز المتجر",
+    "setup.codePlaceholder": "مثال: shop-nomad",
+    "setup.codeHint": "هذا ما سيستخدمه الموظفون لتسجيل الدخول.",
+    "setup.pinLabel": "الرقم السري (6 أرقام)",
+    "setup.pinPlaceholder": "••••••",
+    "setup.error.codeLength": "يجب أن يكون رمز المتجر 3 أحرف على الأقل.",
+    "setup.error.pinLength": "يجب أن يتكون الرقم السري من 6 أرقام بالضبط.",
     // Order with phone
     "order.number": "رقم الطلب",
     "order.phone": "هاتف العميل",
@@ -386,8 +409,8 @@ export const translations = {
     // Landing
     "landing.tagline": "طلبك جاهز عندما تكون أنت جاهزاً.",
     "landing.subtitle":
-      "حوّل أي هاتف إلى جهاز تنبيه. لا أجهزة تشتريها، ولا أجهزة تفقدها. مثالي للمقاهي والمخابز والوجبات السريعة.",
-    "landing.setup": "أنشئ متجر",
+      "حوّل أي هاتف إلى جهاز تنبيه. لا أجهزة تشتريها، ولا أجهزة تفقدها. مثالي للمتاجر والمخابز والوجبات السريعة.",
+    "landing.setup": "أنشئ متجراً",
     "landing.setupHint": "افتح متجرك في 30 ثانية",
     "landing.freeTrial": "تجربة مجانية لمدة 15 يوماً",
     "landing.barista": "دخول الموظفين",
@@ -401,7 +424,7 @@ export const translations = {
     "landing.step3Hint": "بصوت عالٍ وواضح لا يمكن تفويته",
     "landing.footer": "صُمم للمتاجر التي تفضّل خدمة العملاء",
 
-    // Setup
+    // Setup / Sign Up
     "setup.back": "رجوع",
     "setup.title": "أنشئ متجرك",
     "setup.subtitle": "حقلان وتبدأ. يمكنك تخصيص كل شيء لاحقاً.",
@@ -410,12 +433,16 @@ export const translations = {
     "setup.shopNamePlaceholder": "نوماد",
     "setup.pin": "رمز الموظفين",
     "setup.pinHint": "من 4 إلى 6 أرقام. يستخدمه فريقك لتسجيل الدخول.",
-    "setup.create": "إنشاء المتجر",
+    "setup.create": "إنشاء حساب المتجر",
     "setup.creating": "جارٍ الإنشاء…",
-    "setup.haveAccount": "لديك متجر بالفعل؟",
+    "setup.haveAccount": "لديك حساب متجر بالفعل؟",
     "setup.loginLink": "سجّل الدخول",
+    "setup.nameLabel": "اسم المتجر",
+    "setup.namePlaceholder": "مثال: متجر نوماد",
     "setup.error.nameRequired": "اسم المتجر مطلوب.",
     "setup.error.pinTooShort": "يجب أن يكون الرمز 4 أرقام على الأقل.",
+    "setup.error.failedCreate": "فشل في إنشاء المتجر",
+    "setup.error.network": "خطأ في الشبكة",
 
     // Staff login
     "login.title": "دخول الموظفين",
@@ -610,6 +637,9 @@ export const translations = {
       "سيتمكن هذا المتجر من تسجيل الدخول وتلقي الطلبات مرة أخرى.",
     "admin.delete": "حذف",
     "admin.cancel": "إلغاء",
+    "login.error.expired":
+      "انتهت فترة التجربة أو الاشتراك الخاصة بك. يرجى الاتصال بالدعم للتجديد.",
+    "login.error.failed": "فشل تسجيل الدخول",
 
     // Live Feed
     "live.title": "المراقبة المباشرة",
@@ -664,6 +694,14 @@ export const translations = {
   },
 
   en: {
+    "setup.codeLabel": "Shop Code",
+    "setup.codePlaceholder": "e.g. shop-nomad",
+    "setup.codeHint": "This is what staff will use to log in.",
+    "setup.pinLabel": "6-digit PIN",
+    "setup.pinPlaceholder": "••••••",
+    "setup.error.codeLength": "Shop Code must be at least 3 characters.",
+    "setup.error.pinLength": "PIN must be exactly 6 digits.",
+
     "billing.whatsappMsg":
       "Hello %name, this is Mark from Cup. Your subscription is ending soon. Would you like to continue?",
     // Order with phone
@@ -686,6 +724,9 @@ export const translations = {
     "game.finalScore": "Final score",
     "game.newBest": "New best",
     "game.playAgain": "Play again",
+    "login.error.expired":
+      "Your trial or subscription has expired. Please contact support to renew.",
+    "login.error.failed": "Login failed",
 
     // Review
     "review.title": "How was your order?",
@@ -708,7 +749,7 @@ export const translations = {
     // Landing
     "landing.tagline": "Your order, ready when you are.",
     "landing.subtitle":
-      "Turn any phone into a pager. No hardware to buy, no pagers to lose. Perfect for cafés, bakeries and fast food.",
+      "Turn any phone into a pager. No hardware to buy, no pagers to lose. Perfect for shops, bakeries and fast food.",
     "landing.setup": "Set up a shop",
     "landing.setupHint": "Create your shop in 30 seconds",
     "landing.freeTrial": "15-Day Free Trial",
@@ -723,7 +764,7 @@ export const translations = {
     "landing.step3Hint": "Loud, distinct, impossible to miss",
     "landing.footer": "Built for shops that would rather serve",
 
-    // Setup
+    // Setup / Sign Up
     "setup.back": "Back",
     "setup.title": "Set up your shop",
     "setup.subtitle":
@@ -733,12 +774,16 @@ export const translations = {
     "setup.shopNamePlaceholder": "Nomad",
     "setup.pin": "Staff PIN",
     "setup.pinHint": "4 to 6 digits. Your team uses this to log in.",
-    "setup.create": "Create shop",
+    "setup.create": "Create Shop Account",
     "setup.creating": "Creating…",
-    "setup.haveAccount": "Already have a shop?",
+    "setup.haveAccount": "Already have a shop account?",
     "setup.loginLink": "Log in",
+    "setup.nameLabel": "Shop Name",
+    "setup.namePlaceholder": "e.g. Shop Nomad",
     "setup.error.nameRequired": "Shop name is required.",
     "setup.error.pinTooShort": "PIN must be at least 4 digits.",
+    "setup.error.failedCreate": "Failed to create shop",
+    "setup.error.network": "Network error",
 
     // Staff login
     "login.title": "Staff login",
@@ -812,26 +857,26 @@ export const translations = {
     "common.loading": "Loading…",
     "common.justAMoment": "Just a moment",
     "common.orderNotFound": "Order not found",
-    "common.askBarista": "Ask the staff for help.",
+    "common.askBarista": "Ask the staff.",
     "common.back": "Back",
 
     // Pending
     "pending.title": "Waiting for approval",
     "pending.body":
-      "Thanks {name}! Your request has been received. An admin will review it shortly.",
+      "Thanks, {name}! Your request has been received. An administrator will review it shortly.",
     "pending.whatHappens": "What happens next",
-    "pending.step1": "An admin reviews your request",
-    "pending.step2": "You get the approval — usually within 24 hours",
-    "pending.step3": "You open your dashboard",
+    "pending.step1": "An administrator reviews your request",
+    "pending.step2": "You receive approval — usually within 24 hours",
+    "pending.step3": "You get access to your dashboard",
     "pending.autoRefresh":
-      "This page refreshes automatically. Feel free to leave it open.",
+      "This page updates automatically. You can leave it open.",
     "pending.approved": "Approved!",
     "pending.redirecting": "Redirecting to your dashboard…",
     "pending.declined": "Request declined",
     "pending.declinedBody":
-      "Unfortunately this request was not approved. Contact us if you think this is a mistake.",
+      "Unfortunately, this request was not approved. Contact us if you think this is a mistake.",
     "pending.backHome": "Back to home",
-    "pending.unknown": "Could not check status. Reload the page.",
+    "pending.unknown": "Unable to check status. Please reload the page.",
 
     // Customize
     "cz.title": "Customize",
@@ -850,31 +895,31 @@ export const translations = {
     "cz.branding.shopName": "Shop name",
     "cz.branding.shopNameHint": "The name your customers see",
     "cz.branding.tagline": "Tagline",
-    "cz.branding.taglineHint": "A short line under your name",
+    "cz.branding.taglineHint": "A short line below your name",
     "cz.branding.taglinePlaceholder": "Small batch, slow mornings",
     "cz.branding.logo": "Logo",
     "cz.branding.logoHint": "Upload, then adjust position and zoom",
     "cz.branding.removeLogo": "Remove logo",
     "cz.branding.adjust": "Adjust",
-    "cz.branding.dragPreview": "Drag the preview to reposition",
+    "cz.branding.dragPreview": "Drag preview to reposition",
     "cz.branding.reset": "Reset",
     "cz.theme.palette": "Palette",
-    "cz.theme.paletteHint": "Sets the background, text and accents",
+    "cz.theme.paletteHint": "Sets background, text, and accents",
     "cz.theme.primaryColor": "Primary color",
     "cz.theme.primaryColorHint": "Used for buttons and headers",
     "cz.theme.font": "Font",
     "cz.theme.fontHint": "Applies to headings and text",
-    "cz.theme.reset": "Reset all to defaults",
+    "cz.theme.reset": "Reset to defaults",
     "cz.game.waitingGame": "Waiting game",
     "cz.game.waitingGameHint": "Shown to the customer while they wait",
-    "cz.game.catchBeans": "Catch the Beans",
+    "cz.game.catchBeans": "Catch the beans",
     "cz.game.catchBeansHint": "Drag the cup, catch what falls",
     "cz.game.none": "No game",
-    "cz.game.noneHint": "Just show the order status",
+    "cz.game.noneHint": "Show order status only",
     "cz.messages.preparing": "Preparing",
-    "cz.messages.preparingHint": "Shown while the customer waits",
+    "cz.messages.preparingHint": "Shown while customer is waiting",
     "cz.messages.ready": "Ready",
-    "cz.messages.readyHint": "Shown when the order is ready",
+    "cz.messages.readyHint": "Shown when order is ready",
     "cz.messages.preview": "Preview",
     "cz.messages.orderLabel": "Order #42",
 
@@ -886,8 +931,8 @@ export const translations = {
     "cz.logo.cancel": "Cancel",
     "cz.logo.useImage": "Use image",
     "cz.logo.uploading": "Uploading…",
-    "cz.logo.error.format": "Only PNG, JPG, WEBP, or SVG",
-    "cz.logo.error.size": "Max 5MB",
+    "cz.logo.error.format": "PNG, JPG, WEBP or SVG only",
+    "cz.logo.error.size": "Max 5 MB",
     "cz.logo.error.process": "Failed to process image",
     "cz.logo.error.upload": "Upload failed",
 
@@ -895,16 +940,16 @@ export const translations = {
     "admin.title": "Admin",
     "admin.cafes": "Shops",
     "admin.logout": "Log out",
-    "admin.search": "Search shops...",
+    "admin.search": "Search a shop...",
     "admin.all": "All",
     "admin.pending": "Pending",
     "admin.active": "Active",
     "admin.disabled": "Disabled",
     "admin.noCafes": "No shops yet",
     "admin.noCafesHint": "Share the setup link with a shop to get started.",
-    "admin.noMatches": 'No shops match "{query}".',
+    "admin.noMatches": 'No results for "{query}".',
     "admin.clearSearch": "Clear search",
-    "admin.accessControl": "Access Control",
+    "admin.accessControl": "Access control",
     "admin.accessActive": "Can log in and take orders.",
     "admin.accessPending": "Waiting for your approval.",
     "admin.accessDisabled": "Access is blocked.",
@@ -915,21 +960,21 @@ export const translations = {
     "admin.resetPin": "Reset PIN",
     "admin.savePin": "Save",
     "admin.recentOrders": "Recent orders",
-    "admin.noOrders": "No orders yet",
+    "admin.noOrders": "No orders",
     "admin.reviews": "Reviews",
     "admin.noReviews": "No reviews yet",
-    "admin.activity": "Activity History",
-    "admin.noActivity": "No activity logged yet",
+    "admin.activity": "Activity history",
+    "admin.noActivity": "No activity logged",
     "admin.deleteCafe": "Delete shop",
     "admin.deleteWarning":
-      "Deleting removes the shop and all its orders. Cannot be undone.",
+      "Deleting erases the shop and all its orders. This action is irreversible.",
     "admin.statusActive": "Active",
     "admin.statusPending": "Pending",
     "admin.statusDisabled": "Disabled",
     "admin.confirmDisable": "Disable this shop?",
     "admin.confirmEnable": "Enable this shop?",
     "admin.confirmDisableDesc":
-      "Staff will not be able to log in and take orders until re-enabled.",
+      "Staff will no longer be able to log in or take orders.",
     "admin.confirmEnableDesc":
       "This shop will be able to log in and take orders again.",
     "admin.delete": "Delete",
@@ -937,13 +982,13 @@ export const translations = {
 
     // Live Feed
     "live.title": "Live Monitor",
-    "live.allShops": "All Shops",
-    "live.searchPlaceholder": "Search order # or shop...",
-    "live.noOrders": "No orders yet",
-    "live.waiting": "Waiting for the first order across the platform...",
-    "live.noResults": "No results found",
-    "live.adjustFilters": "Try adjusting your search or shop filter.",
-    "live.clearFilters": "Clear Filters",
+    "live.allShops": "All shops",
+    "live.searchPlaceholder": "Search # or shop...",
+    "live.noOrders": "No orders",
+    "live.waiting": "Waiting for the first order...",
+    "live.noResults": "No results",
+    "live.adjustFilters": "Try adjusting your filters.",
+    "live.clearFilters": "Clear filters",
 
     // Admin Stats
     "admin.stats.today": "Today",
@@ -959,14 +1004,14 @@ export const translations = {
     "support.sending": "Sending...",
     "support.success": "Message sent!",
     "support.history": "Your messages",
-    "support.noHistory": "No messages yet",
+    "support.noHistory": "No messages",
     "admin.support.inbox": "Inbox",
     "admin.support.noMessages": "No messages yet",
     "admin.support.from": "From",
     "admin.support.markRead": "Mark read",
     "admin.support.markResolved": "Resolve",
-    "admin.broadcast.title": "Global Banner",
-    "admin.broadcast.placeholder": "e.g. Maintenance tonight at 11 PM...",
+    "admin.broadcast.title": "Global Message (Banner)",
+    "admin.broadcast.placeholder": "Ex: Maintenance tonight at 11 PM...",
     "admin.broadcast.active": "Enable banner",
     "admin.broadcast.save": "Update",
     "admin.broadcast.saved": "Banner updated",
@@ -974,13 +1019,13 @@ export const translations = {
 
     // Onboarding
     "onboarding.title": "Welcome to Cup!",
-    "onboarding.subtitle": "Let's get your shop ready in 3 easy steps.",
+    "onboarding.subtitle": "Let's set up your shop in 3 simple steps.",
     "onboarding.logo": "Upload your logo",
-    "onboarding.logoDesc": "Show your brand to customers.",
+    "onboarding.logoDesc": "Showcase your brand to customers.",
     "onboarding.theme": "Customize your theme",
-    "onboarding.themeDesc": "Pick colors and fonts for your page.",
+    "onboarding.themeDesc": "Choose your page colors and fonts.",
     "onboarding.order": "Create a test order",
-    "onboarding.orderDesc": "See how the QR code and screen work.",
+    "onboarding.orderDesc": "See how the QR code works.",
     "onboarding.go": "Go",
     "onboarding.tryIt": "Try it",
   },

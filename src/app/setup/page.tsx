@@ -12,6 +12,7 @@ export default function SetupPage() {
   const t = useT()
   const router = useRouter()
   const [name, setName] = useState('')
+  const [code, setCode] = useState('')
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,37 +22,44 @@ export default function SetupPage() {
     setError('')
 
     if (!name.trim()) return setError(t('setup.error.nameRequired'))
-    if (pin.length < 4) return setError(t('setup.error.pinTooShort'))
+    if (code.length < 3) return setError(t('setup.error.codeLength'))
+    if (pin.length !== 6) return setError(t('setup.error.pinLength'))
 
     setLoading(true)
     try {
       const res = await fetch('/api/shops', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), pin }),
+        body: JSON.stringify({ name: name.trim(), code: code.trim(), pin }),
       })
       const json = await res.json()
 
       if (!res.ok) {
-        setError(json.error ?? 'Failed to create shop')
+        setError(json.error ?? t('setup.error.failedCreate'))
         return
       }
 
-      // Save identity so the pending page can show the shop name
       localStorage.setItem('shop_id', json.shop.id)
       localStorage.setItem('shop_name', json.shop.name)
-
-      // Go to the pending approval screen
+      localStorage.setItem('shop_code', json.shop.code)
       router.push('/pending')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error')
+      setError(e instanceof Error ? e.message : t('setup.error.network'))
     } finally {
       setLoading(false)
     }
   }
 
+  // Auto-generate code from name
+  function handleNameChange(val: string) {
+    setName(val)
+    if (!code || code === name.toLowerCase().replace(/\s+/g, '-')) {
+      setCode(val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
+    }
+  }
+
   return (
-    <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col">
+    <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col transition-colors duration-300">
       <header className="px-6 pt-8 pb-2">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <Link
@@ -77,22 +85,44 @@ export default function SetupPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Field
-              label={t('setup.shopName')}
-              hint={t('setup.shopNameHint')}
-            >
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* SHOP NAME */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-900">
+                {t('setup.nameLabel')}
+              </label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t('setup.shopNamePlaceholder')}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder={t('setup.namePlaceholder')}
                 autoFocus
-                className="w-full px-4 py-3.5 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-[15px] transition"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition"
               />
-            </Field>
+            </div>
 
-            <Field label={t('setup.pin')} hint={t('setup.pinHint')}>
+            {/* CAFÉ CODE */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-900">
+                {t('setup.codeLabel')}
+              </label>
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toLowerCase().trim())}
+                placeholder={t('setup.codePlaceholder')}
+                className="w-full px-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition font-mono"
+              />
+              <p className="text-xs text-stone-500">
+                {t('setup.codeHint')}
+              </p>
+            </div>
+
+            {/* PIN */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-900">
+                {t('setup.pinLabel')}
+              </label>
               <div className="relative">
                 <KeyRound className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
                 <input
@@ -102,15 +132,15 @@ export default function SetupPage() {
                   onChange={(e) =>
                     setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
                   }
-                  placeholder="••••"
+                  placeholder={t('setup.pinPlaceholder')}
                   maxLength={6}
-                  className="w-full ps-11 pe-4 py-3.5 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-[15px] tracking-[0.4em] font-mono transition"
+                  className="w-full ps-11 pe-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm tracking-[0.4em] font-mono transition"
                 />
               </div>
-            </Field>
+            </div>
 
             {error && (
-              <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+              <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl transition-all">
                 {error}
               </div>
             )}
@@ -144,25 +174,5 @@ export default function SetupPage() {
         </div>
       </footer>
     </main>
-  )
-}
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string
-  hint?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-2.5">
-      <div>
-        <label className="text-sm font-medium text-stone-900">{label}</label>
-        {hint && <p className="text-xs text-stone-500 mt-0.5">{hint}</p>}
-      </div>
-      {children}
-    </div>
   )
 }
