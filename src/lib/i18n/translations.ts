@@ -70,7 +70,7 @@ export const translations = {
     "landing.setup": "Créer un commerce",
     "landing.setupHint": "Ouvrez votre boutique en 30 secondes",
     "landing.freeTrial": "Essai gratuit de 15 jours",
-    "landing.barista": "Connexion personnel",
+    "landing.barista": "Espace équipe",
     "landing.baristaHint": "Connectez-vous avec le code du commerce",
     "landing.howItWorks": "Comment ça marche",
     "landing.step1": "L'équipe encaisse la commande",
@@ -91,7 +91,7 @@ export const translations = {
     "setup.shopNamePlaceholder": "Nomad",
     "setup.pin": "Code personnel",
     "setup.pinHint":
-      "4 à 6 chiffres. Votre équipe l'utilise pour se connecter.",
+      "6 chiffres. Votre équipe l'utilise pour se connecter.",
     "setup.create": "Créer le commerce",
     "setup.creating": "Création…",
     "setup.haveAccount": "Vous avez déjà un commerce ?",
@@ -99,16 +99,16 @@ export const translations = {
     "setup.nameLabel": "Nom du commerce",
     "setup.namePlaceholder": "ex. Boutique Nomad",
     "setup.error.nameRequired": "Le nom du commerce est requis.",
-    "setup.error.pinTooShort": "Le code doit comporter au moins 4 chiffres.",
+    "setup.error.pinTooShort": "Le PIN doit contenir exactement 6 chiffres.",
     "setup.error.failedCreate": "Échec de la création du commerce",
     "setup.error.network": "Erreur réseau",
 
     // Staff Login
-    "login.title": "Connexion personnel",
+    "login.title": "Connexion du personnel",
     "login.subtitle":
       "Entrez le code de votre commerce pour ouvrir le tableau de bord.",
     "login.button": "Se connecter",
-    "login.error.pinTooShort": "Le code doit comporter au moins 4 chiffres.",
+    "login.error.pinTooShort": "Le PIN doit contenir exactement 6 chiffres.",
     "login.newShop": "Nouveau commerce ?",
     "login.setupLink": "Créez-en un",
     "login.footer": "Gardez cet onglet ouvert pendant votre service",
@@ -125,7 +125,7 @@ export const translations = {
     "dash.noOrdersHint": "Appuyez sur « Nouvelle commande » pour commencer",
     "dash.ready": "Prêt",
     "dash.preparing": "En préparation",
-    "dash.markReady": "Prêt",
+    "dash.markReady": "Marquer prêt",
     "dash.saving": "Enregistrement…",
     "dash.pickedUp": "Récupéré",
     "dash.customerConnected": "Client connecté",
@@ -346,7 +346,7 @@ export const translations = {
 
     // Onboarding
     "onboarding.title": "Bienvenue sur Cup !",
-    "onboarding.subtitle": "Préparons votre commerce en 3 étapes simples.",
+    "onboarding.subtitle": "Préparons votre commerce en 2 étapes simples.",
     "onboarding.logo": "Téléchargez votre logo",
     "onboarding.logoDesc": "Montrez votre marque à vos clients.",
     "onboarding.theme": "Personnalisez votre thème",
@@ -357,7 +357,7 @@ export const translations = {
     "onboarding.tryIt": "Essayer",
 
     "billing.whatsappMsg":
-      "Bonjour %name, c'est Mark de Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
+      "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
   },
 
   ar: {
@@ -386,7 +386,7 @@ export const translations = {
       "اسحب لتحريك الكوب. التقط الحبوب، وإذا فوّت ثلاثاً تنتهي اللعبة.",
     "game.play": "العب",
     "game.finalScore": "النتيجة النهائية",
-    "game.newBest": "أفضل نتيجة جديدة",
+    "game.newBest": "رقم قياسي جديد",
     "game.playAgain": "العب مرة أخرى",
 
     // Review
@@ -432,7 +432,7 @@ export const translations = {
     "setup.shopNameHint": "ما يراه عملاؤك",
     "setup.shopNamePlaceholder": "نوماد",
     "setup.pin": "رمز الموظفين",
-    "setup.pinHint": "من 4 إلى 6 أرقام. يستخدمه فريقك لتسجيل الدخول.",
+    "setup.pinHint": "6 أرقام. يستخدمه فريقك لتسجيل الدخول.",
     "setup.create": "إنشاء حساب المتجر",
     "setup.creating": "جارٍ الإنشاء…",
     "setup.haveAccount": "لديك حساب متجر بالفعل؟",
@@ -440,7 +440,7 @@ export const translations = {
     "setup.nameLabel": "اسم المتجر",
     "setup.namePlaceholder": "مثال: متجر نوماد",
     "setup.error.nameRequired": "اسم المتجر مطلوب.",
-    "setup.error.pinTooShort": "يجب أن يكون الرمز 4 أرقام على الأقل.",
+    "setup.error.pinTooShort": "يجب أن يتكون الرمز من 6 أرقام بالضبط.",
     "setup.error.failedCreate": "فشل في إنشاء المتجر",
     "setup.error.network": "خطأ في الشبكة",
 
@@ -448,7 +448,7 @@ export const translations = {
     "login.title": "دخول الموظفين",
     "login.subtitle": "أدخل رمز متجرك لفتح لوحة التحكم.",
     "login.button": "تسجيل الدخول",
-    "login.error.pinTooShort": "يجب أن يكون الرمز 4 أرقام على الأقل.",
+    "login.error.pinTooShort": "يجب أن يتكون الرمز من 6 أرقام بالضبط.",
     "login.newShop": "متجر جديد؟",
     "login.setupLink": "أنشئ واحداً",
     "login.footer": "أبقِ هذه الصفحة مفتوحة خلال نوبتك",
@@ -464,7 +464,7 @@ export const translations = {
     "dash.noOrdersHint": "اضغط على «طلب جديد» للبدء",
     "dash.ready": "جاهز",
     "dash.preparing": "قيد التحضير",
-    "dash.markReady": "جاهز",
+    "dash.markReady": "علّم كجاهز",
     "dash.saving": "جارٍ الحفظ…",
     "dash.pickedUp": "تم الاستلام",
     "dash.customerConnected": "العميل متصل",
@@ -495,7 +495,7 @@ export const translations = {
     "cust.gotIt": "فهمت",
     "cust.enjoy": "استمتع بطلبك",
     "cust.canClose": "يمكنك إغلاق هذه الصفحة الآن.",
-    "cust.received": "تم الاستلام",
+    "cust.received": "تم استلام الطلب",
     "cust.preparingStep": "قيد التحضير",
     "cust.readyStep": "جاهز",
     "cust.whileYouWait": "في أثناء الانتظار",
@@ -552,7 +552,7 @@ export const translations = {
     "cz.tab.messages": "الرسائل",
     "cz.branding.shopName": "اسم المتجر",
     "cz.branding.shopNameHint": "الاسم الذي يراه عملاؤك",
-    "cz.branding.tagline": "الشعار",
+    "cz.branding.tagline": "العبارة التعريفية",
     "cz.branding.taglineHint": "سطر قصير تحت اسمك",
     "cz.branding.taglinePlaceholder": "دفعات صغيرة، صباحات هادئة",
     "cz.branding.logo": "الشعار",
@@ -670,9 +670,9 @@ export const translations = {
     "admin.support.noMessages": "لا توجد رسائل بعد",
     "admin.support.from": "من",
     "admin.support.markRead": "تحديد كمقروء",
-    "admin.support.markResolved": "تم الحل",
+    "admin.support.markResolved": "حل",
     "admin.broadcast.title": "رسالة عامة (شريط)",
-    "admin.broadcast.placeholder": "مثال: صيانة الليلة الساعة 11...",
+    "admin.broadcast.placeholder": "مثال: صيانة الليلة الساعة 11 مساءً...",
     "admin.broadcast.active": "تفعيل الشريط",
     "admin.broadcast.save": "تحديث",
     "admin.broadcast.saved": "تم تحديث الشريط",
@@ -680,7 +680,7 @@ export const translations = {
 
     // Onboarding
     "onboarding.title": "مرحباً بك في Cup!",
-    "onboarding.subtitle": "لنجهز متجرك في 3 خطوات سهلة.",
+    "onboarding.subtitle": "لنجهز متجرك في خطوتين سهلتين.",
     "onboarding.logo": "ارفع شعارك",
     "onboarding.logoDesc": "أظهر علامتك التجارية لعملائك.",
     "onboarding.theme": "خصص مظهرك",
@@ -690,7 +690,7 @@ export const translations = {
     "onboarding.go": "اذهب",
     "onboarding.tryIt": "جرب",
     "billing.whatsappMsg":
-      "مرحباً %name، أنا مارك من Cup. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟",
+      "مرحباً %name، معك فريق Cup. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟",
   },
 
   en: {
@@ -703,7 +703,7 @@ export const translations = {
     "setup.error.pinLength": "PIN must be exactly 6 digits.",
 
     "billing.whatsappMsg":
-      "Hello %name, this is Mark from Cup. Your subscription is ending soon. Would you like to continue?",
+      "Hello %name, this is the Cup team. Your subscription is ending soon. Would you like to continue?",
     // Order with phone
     "order.number": "Order number",
     "order.phone": "Customer phone",
@@ -773,7 +773,7 @@ export const translations = {
     "setup.shopNameHint": "Shown to your customers",
     "setup.shopNamePlaceholder": "Nomad",
     "setup.pin": "Staff PIN",
-    "setup.pinHint": "4 to 6 digits. Your team uses this to log in.",
+    "setup.pinHint": "6 digits. Your team uses this to log in.",
     "setup.create": "Create Shop Account",
     "setup.creating": "Creating…",
     "setup.haveAccount": "Already have a shop account?",
@@ -781,7 +781,7 @@ export const translations = {
     "setup.nameLabel": "Shop Name",
     "setup.namePlaceholder": "e.g. Shop Nomad",
     "setup.error.nameRequired": "Shop name is required.",
-    "setup.error.pinTooShort": "PIN must be at least 4 digits.",
+    "setup.error.pinTooShort": "PIN must be exactly 6 digits.",
     "setup.error.failedCreate": "Failed to create shop",
     "setup.error.network": "Network error",
 
@@ -789,7 +789,7 @@ export const translations = {
     "login.title": "Staff login",
     "login.subtitle": "Enter your shop's PIN to open the dashboard.",
     "login.button": "Log in",
-    "login.error.pinTooShort": "PIN must be at least 4 digits.",
+    "login.error.pinTooShort": "PIN must be exactly 6 digits.",
     "login.newShop": "New shop?",
     "login.setupLink": "Set one up",
     "login.footer": "Keep this tab open during your shift",
@@ -805,7 +805,7 @@ export const translations = {
     "dash.noOrdersHint": 'Tap "New Order" to get started',
     "dash.ready": "Ready",
     "dash.preparing": "Preparing",
-    "dash.markReady": "Ready",
+    "dash.markReady": "Mark ready",
     "dash.saving": "Saving…",
     "dash.pickedUp": "Picked up",
     "dash.customerConnected": "Customer connected",
@@ -1019,7 +1019,7 @@ export const translations = {
 
     // Onboarding
     "onboarding.title": "Welcome to Cup!",
-    "onboarding.subtitle": "Let's set up your shop in 3 simple steps.",
+    "onboarding.subtitle": "Let's set up your shop in 2 simple steps.",
     "onboarding.logo": "Upload your logo",
     "onboarding.logoDesc": "Showcase your brand to customers.",
     "onboarding.theme": "Customize your theme",
