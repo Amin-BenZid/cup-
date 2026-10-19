@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { X, Send, LifeBuoy, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { useT } from '@/lib/i18n/context'
 
 type Message = { id: string; message: string; created_at: string; sender: string }
@@ -39,13 +38,8 @@ export default function SupportModal({ shopId, onClose }: { shopId: string; onCl
     }).catch(() => {})
 
     // Listen for new messages
-    const channel = supabase
-      .channel('support-chat')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'support_messages', filter: `shop_id=eq.${shopId}` }, 
-        () => load()
-      )
-      .subscribe()
+       const interval = setInterval(load, 5000)
+
 
     // LOCK BACKGROUND SCROLL
     document.body.style.overflow = 'hidden'
