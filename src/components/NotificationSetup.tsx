@@ -36,14 +36,6 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
       `SW:${supportsSW} Push:${supportsPush} Notif:${supportsNotif} Perm:${permission}`
     )
 
-    console.log('[NotifSetup] env check', {
-      supportsSW,
-      supportsPush,
-      supportsNotif,
-      permission,
-      orderId,
-    })
-
     if (!supportsSW || !supportsPush || !supportsNotif) {
       console.warn('[NotifSetup] browser does not support push')
       return
@@ -63,7 +55,6 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
       return
     }
 
-    console.log('[NotifSetup] showing banner')
     setVisible(true)
   }, [orderId])
 
@@ -80,41 +71,31 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
     setError('')
     setStatus('working')
     try {
-      console.log('[NotifSetup] requesting permission')
       const perm = await Notification.requestPermission()
-      console.log('[NotifSetup] permission result:', perm)
-
       if (perm !== 'granted') {
         setStatus('denied')
         return
       }
 
-      console.log('[NotifSetup] awaiting SW ready')
       const reg = await navigator.serviceWorker.ready
 
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      console.log('[NotifSetup] VAPID public key present:', !!publicKey)
       if (!publicKey) {
         setError('VAPID public key missing (check .env.local)')
         setStatus('idle')
         return
       }
 
-      console.log('[NotifSetup] subscribing to push')
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
       })
-
-      console.log('[NotifSetup] subscription obtained', sub.endpoint)
 
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, subscription: sub.toJSON() }),
       })
-
-      console.log('[NotifSetup] server response status:', res.status)
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
@@ -125,9 +106,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
 
       setStatus('granted')
       setVisible(false)
-      console.log('[NotifSetup] subscribed successfully')
     } catch (e) {
-      console.error('[NotifSetup] error', e)
       setError(e instanceof Error ? e.message : 'Failed')
       setStatus('idle')
     }
