@@ -1,34 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { QrCode, Bell, ArrowRight, Store, User, Gift } from "lucide-react";
 import CupLogo from "@/components/CupLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-const router = useRouter();
-
-useEffect(() => {
-  let cancelled = false;
-  (async () => {
-    try {
-      const res = await fetch("/api/auth/session", { cache: "no-store" });
-      if (!res.ok) return;
-      const json = await res.json();
-      if (!cancelled && json.shop?.id) {
-        router.replace("/barista/dashboard");
-      }
-    } catch {}
-  })();
-  return () => {
-    cancelled = true;
-  };
-}, [router]);
 
 export default function Home() {
   const t = useT();
+  const router = useRouter();
+
+  // A logged-in barista who opens the site should land on the dashboard,
+  // not on the marketing page.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json.shop?.id) {
+          router.replace("/barista/dashboard");
+        }
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col">
