@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Coffee,
@@ -9,7 +10,6 @@ import {
   AlertCircle,
   Clock,
 } from "lucide-react";
-import CatchBeans from "@/components/CatchBeans";
 import NotificationSetup from "@/components/NotificationSetup";
 import Logo from "@/components/Logo";
 import CupLogo from "@/components/CupLogo";
@@ -21,7 +21,12 @@ import { setBadge, clearBadge } from "@/lib/badge";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { getFont, getPalette, paletteVars, type Shop } from "@/lib/themes";
 
-type Order = {
+// The game is below the fold and heavy — keep it out of the first JS payload.
+const CatchBeans = dynamic(() => import("@/components/CatchBeans"), {
+  ssr: false,
+});
+
+export type Order = {
   id: string;
   shop_id: string;
   order_number: string;
@@ -31,26 +36,144 @@ type Order = {
   ready_at: string | null;
 };
 
-export default function CustomerOrderClient({ orderId }: { orderId: string }) {
+type Props = {
+  orderId: string;
+  initialOrder?: Order | null;
+  initialShop?: Shop | null;
+};
+
+export default function CustomerOrderClient({
+  orderId,
+  initialOrder,
+  initialShop,
+}: Props) {
   const t = useT();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [shop, setShop] = useState<Shop | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const hasInitial = initialOrder !== undefined;
+
+  const [order, setOrder] = useState<Order | null>(initialOrder ?? null);
+  const [shop, setShop] = useState<Shop | null>(initialShop ?? null);
+  const [loading, setLoading] = useState(!hasInitial);
+  const [error, setError] = useState(
+    hasInitial && !initialOrder ? "Order not found" : "",
+  );
   const [ringing, setRinging] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const [enableState, setEnableState] = useState<
+    "idle" | "loading" | "ok" | "hidden"
+  >("idle");
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const vibrateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
 
-  // ---------- load order + shop ----------
+  // ---------- audio engine ----------
+  // Web Audio instead of <audio>.play(): once an AudioContext is resumed inside
+  // a user gesture, later playback is allowed without another gesture, on iOS
+  // and Android. Unlocking is silent, so it never fires the alert.
+  const stopAudio = useCallback(() => {
+    if (sourceRef.current) {
+      try {
+        sourceRef.current.stop();
+      } catch {}
+      try {
+        sourceRef.current.disconnect();
+      } catch {}
+      sourceRef.current = null;
+    }
+    const el = audioRef.current;
+    if (el) {
+      el.pause();
+      el.currentTime = 0;
+    }
+  }, []);
+
+  const startAudio = useCallback(async () => {
+    const ctx = audioCtxRef.current;
+    const buffer = audioBufferRef.current;
+    if (ctx && buffer && ctx.state !== "closed") {
+      try {
+        if (ctx.state === "suspended") await ctx.resume();
+        if (!sourceRef.current) {
+          const src = ctx.createBufferSource();
+          src.buffer = buffer;
+          src.loop = true;
+          src.connect(ctx.destination);
+          src.start(0);
+          sourceRef.current = src;
+        }
+        return true;
+      } catch {
+        // fall through to the element fallback
+      }
+    }
+    const el = audioRef.current;
+    if (el) {
+      try {
+        el.loop = true;
+        el.volume = 1;
+        await el.play();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }, []);
+
+  const unlockAudio = useCallback(async () => {
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+        const w = window as unknown as {
+          AudioContext?: typeof AudioContext;
+          webkitAudioContext?: typeof AudioContext;
+        };
+        const Ctor = w.AudioContext ?? w.webkitAudioContext;
+        if (!Ctor) throw new Error("no AudioContext");
+        audioCtxRef.current = new Ctor();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") await ctx.resume();
+      if (!audioBufferRef.current) {
+        const res = await fetch("/ready.mp3", { cache: "force-cache" });
+        const bytes = await res.arrayBuffer();
+        audioBufferRef.current = await ctx.decodeAudioData(bytes.slice(0));
+      }
+      setAudioUnlocked(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const handleEnableSound = useCallback(async () => {
+    if (enableState === "loading") return;
+    setEnableState("loading");
+    const ok = await unlockAudio();
+    if (ok) {
+      setEnableState("ok");
+      if (navigator.vibrate) navigator.vibrate(10);
+      window.setTimeout(() => setEnableState("hidden"), 1600);
+    } else {
+      setEnableState("idle");
+    }
+  }, [enableState, unlockAudio]);
+
+  // If another tap already unlocked the page, drop the prompt.
+  useEffect(() => {
+    if (!audioUnlocked) return;
+    setEnableState((s) => (s === "idle" ? "hidden" : s));
+  }, [audioUnlocked]);
+
+  // ---------- initial load ----------
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
 
-    // Check if this order was already acknowledged
     try {
       const ack = localStorage.getItem(`cup-ack-${orderId}`);
       if (ack === "1") {
@@ -58,6 +181,23 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         setRinging(false);
       }
     } catch {}
+
+    // The server already delivered the order — only register the connection.
+    if (hasInitial) {
+      if (initialOrder) {
+        try {
+          localStorage.setItem("cup-active-order", orderId);
+        } catch {}
+        fetch(`/api/orders/${orderId}/connect`, { method: "POST" }).catch(
+          () => {},
+        );
+        try {
+          const ack = localStorage.getItem(`cup-ack-${orderId}`);
+          if (initialOrder.status === "ready" && ack !== "1") setRinging(true);
+        } catch {}
+      }
+      return;
+    }
 
     async function load() {
       try {
@@ -95,11 +235,11 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         fetch(`/api/orders/${orderId}/connect`, { method: "POST" }).catch(
           () => {},
         );
-        // Only ring if it's ready AND not already acknowledged
-        const ack = localStorage.getItem(`cup-ack-${orderId}`);
-        if (orderData.status === "ready" && ack !== "1") {
-          setRinging(true);
-        }
+
+        try {
+          const ack = localStorage.getItem(`cup-ack-${orderId}`);
+          if (orderData.status === "ready" && ack !== "1") setRinging(true);
+        } catch {}
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Failed to load order");
@@ -112,13 +252,9 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, hasInitial, initialOrder]);
 
-  // ---------- realtime ----------
   // ---------- status polling ----------
-  // Runs every 4s while the page is visible. This replaces the direct
-  // Supabase realtime subscription, which required public read access to
-  // the orders table. Also acts as the fallback if a socket would drop.
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
@@ -133,8 +269,10 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         const updated = json.order as Order;
         setOrder(updated);
 
-        const ack = localStorage.getItem(`cup-ack-${orderId}`);
-        if (updated.status === "ready" && ack !== "1") setRinging(true);
+        try {
+          const ack = localStorage.getItem(`cup-ack-${orderId}`);
+          if (updated.status === "ready" && ack !== "1") setRinging(true);
+        } catch {}
         if (updated.status === "done") setRinging(false);
       } catch {
         // network blip — next tick retries
@@ -156,13 +294,37 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [orderId]);
+
+  // ---------- unlock on the first interaction ----------
+  useEffect(() => {
+    if (audioUnlocked) return;
+    const onFirst = () => {
+      void unlockAudio();
+    };
+    document.addEventListener("pointerdown", onFirst, { once: true });
+    document.addEventListener("keydown", onFirst, { once: true });
+    return () => {
+      document.removeEventListener("pointerdown", onFirst);
+      document.removeEventListener("keydown", onFirst);
+    };
+  }, [audioUnlocked, unlockAudio]);
+
+  // ---------- keep the context alive after backgrounding ----------
+  useEffect(() => {
+    const onVis = () => {
+      const ctx = audioCtxRef.current;
+      if (document.visibilityState === "visible" && ctx?.state === "suspended") {
+        void ctx.resume();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
   // ---------- sound + vibration ----------
   useEffect(() => {
     if (!ringing || acknowledged) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
+      stopAudio();
       if (vibrateIntervalRef.current) {
         clearInterval(vibrateIntervalRef.current);
         vibrateIntervalRef.current = null;
@@ -171,12 +333,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       return;
     }
 
-    const audio = audioRef.current;
-    if (audio) {
-      audio.loop = true;
-      audio.volume = 1;
-      audio.play().catch(() => {});
-    }
+    void startAudio();
 
     const buzz = () => {
       if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
@@ -199,8 +356,15 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
         vibrateIntervalRef.current = null;
       }
       if (navigator.vibrate) navigator.vibrate(0);
+      stopAudio();
     };
-  }, [ringing, acknowledged]);
+  }, [ringing, acknowledged, audioUnlocked, startAudio, stopAudio]);
+
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, [stopAudio]);
 
   // ---------- wake lock ----------
   useEffect(() => {
@@ -229,21 +393,6 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       if (sentinel) sentinel.release().catch(() => {});
     };
   }, []);
-
-  const resumeAudio = useCallback(() => {
-    if (ringing && audioRef.current) {
-      audioRef.current.play().catch(() => {});
-    }
-  }, [ringing]);
-
-  useEffect(() => {
-    document.addEventListener("click", resumeAudio, { once: true });
-    document.addEventListener("touchstart", resumeAudio, { once: true });
-    return () => {
-      document.removeEventListener("click", resumeAudio);
-      document.removeEventListener("touchstart", resumeAudio);
-    };
-  }, [resumeAudio]);
 
   const palette = useMemo(
     () => getPalette(shop?.theme?.palette),
@@ -307,8 +456,8 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
   function handleAcknowledge() {
     setAcknowledged(true);
     setRinging(false);
+    stopAudio();
     try {
-      // Save that this specific order was acknowledged so it persists on reload
       localStorage.setItem(`cup-ack-${orderId}`, "1");
     } catch {}
   }
@@ -395,7 +544,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
       )}
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <audio ref={audioRef} preload="auto">
+        <audio ref={audioRef} preload="none">
           <source src="/ready.mp3" type="audio/mpeg" />
         </audio>
 
@@ -452,6 +601,56 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                 #{order.order_number}
               </div>
             </div>
+
+            {/* ENABLE SOUND — silent unlock, shown only while waiting */}
+            {enableState !== "hidden" && !acknowledged && !ready && (
+              <div
+                className="rounded-2xl border px-4 py-3.5 space-y-1 transition-colors duration-300"
+                style={{
+                  borderColor:
+                    enableState === "ok" ? "#a7f3d0" : "var(--border)",
+                  background:
+                    enableState === "ok" ? "#ecfdf5" : "var(--surface)",
+                }}
+              >
+                {enableState === "ok" ? (
+                  <div
+                    className="flex items-center justify-center gap-2 text-sm font-semibold py-0.5"
+                    style={{ color: "#047857" }}
+                  >
+                    <Check className="w-4 h-4 animate-bounce" strokeWidth={3} />
+                    {t("cust.soundOn")}
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleEnableSound}
+                      disabled={enableState === "loading"}
+                      className="w-full text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition disabled:opacity-70"
+                      style={{ color: "var(--text)" }}
+                    >
+                      {enableState === "loading" ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {t("cust.enableSound")}
+                        </>
+                      ) : (
+                        <>
+                          <BellRing className="w-4 h-4" />
+                          {t("cust.enableSound")}
+                        </>
+                      )}
+                    </button>
+                    <p
+                      className="text-[11px] text-center leading-snug"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {t("cust.enableSoundHint")}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* STATUS */}
             {acknowledged ? (
@@ -510,6 +709,7 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                     </span>
                   </p>
                 </div>
+
                 <button
                   onClick={handleAcknowledge}
                   className="w-full py-4 rounded-2xl font-bold text-lg active:scale-[0.99] transition"
@@ -520,6 +720,17 @@ export default function CustomerOrderClient({ orderId }: { orderId: string }) {
                 >
                   {t("cust.gotIt")}
                 </button>
+
+                {/* Safety net only: still locked at Ready means it's silent */}
+                {!audioUnlocked && (
+                  <button
+                    onClick={handleEnableSound}
+                    className="w-full text-xs underline underline-offset-4 py-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {t("cust.enableSound")}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-4 text-center py-4">

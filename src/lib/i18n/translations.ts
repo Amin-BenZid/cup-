@@ -355,7 +355,11 @@ export const translations = {
     "onboarding.order": "Créez une commande test",
     "onboarding.orderDesc": "Voyez comment fonctionne le QR code.",
     "onboarding.go": "Aller",
+    "cust.enableSound": "Activer le son",
+    "cust.enableSoundHint":
+    "Appuyez une fois : votre téléphone sonnera quand la commande sera prête.",
     "onboarding.tryIt": "Essayer",
+    "cust.soundOn": "Son activé",
     "billing.whatsappMsg":
       "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
   },
@@ -691,6 +695,10 @@ export const translations = {
     "onboarding.tryIt": "جرب",
     "billing.whatsappMsg":
       "مرحباً %name، معك فريق Cup. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟",
+    "cust.enableSound": "تفعيل الصوت",
+    "cust.soundOn": "تم تفعيل الصوت",
+    "cust.enableSoundHint":
+      "اضغط مرة واحدة وسيرن هاتفك عندما يصبح طلبك جاهزاً.",
   },
 
   en: {
@@ -1030,6 +1038,10 @@ export const translations = {
     "onboarding.orderDesc": "See how the QR code works.",
     "onboarding.go": "Go",
     "onboarding.tryIt": "Try it",
+    "cust.enableSound": "Enable sound",
+    "cust.soundOn": "Sound on",
+    "cust.enableSoundHint":
+      "Tap once and your phone will ring when your order is ready.",
   },
 } as const;
 
