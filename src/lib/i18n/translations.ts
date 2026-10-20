@@ -381,6 +381,11 @@ export const translations = {
     "common.loadFailed": "Impossible de charger la commande.",
     "common.shopFallback": "Boutique",
     "common.orderReadyTitle": "Commande prête",
+        "error.title": "Une erreur est survenue",
+    "error.body": "Réessayez. Si cela persiste, contactez le support.",
+    "error.retry": "Réessayer",
+    "notFound.title": "Page introuvable",
+    "notFound.body": "Le lien est peut-être ancien ou mal saisi.",
   },
 
   ar: {
@@ -735,6 +740,11 @@ export const translations = {
     "common.loadFailed": "تعذر تحميل الطلب.",
     "common.shopFallback": "متجر",
     "common.orderReadyTitle": "الطلب جاهز",
+        "error.title": "حدث خطأ ما",
+    "error.body": "حاول مرة أخرى. إذا استمرت المشكلة، تواصل مع الدعم.",
+    "error.retry": "إعادة المحاولة",
+    "notFound.title": "الصفحة غير موجودة",
+    "notFound.body": "قد يكون الرابط قديماً أو خاطئاً.",
   },
 
   en: {
