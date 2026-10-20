@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireShop } from "@/lib/shop-auth";
 
 type CreateOrderBody = {
   shop_id?: unknown;
@@ -22,6 +23,12 @@ export async function POST(req: NextRequest) {
 
   if (!shop_id) {
     return NextResponse.json({ error: "shop_id required" }, { status: 400 });
+  }
+
+  // Authentication: a signed session must own this shop.
+  const guard = await requireShop(shop_id);
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
   }
 
   // A number is only sent when the barista edited it.
@@ -48,7 +55,7 @@ export async function POST(req: NextRequest) {
     // Single round trip: claims the number (if p_number is empty), inserts the
     // order and flags the shop for onboarding — all inside one SQL function.
     const { data, error } = await supabaseAdmin.rpc("create_order", {
-      p_shop_id: shop_id,
+      p_shop_id: guard.shopId,
       p_number: suppliedNumber,
       p_phone: customer_phone,
     });

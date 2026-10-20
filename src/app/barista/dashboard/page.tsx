@@ -142,16 +142,28 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [shopId]);
 
-  const loadOrders = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/orders/list?shop_id=${id}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) return;
-      const json = await res.json();
-      setOrders(json.orders ?? []);
-    } catch {}
-  }, []);
+  const loadOrders = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(`/api/orders/list?shop_id=${id}`, {
+          cache: "no-store",
+        });
+
+        // Session expired or revoked — send them back to the PIN screen.
+        if (res.status === 401) {
+          localStorage.removeItem("shop_id");
+          localStorage.removeItem("shop_name");
+          router.replace("/barista");
+          return;
+        }
+
+        if (!res.ok) return;
+        const json = await res.json();
+        setOrders(json.orders ?? []);
+      } catch {}
+    },
+    [router],
+  );
 
   // Fast polling: 1.2s while visible, paused when the tab is hidden, plus an
   // immediate refresh on focus. The inFlight guard prevents request stacking.
@@ -236,6 +248,13 @@ export default function DashboardPage() {
         }),
       });
 
+      if (res.status === 401) {
+        localStorage.removeItem("shop_id");
+        localStorage.removeItem("shop_name");
+        router.replace("/barista");
+        return;
+      }
+
       const json = await res.json();
       if (!res.ok) {
         if (json.code === "DUPLICATE_ORDER_NUMBER") {
@@ -281,6 +300,14 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem("shop_id");
+        localStorage.removeItem("shop_name");
+        router.replace("/barista");
+        return;
+      }
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setOrders(before);
@@ -301,6 +328,7 @@ export default function DashboardPage() {
   }
 
   function logout() {
+    void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     localStorage.removeItem("shop_id");
     localStorage.removeItem("shop_name");
     router.replace("/barista");

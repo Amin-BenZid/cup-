@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { hashPin } from '@/lib/hash'
+import { SHOP_COOKIE, SHOP_MAX_AGE, createShopToken } from "@/lib/shop-auth";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,8 +88,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({ shop: { id: shop.id, name: shop.name, code: shop.code } })
-  } catch (e: unknown) {
+    const res = NextResponse.json({
+      shop: { id: shop.id, name: shop.name, code: shop.code },
+    });
+
+    res.cookies.set({
+      name: SHOP_COOKIE,
+      value: createShopToken(shop.id),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SHOP_MAX_AGE,
+      path: "/",
+    });
+
+    return res;  } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
   }
