@@ -7,9 +7,6 @@ import {
   Loader2,
   LogOut,
   Store,
-  CheckCircle2,
-  XCircle,
-  Clock,
   Search,
   Activity,
   ShoppingBag,
@@ -21,6 +18,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Clock,
 } from 'lucide-react'
 import { Toast } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
@@ -30,25 +28,39 @@ import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 import { formatTemplate } from '@/lib/i18n/translations'
 
+type ShopStatus = 'pending' | 'active' | 'expired' | 'disabled'
+
 type Shop = {
   id: string
   name: string
   tagline?: string | null
-  status: string
+  status: ShopStatus
   created_at: string
   logo_url?: string | null
-  stats: { total: number; last7: number; last30: number }
+  is_trial?: boolean
+  days_left?: number
+  stats: {
+    total: number
+    last7: number
+    last30: number
+    today?: number
+    last_order_at?: string | null
+    rating?: number
+    rating_count?: number
+  }
 }
 
 type GlobalStats = {
   totalOrders: number
   ordersToday: number
   totalShops: number
+  activeShops?: number
+  expiringSoon?: number
   totalReviews: number
   avgRating: string
 }
 
-type StatusFilter = 'all' | 'pending' | 'active' | 'disabled'
+type StatusFilter = 'all' | 'pending' | 'active' | 'expired' | 'disabled'
 
 export default function AdminHome() {
   const t = useT()
@@ -75,7 +87,7 @@ export default function AdminHome() {
           push('error', json.error ?? 'Failed to load')
           return
         }
-        setShops(json.shops)
+        setShops(json.shops ?? [])
         setStats(json.globalStats)
       } catch (e) {
         push('error', e instanceof Error ? e.message : 'Network error')
@@ -119,14 +131,15 @@ export default function AdminHome() {
       all: shops.length,
       pending: shops.filter((s) => s.status === 'pending').length,
       active: shops.filter((s) => s.status === 'active').length,
+      expired: shops.filter((s) => s.status === 'expired').length,
       disabled: shops.filter((s) => s.status === 'disabled').length,
     }),
-    [shops]
+    [shops],
   )
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-900 flex flex-col">
-      
+
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -141,7 +154,7 @@ export default function AdminHome() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <LanguageSwitcher compact />
             <button
@@ -192,7 +205,7 @@ export default function AdminHome() {
       </header>
 
       <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-8">
-        
+
         {/* STATS ROW (CLICKABLE) */}
         {stats && (
           <section>
@@ -219,6 +232,11 @@ export default function AdminHome() {
                   label="Shops"
                   value={stats.totalShops}
                   icon={<Store className="w-4 h-4" />}
+                  hint={
+                    stats.expiringSoon
+                      ? `${stats.expiringSoon} expiring soon`
+                      : undefined
+                  }
                 />
               </Link>
               <Link href="/admin/reviews" className="block">
@@ -247,6 +265,7 @@ export default function AdminHome() {
                 ['all', 'All'],
                 ['pending', 'Pending'],
                 ['active', 'Active'],
+                ['expired', 'Expired'],
                 ['disabled', 'Disabled'],
               ] as const
             ).map(([id, label]) => {
@@ -326,7 +345,7 @@ export default function AdminHome() {
                       />
                     ) : (
                       <div className="w-9 h-9 rounded-md bg-zinc-900 flex items-center justify-center text-zinc-100 font-semibold text-xs shrink-0">
-                        {shop.name[0].toUpperCase()}
+                        {shop.name[0]?.toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
@@ -335,6 +354,22 @@ export default function AdminHome() {
                           {shop.name}
                         </span>
                         <StatusDot status={shop.status} />
+                        {shop.status === 'active' &&
+                          typeof shop.days_left === 'number' &&
+                          shop.days_left <= 7 && (
+                            <span
+                              className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                shop.days_left <= 3
+                                  ? 'bg-red-50 text-red-600'
+                                  : 'bg-amber-50 text-amber-700'
+                              }`}
+                            >
+                              <Clock className="w-3 h-3" />
+                              {shop.days_left === 0
+                                ? 'ends today'
+                                : `${shop.days_left}d left`}
+                            </span>
+                          )}
                       </div>
                       <div className="text-xs text-zinc-500 truncate">
                         {shop.tagline || 'No tagline'}
@@ -370,11 +405,13 @@ function StatCard({
   value,
   suffix,
   icon,
+  hint,
 }: {
   label: string
   value: number
   suffix?: string
   icon: React.ReactNode
+  hint?: string
 }) {
   return (
     <div className="bg-white border border-zinc-200 rounded-lg p-4 hover:border-zinc-400 hover:bg-zinc-50 transition cursor-pointer h-full">
@@ -388,6 +425,11 @@ function StatCard({
         {value}
         {suffix && <span className="text-sm text-zinc-400 ml-1">{suffix}</span>}
       </div>
+      {hint && (
+        <div className="text-[10px] text-amber-600 font-medium mt-1.5">
+          {hint}
+        </div>
+      )}
     </div>
   )
 }
@@ -406,6 +448,14 @@ function StatusDot({ status }: { status: string }) {
       <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
         Pending
+      </span>
+    )
+  }
+  if (status === 'expired') {
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-medium text-orange-600">
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+        Expired
       </span>
     )
   }

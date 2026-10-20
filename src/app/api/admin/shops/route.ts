@@ -1,73 +1,125 @@
-import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isAdminAuthed } from '@/lib/admin-auth'
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { isAdminAuthed } from "@/lib/admin-auth";
+
+type ShopRow = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  status: string;
+  created_at: string;
+  logo_url: string | null;
+  theme: unknown;
+  game: string | null;
+  trial_ends_at: string | null;
+  subscription_ends_at: string | null;
+  billing_status: string | null;
+  phone: string | null;
+  paid_current_month: boolean | null;
+};
+
+type StatRow = {
+  shop_id: string;
+  orders_total: number;
+  orders_7d: number;
+  orders_30d: number;
+  orders_today: number;
+  last_order_at: string | null;
+  rating_avg: number;
+  rating_count: number;
+};
+
+const DAY = 24 * 60 * 60 * 1000;
 
 export async function GET() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 1. Fetch shops
-  const { data: shops, error: shopsErr } = await supabaseAdmin
-    .from('shops')
-    .select('id, name, tagline, status, created_at, logo_url, theme, game, trial_ends_at, subscription_ends_at, billing_status, phone, paid_current_month')
-    .order('created_at', { ascending: false })
+  const [shopsRes, statsRes] = await Promise.all([
+    supabaseAdmin
+      .from("shops")
+      .select(
+        "id, name, tagline, status, created_at, logo_url, theme, game, trial_ends_at, subscription_ends_at, billing_status, phone, paid_current_month",
+      )
+      .order("created_at", { ascending: false }),
+    supabaseAdmin.rpc("admin_shop_stats"),
+  ]);
 
-  if (shopsErr) {
-    return NextResponse.json({ error: shopsErr.message }, { status: 500 })
+  if (shopsRes.error) {
+    return NextResponse.json({ error: shopsRes.error.message }, { status: 500 });
   }
 
-  // 2. Fetch all orders for stats
-  const { data: orders } = await supabaseAdmin
-    .from('orders')
-    .select('shop_id, created_at, status')
+  const statMap = new Map<string, StatRow>(
+    ((statsRes.data as StatRow[] | null) ?? []).map((r) => [r.shop_id, r]),
+  );
 
-  // 3. Fetch all reviews for stats
-  const { data: reviews } = await supabaseAdmin
-    .from('reviews')
-    .select('rating')
+  const now = Date.now();
+  let totalOrders = 0;
+  let ordersToday = 0;
+  let ratingSum = 0;
+  let ratingCount = 0;
 
-  // --- CALCULATE STATS ---
-  const now = Date.now()
-  const day = 24 * 60 * 60 * 1000
-  const todayStart = new Date(now).setHours(0, 0, 0, 0)
+  const shops = ((shopsRes.data as ShopRow[] | null) ?? []).map((s) => {
+    const st = statMap.get(s.id);
 
-  let totalOrders = 0
-  let ordersToday = 0
-  const shopStats = new Map<string, { total: number; last7: number; last30: number }>()
+    const trialEnd = s.trial_ends_at ? new Date(s.trial_ends_at).getTime() : 0;
+    const subEnd = s.subscription_ends_at
+      ? new Date(s.subscription_ends_at).getTime()
+      : 0;
 
-  for (const o of orders ?? []) {
-    totalOrders++
-    if (new Date(o.created_at).getTime() >= todayStart) {
-      ordersToday++
-    }
+    const trialOk = trialEnd > now;
+    const subOk = subEnd > now;
 
-    const s = shopStats.get(o.shop_id) ?? { total: 0, last7: 0, last30: 0 }
-    s.total += 1
-    const age = now - new Date(o.created_at).getTime()
-    if (age <= 7 * day) s.last7 += 1
-    if (age <= 30 * day) s.last30 += 1
-    shopStats.set(o.shop_id, s)
-  }
+    // Derived state — the raw column only knows pending/active/disabled.
+    let state: "pending" | "disabled" | "expired" | "active" = "active";
+    if (s.status === "pending") state = "pending";
+    else if (s.status === "disabled") state = "disabled";
+    else if (!trialOk && !subOk) state = "expired";
 
-  const reviewCount = reviews?.length ?? 0
-  const ratingSum = (reviews ?? []).reduce((sum, r) => sum + r.rating, 0)
-  const avgRating = reviewCount > 0 ? (ratingSum / reviewCount).toFixed(1) : '0.0'
+    const periodEnd = Math.max(subEnd, trialEnd);
+    const daysLeft = Math.max(0, Math.ceil((periodEnd - now) / DAY));
 
-  // --- BUILD RESPONSE ---
-  const enrichedShops = (shops ?? []).map((s) => ({
-    ...s,
-    stats: shopStats.get(s.id) ?? { total: 0, last7: 0, last30: 0 },
-  }))
+    const stats = {
+      total: Number(st?.orders_total ?? 0),
+      last7: Number(st?.orders_7d ?? 0),
+      last30: Number(st?.orders_30d ?? 0),
+      today: Number(st?.orders_today ?? 0),
+      last_order_at: st?.last_order_at ?? null,
+      rating: Number(st?.rating_avg ?? 0),
+      rating_count: Number(st?.rating_count ?? 0),
+    };
 
-  return NextResponse.json({
-    shops: enrichedShops,
-    globalStats: {
-      totalOrders,
-      ordersToday,
-      totalShops: shops?.length ?? 0,
-      totalReviews: reviewCount,
-      avgRating,
-    }
-  })
+    totalOrders += stats.total;
+    ordersToday += stats.today;
+    ratingSum += stats.rating * stats.rating_count;
+    ratingCount += stats.rating_count;
+
+    return {
+      ...s,
+      status: state,
+      raw_status: s.status,
+      is_trial: !subOk && trialOk,
+      days_left: daysLeft,
+      stats,
+    };
+  });
+
+  return NextResponse.json(
+    {
+      shops,
+      globalStats: {
+        totalOrders,
+        ordersToday,
+        totalShops: shops.length,
+        activeShops: shops.filter((s) => s.status === "active").length,
+        expiringSoon: shops.filter(
+          (s) => s.status === "active" && s.days_left <= 7,
+        ).length,
+        totalReviews: ratingCount,
+        avgRating: ratingCount ? (ratingSum / ratingCount).toFixed(1) : "0.0",
+      },
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

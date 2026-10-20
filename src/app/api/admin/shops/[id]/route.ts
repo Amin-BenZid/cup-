@@ -3,6 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { isAdminAuthed } from '@/lib/admin-auth'
 import { hashPin } from '@/lib/hash'
 
+const SHOP_FIELDS =
+  'id, name, tagline, status, created_at, code, phone, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, trial_ends_at, subscription_ends_at, billing_status, paid_current_month, login_attempts, locked_until'
+
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> | { id: string } }
@@ -15,9 +18,7 @@ export async function GET(
 
   const { data: shop, error } = await supabaseAdmin
     .from('shops')
-    .select(
-      'id, name, tagline, status, created_at, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages'
-    )
+    .select(SHOP_FIELDS)
     .eq('id', id)
     .maybeSingle()
 
@@ -53,8 +54,35 @@ export async function GET(
   const ratingSum = (reviews ?? []).reduce((s, r) => s + r.rating, 0)
   const avgRating = reviewCount > 0 ? ratingSum / reviewCount : 0
 
+  // Derived: the raw `status` column never becomes "expired".
+  const now = Date.now()
+  const trialEnd = shop.trial_ends_at
+    ? new Date(shop.trial_ends_at).getTime()
+    : 0
+  const subEnd = shop.subscription_ends_at
+    ? new Date(shop.subscription_ends_at).getTime()
+    : 0
+
+  const trialOk = trialEnd > now
+  const subOk = subEnd > now
+
+  let state: 'pending' | 'active' | 'expired' | 'disabled' = 'active'
+  if (shop.status === 'pending') state = 'pending'
+  else if (shop.status === 'disabled') state = 'disabled'
+  else if (!trialOk && !subOk) state = 'expired'
+
+  const daysLeft = Math.max(
+    0,
+    Math.ceil((Math.max(trialEnd, subEnd) - now) / 86400000)
+  )
+
   return NextResponse.json({
-    shop,
+    shop: {
+      ...shop,
+      state,
+      days_left: daysLeft,
+      is_trial: !subOk && trialOk,
+    },
     orders: orders ?? [],
     reviews: reviews ?? [],
     history: history ?? [],
@@ -95,8 +123,12 @@ export async function PATCH(
   }
 
   if (typeof body.new_pin === 'string') {
-    if (body.new_pin.length < 4 || body.new_pin.length > 6) {
-      return NextResponse.json({ error: 'PIN 4–6 digits' }, { status: 400 })
+    // Login requires exactly 6 digits — anything else locks the shop out.
+    if (!/^\d{6}$/.test(body.new_pin)) {
+      return NextResponse.json(
+        { error: 'PIN must be exactly 6 digits' },
+        { status: 400 }
+      )
     }
     update.pin_hash = await hashPin(body.new_pin)
     logAction = 'pin_reset'
@@ -110,9 +142,7 @@ export async function PATCH(
     .from('shops')
     .update(update)
     .eq('id', id)
-    .select(
-      'id, name, tagline, status, created_at, logo_url, theme, game, messages'
-    )
+    .select(SHOP_FIELDS)
     .single()
 
   if (error) {
