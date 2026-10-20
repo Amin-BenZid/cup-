@@ -19,11 +19,35 @@ export default function BaristaLogin() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    const shopId = localStorage.getItem('shop_id')
-    if (shopId) {
-      router.replace('/barista/dashboard')
-    } else {
-      setChecking(false)
+    let cancelled = false
+
+    ;(async () => {
+      // Fast path: cached identity.
+      if (localStorage.getItem('shop_id')) {
+        router.replace('/barista/dashboard')
+        return
+      }
+
+      // Slow path: the HttpOnly cookie may still be valid even when local
+      // storage is empty (new tab, cleared storage, another device).
+      try {
+        const res = await fetch('/api/auth/session', { cache: 'no-store' })
+        if (res.ok) {
+          const json = await res.json()
+          if (json.shop?.id) {
+            localStorage.setItem('shop_id', json.shop.id)
+            localStorage.setItem('shop_name', json.shop.name ?? '')
+            if (!cancelled) router.replace('/barista/dashboard')
+            return
+          }
+        }
+      } catch {}
+
+      if (!cancelled) setChecking(false)
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [router])
 
