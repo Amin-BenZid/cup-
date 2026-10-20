@@ -373,6 +373,14 @@ export const translations = {
     "scan.error":
       "Impossible d'ouvrir la caméra. Autorisez l'accès dans les réglages.",
     "scan.invalid": "QR code non reconnu. Réessayez.",
+    "cust.staleTitle": "Toujours en attente ?",
+    "cust.staleBody":
+      "Votre commande n'est pas encore prête. Vous pouvez l'annuler.",
+    "cust.staleCancel": "Annuler la commande",
+    "cust.staleWait": "Attendre encore",
+    "common.loadFailed": "Impossible de charger la commande.",
+    "common.shopFallback": "Boutique",
+    "common.orderReadyTitle": "Commande prête",
   },
 
   ar: {
@@ -719,6 +727,14 @@ export const translations = {
     "scan.hint": "ضع رمز QR الخاص بطلبك داخل الإطار.",
     "scan.error": "تعذر فتح الكاميرا. اسمح بالوصول من الإعدادات.",
     "scan.invalid": "رمز QR غير معروف. حاول مرة أخرى.",
+
+    "cust.staleTitle": "هل ما زلت تنتظر؟",
+    "cust.staleBody": "طلبك غير جاهز بعد. يمكنك إلغاءه.",
+    "cust.staleCancel": "إلغاء الطلب",
+    "cust.staleWait": "الانتظار أكثر",
+    "common.loadFailed": "تعذر تحميل الطلب.",
+    "common.shopFallback": "متجر",
+    "common.orderReadyTitle": "الطلب جاهز",
   },
 
   en: {
@@ -1067,11 +1083,18 @@ export const translations = {
     "cust.soundOn": "Sound on",
     "cust.enableSoundHint":
       "Tap once and your phone will ring when your order is ready.",
+    "scan.button": "Scan QR code",
+    "scan.hint": "Place your order's QR code inside the frame.",
+    "scan.error": "Camera unavailable. Allow access in Settings.",
+    "scan.invalid": "QR code not recognised. Try again.",
+    "cust.staleTitle": "Still waiting?",
+    "cust.staleBody": "Your order isn't ready yet. You can cancel it.",
+    "cust.staleCancel": "Cancel order",
+    "cust.staleWait": "Wait longer",
+    "common.loadFailed": "Couldn't load the order.",
+    "common.shopFallback": "Shop",
+    "common.orderReadyTitle": "Order ready",
   },
-  "scan.button": "Scan QR code",
-  "scan.hint": "Place your order's QR code inside the frame.",
-  "scan.error": "Camera unavailable. Allow access in Settings.",
-  "scan.invalid": "QR code not recognised. Try again.",
 } as const;
 
 export type TranslationKey = keyof typeof translations.fr;

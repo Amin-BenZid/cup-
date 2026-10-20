@@ -29,7 +29,6 @@ const CatchBeans = dynamic(() => import("@/components/CatchBeans"), {
 
 export type Order = {
   id: string;
-  shop_id: string;
   order_number: string;
   status: "preparing" | "ready" | "done";
   customer_connected: boolean;
@@ -56,7 +55,7 @@ export default function CustomerOrderClient({
   const [shop, setShop] = useState<Shop | null>(initialShop ?? null);
   const [loading, setLoading] = useState(!hasInitial);
   const [error, setError] = useState(
-    hasInitial && !initialOrder ? "Order not found" : "",
+    hasInitial && !initialOrder ? t("common.orderNotFound") : "",
   );
   const [ringing, setRinging] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -64,6 +63,9 @@ export default function CustomerOrderClient({
   const [enableState, setEnableState] = useState<
     "idle" | "loading" | "ok" | "hidden"
   >("idle");
+  const [staleDismissed, setStaleDismissed] = useState(false);
+  const [staleCancelling, setStaleCancelling] = useState(false);
+  const [staleError, setStaleError] = useState("");
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -208,12 +210,12 @@ export default function CustomerOrderClient({
         if (cancelled) return;
 
         if (res.status === 404) {
-          setError("Order not found");
+          setError(t("common.orderNotFound"));
           setLoading(false);
           return;
         }
         if (!res.ok) {
-          setError("Failed to load order");
+          setError(t("common.loadFailed"));
           setLoading(false);
           return;
         }
@@ -221,7 +223,7 @@ export default function CustomerOrderClient({
         const json = await res.json();
         const orderData = json.order as Order;
         if (!orderData) {
-          setError("Order not found");
+          setError(t("common.orderNotFound"));
           setLoading(false);
           return;
         }
@@ -244,7 +246,7 @@ export default function CustomerOrderClient({
         } catch {}
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load order");
+          setError(e instanceof Error ? e.message : t("common.loadFailed"));
           setLoading(false);
         }
       }
@@ -254,7 +256,27 @@ export default function CustomerOrderClient({
     return () => {
       cancelled = true;
     };
-  }, [orderId, hasInitial, initialOrder]);
+  }, [orderId, hasInitial, initialOrder, t]);
+
+  // A finished or already-acknowledged order must never re-open the "enjoy"
+  // screen. Runs once, on the first order we receive.
+  const initialRedirectDone = useRef(false);
+  useEffect(() => {
+    if (!order || initialRedirectDone.current) return;
+    initialRedirectDone.current = true;
+
+    let acked = false;
+    try {
+      acked = localStorage.getItem(`cup-ack-${orderId}`) === "1";
+    } catch {}
+
+    if (acked || order.status === "done") {
+      try {
+        localStorage.removeItem("cup-active-order");
+      } catch {}
+      router.replace("/o/latest");
+    }
+  }, [order, orderId, router]);
 
   // ---------- status polling ----------
   useEffect(() => {
@@ -346,7 +368,7 @@ export default function CustomerOrderClient({
     const originalTitle = document.title;
     let on = false;
     const titleInterval = setInterval(() => {
-      document.title = on ? "Order Ready" : originalTitle;
+      document.title = on ? t("common.orderReadyTitle") : originalTitle;
       on = !on;
     }, 800);
 
@@ -360,7 +382,7 @@ export default function CustomerOrderClient({
       if (navigator.vibrate) navigator.vibrate(0);
       stopAudio();
     };
-  }, [ringing, acknowledged, audioUnlocked, startAudio, stopAudio]);
+  }, [ringing, acknowledged, audioUnlocked, startAudio, stopAudio, t]);
 
   useEffect(() => {
     return () => {
@@ -454,6 +476,29 @@ export default function CustomerOrderClient({
     order?.created_at ?? null,
     order?.ready_at ?? null,
   );
+  const isStale = (elapsedLive ?? 0) > 30 * 60 * 1000;
+
+  async function handleCancelOrder() {
+    setStaleError("");
+    setStaleCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        setStaleError(t("common.error"));
+        return;
+      }
+      try {
+        localStorage.removeItem("cup-active-order");
+      } catch {}
+      router.replace("/o/latest");
+    } catch {
+      setStaleError(t("common.error"));
+    } finally {
+      setStaleCancelling(false);
+    }
+  }
 
   function handleAcknowledge() {
     setAcknowledged(true);
@@ -569,7 +614,7 @@ export default function CustomerOrderClient({
             <div className="flex items-center gap-3 min-w-0">
               <Logo
                 url={shop?.logo_url ?? null}
-                name={shop?.name ?? "Coffee"}
+                name={shop?.name ?? t("common.shopFallback")}
                 size={34}
                 scale={Number(shop?.logo_scale ?? 1)}
                 offsetX={Number(shop?.logo_offset_x ?? 0)}
@@ -578,7 +623,7 @@ export default function CustomerOrderClient({
               />
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate">
-                  {shop?.name ?? "Coffee shop"}
+                  {shop?.name ?? t("common.shopFallback")}
                 </div>
                 {shop?.tagline && (
                   <div
@@ -788,6 +833,53 @@ export default function CustomerOrderClient({
                     {formatElapsed(elapsedLive)}
                   </span>
                 </div>
+
+                {/* Stale order: waiting too long */}
+                {isStale && !staleDismissed && (
+                  <div
+                    className="rounded-2xl border px-4 py-4 space-y-3 text-left"
+                    style={{
+                      borderColor: "var(--border)",
+                      background: "var(--surface)",
+                    }}
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">
+                        {t("cust.staleTitle")}
+                      </p>
+                      <p
+                        className="text-xs leading-snug"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {t("cust.staleBody")}
+                      </p>
+                    </div>
+
+                    {staleError && (
+                      <p className="text-xs text-red-600">{staleError}</p>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleCancelOrder}
+                        disabled={staleCancelling}
+                        className="flex-1 py-2.5 rounded-xl bg-stone-900 text-amber-50 text-sm font-semibold disabled:opacity-50 transition"
+                      >
+                        {t("cust.staleCancel")}
+                      </button>
+                      <button
+                        onClick={() => setStaleDismissed(true)}
+                        className="flex-1 py-2.5 rounded-xl border text-sm font-medium transition"
+                        style={{
+                          borderColor: "var(--border)",
+                          color: "var(--text)",
+                        }}
+                      >
+                        {t("cust.staleWait")}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
