@@ -411,6 +411,10 @@ export const translations = {
     "admin.tabFeedback": "Avis & activité",
     "admin.orderNoMatch": "Aucune commande pour ce filtre.",
     "admin.pinHint": "6 chiffres, comme à la connexion",
+        "admin.attention": "Nécessite votre attention",
+    "admin.expiringSoon": "Expire bientôt",
+    "admin.lastOrder": "Dernière commande",
+    "admin.never": "Jamais",
   },
 
   ar: {
@@ -794,6 +798,10 @@ export const translations = {
     "admin.tabFeedback": "التقييمات والنشاط",
     "admin.orderNoMatch": "لا توجد طلبات لهذا الفلتر.",
     "admin.pinHint": "6 أرقام، كما في تسجيل الدخول",
+        "admin.attention": "يحتاج إلى انتباهك",
+    "admin.expiringSoon": "ينتهي قريباً",
+    "admin.lastOrder": "آخر طلب",
+    "admin.never": "أبداً",
   },
 
   en: {
@@ -1183,6 +1191,10 @@ export const translations = {
     "admin.tabFeedback": "Reviews & activity",
     "admin.orderNoMatch": "No orders for this filter.",
     "admin.pinHint": "6 digits, same as login",
+        "admin.attention": "Needs your attention",
+    "admin.expiringSoon": "Expiring soon",
+    "admin.lastOrder": "Last order",
+    "admin.never": "Never",
   },
 } as const;
 
