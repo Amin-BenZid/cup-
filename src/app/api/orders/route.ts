@@ -1,85 +1,91 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+type CreateOrderBody = {
+  shop_id?: unknown;
+  order_number?: unknown;
+  customer_phone?: unknown;
+};
 
 export async function POST(req: NextRequest) {
+  let body: CreateOrderBody;
+
   try {
-    const body = await req.json().catch(() => ({}))
-    const shop_id = (body?.shop_id ?? '').toString()
-    const order_number = (body?.order_number ?? '').toString().trim()
-    const rawPhone = (body?.customer_phone ?? '').toString().trim()
+    body = (await req.json()) as CreateOrderBody;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!shop_id) {
-      return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-    }
-    if (!order_number) {
+  const shop_id = String(body?.shop_id ?? "").trim();
+  const suppliedNumber = String(body?.order_number ?? "").trim();
+  const rawPhone = String(body?.customer_phone ?? "").trim();
+
+  if (!shop_id) {
+    return NextResponse.json({ error: "shop_id required" }, { status: 400 });
+  }
+
+  // A number is only sent when the barista edited it.
+  if (suppliedNumber && !/^\d{1,4}$/.test(suppliedNumber)) {
+    return NextResponse.json(
+      { error: "Order number must be 1 to 4 digits" },
+      { status: 400 },
+    );
+  }
+
+  let customer_phone: string | null = null;
+  if (rawPhone) {
+    const cleaned = rawPhone.replace(/[\s\-().]/g, "");
+    if (!/^\+?\d{6,20}$/.test(cleaned)) {
       return NextResponse.json(
-        { error: 'order_number required' },
-        { status: 400 }
-      )
+        { error: "Invalid phone number" },
+        { status: 400 },
+      );
+    }
+    customer_phone = cleaned;
+  }
+
+  try {
+    // Single round trip: claims the number (if p_number is empty), inserts the
+    // order and flags the shop for onboarding — all inside one SQL function.
+    const { data, error } = await supabaseAdmin.rpc("create_order", {
+      p_shop_id: shop_id,
+      p_number: suppliedNumber,
+      p_phone: customer_phone,
+    });
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { code: "DUPLICATE_ORDER_NUMBER", error: error.message },
+          { status: 409 },
+        );
+      }
+
+      if (error.code === "23503") {
+        return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+      }
+
+      console.error("[orders POST]", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Ensure order number is strictly max 4 digits
-    if (!/^\d{1,4}$/.test(order_number)) {
+    // PostgREST returns a composite as an object, but tolerate an array.
+    const order = Array.isArray(data) ? data[0] : data;
+
+    if (!order) {
       return NextResponse.json(
-        { error: 'Order number must be 1 to 4 digits' },
-        { status: 400 }
-      )
+        { error: "Order was not created" },
+        { status: 500 },
+      );
     }
 
-    // Normalize phone: strip spaces, dashes, parentheses
-    let customer_phone: string | null = null
-    if (rawPhone) {
-      const cleaned = rawPhone.replace(/[\s\-().]/g, '')
-      if (/^\+?\d{6,20}$/.test(cleaned)) {
-        customer_phone = cleaned
-      } else {
-        return NextResponse.json(
-          { error: 'Invalid phone number' },
-          { status: 400 }
-        )
-      }
-    }
-
-    const { data: shop } = await supabaseAdmin
-      .from('shops')
-      .select('id')
-      .eq('id', shop_id)
-      .maybeSingle()
-
-    if (!shop) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('orders')
-      .insert({
-        shop_id,
-        order_number,
-        status: 'preparing',
-        customer_phone,
-      })
-      .select()
-      .single()
-
-       if (error) {
-      if (error.code === '23505') {
-        return NextResponse.json(
-          { code: 'DUPLICATE_ORDER_NUMBER', error: error.message },
-          { status: 409 }
-        )
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    // Mark the shop as "has created an order" (for the onboarding checklist)
-    await supabaseAdmin
-      .from('shops')
-      .update({ has_created_order: true })
-      .eq('id', shop_id)
-
-    return NextResponse.json({ order: data })
+    return NextResponse.json(
+      { order },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("[orders POST] crash:", e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

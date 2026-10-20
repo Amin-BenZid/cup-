@@ -182,6 +182,8 @@ export const translations = {
     "common.orderNotFound": "Commande introuvable",
     "common.askBarista": "Demandez au personnel.",
     "common.back": "Retour",
+    "common.error": "Une erreur est survenue. Réessayez.",
+
 
     // Pending
     "pending.title": "En attente d'approbation",
@@ -360,11 +362,13 @@ export const translations = {
     "Appuyez une fois : votre téléphone sonnera quand la commande sera prête.",
     "onboarding.tryIt": "Essayer",
     "cust.soundOn": "Son activé",
+    "order.useNext": "Utiliser le numéro suivant (#%n)",
     "billing.whatsappMsg":
       "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
   },
 
   ar: {
+    "order.useNext": "استخدم الرقم التالي (#%n)",
     "setup.codeLabel": "رمز المتجر",
     "setup.codePlaceholder": "مثال: shop-nomad",
     "setup.codeHint": "هذا ما سيستخدمه الموظفون لتسجيل الدخول.",
@@ -521,6 +525,8 @@ export const translations = {
     "common.orderNotFound": "الطلب غير موجود",
     "common.askBarista": "اسأل الموظف.",
     "common.back": "رجوع",
+    "common.error": "حدث خطأ ما. حاول مرة أخرى.",
+
 
     // Pending
     "pending.title": "بانتظار الموافقة",
@@ -771,6 +777,7 @@ export const translations = {
     "landing.step3": "The phone rings when it's ready",
     "landing.step3Hint": "Loud, distinct, impossible to miss",
     "landing.footer": "Built for shops that would rather serve",
+    "order.useNext": "Use the next number (#%n)",
 
     // Setup / Sign Up
     "setup.back": "Back",
@@ -869,6 +876,7 @@ export const translations = {
     "common.orderNotFound": "Order not found",
     "common.askBarista": "Ask the staff.",
     "common.back": "Back",
+    "common.error": "Something went wrong. Please try again.",
 
     // Pending
     "pending.title": "Waiting for approval",

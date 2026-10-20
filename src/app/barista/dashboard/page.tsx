@@ -47,7 +47,9 @@ type ShopInfo = {
   logo_url?: string | null;
 };
 
-const DEV_LAN_IP = "192.168.0.228";
+// Dev only: when the dashboard is opened on localhost, QR codes must point at
+// the machine's LAN address so a phone can reach it. Override via env.
+const DEV_LAN_IP = process.env.NEXT_PUBLIC_DEV_LAN_IP ?? "192.168.0.228";
 
 export default function DashboardPage() {
   const t = useT();
@@ -59,6 +61,9 @@ export default function DashboardPage() {
 
   const [newOrderOpen, setNewOrderOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+  const [numberEdited, setNumberEdited] = useState(false);
+  const [nextNumber, setNextNumber] = useState<number | null>(null);
+  const [nextVersion, setNextVersion] = useState(0);
   const [customerPhone, setCustomerPhone] = useState("");
   const [creating, setCreating] = useState(false);
   const [qrOrder, setQrOrder] = useState<Order | null>(null);
@@ -84,6 +89,7 @@ export default function DashboardPage() {
 
     const cachedName = localStorage.getItem("shop_name");
     if (cachedName) setShop({ id, name: cachedName });
+
     (async () => {
       try {
         const res = await fetch(`/api/shops/${id}`, { cache: "no-store" });
@@ -121,7 +127,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", onClick);
   }, [customizeOpen]);
 
-  // Check for unread support messages
+  // Unread support messages
   useEffect(() => {
     if (!shopId) return;
     const check = async () => {
@@ -132,7 +138,7 @@ export default function DashboardPage() {
       } catch {}
     };
     check();
-    const interval = setInterval(check, 30000); // 30 seconds
+    const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
   }, [shopId]);
 
@@ -147,18 +153,76 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
+  // Fast polling: 1.2s while visible, paused when the tab is hidden, plus an
+  // immediate refresh on focus. The inFlight guard prevents request stacking.
   useEffect(() => {
     if (!shopId) return;
-    loadOrders(shopId);
-    const interval = setInterval(() => loadOrders(shopId), 4000);
-    return () => clearInterval(interval);
+
+    let cancelled = false;
+    let inFlight = false;
+
+    const refresh = async () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      try {
+        await loadOrders(shopId);
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    refresh();
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 1200);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    const onFocus = () => refresh();
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [shopId, loadOrders]);
+
+  // Suggested next order number (server owns the counter)
+  useEffect(() => {
+    if (!shopId) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/orders/next?shop_id=${shopId}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && typeof json.next === "number") {
+          setNextNumber(json.next);
+        }
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shopId, nextVersion]);
 
   async function createOrder(e: React.FormEvent) {
     e.preventDefault();
     if (!shopId) return;
+
     const num = orderNumber.trim();
-    if (!num) return setToast(t("order.error.required"));
+    // An empty number is valid: the server assigns the next one.
+    if (numberEdited && !num) return setToast(t("order.error.required"));
 
     setCreating(true);
     try {
@@ -167,25 +231,35 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shop_id: shopId,
-          order_number: num,
+          order_number: numberEdited ? num : undefined,
           customer_phone: customerPhone.trim() || undefined,
         }),
       });
+
       const json = await res.json();
-          if (!res.ok) {
-        if (json.code === 'DUPLICATE_ORDER_NUMBER') {
-          return setToast(t('order.error.duplicate'))
+      if (!res.ok) {
+        if (json.code === "DUPLICATE_ORDER_NUMBER") {
+          return setToast(t("order.error.duplicate"));
         }
-        return setToast(json.error ?? 'Failed')
+        return setToast(json.error ?? t("common.error"));
       }
+
+      // Paint it on this screen instantly — the server response is the truth.
+      const created = json.order as Order;
+      setOrders((prev) => [
+        created,
+        ...prev.filter((o) => o.id !== created.id),
+      ]);
 
       setNewOrderOpen(false);
       setOrderNumber("");
       setCustomerPhone("");
-      setQrOrder(json.order);
-      await loadOrders(shopId);
+      setNumberEdited(false);
+      setQrOrder(created);
+      setNextVersion((v) => v + 1);
+      void loadOrders(shopId);
     } catch (e) {
-      setToast(e instanceof Error ? e.message : "Network error");
+      setToast(e instanceof Error ? e.message : t("setup.error.network"));
     } finally {
       setCreating(false);
     }
@@ -212,11 +286,11 @@ export default function DashboardPage() {
         setOrders(before);
         setToast(json.error ?? `Failed (${res.status})`);
       } else {
-        await loadOrders(shopId);
+        void loadOrders(shopId);
       }
     } catch (e) {
       setOrders(before);
-      setToast(e instanceof Error ? e.message : "Network error");
+      setToast(e instanceof Error ? e.message : t("setup.error.network"));
     } finally {
       setBusyIds((prev) => {
         const n = new Set(prev);
@@ -258,6 +332,12 @@ export default function DashboardPage() {
   function telHref(order: Order) {
     if (!order.customer_phone) return "";
     return `tel:${order.customer_phone}`;
+  }
+
+  function openNewOrder() {
+    setNumberEdited(false);
+    setOrderNumber(nextNumber ? String(nextNumber) : "");
+    setNewOrderOpen(true);
   }
 
   if (!shopId) {
@@ -350,6 +430,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </button>
+
                   <button
                     onClick={() => {
                       setCustomizeOpen(false);
@@ -367,6 +448,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </button>
+
                   <button
                     onClick={() => {
                       setCustomizeOpen(false);
@@ -384,6 +466,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </button>
+
                   <button
                     onClick={() => {
                       setCustomizeOpen(false);
@@ -418,7 +501,6 @@ export default function DashboardPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-5 py-6 space-y-6">
-        {/* ONBOARDING CHECKLIST */}
         {shop && showOnboarding && (
           <OnboardingChecklist
             shopId={shop.id}
@@ -427,11 +509,14 @@ export default function DashboardPage() {
         )}
 
         <button
-          onClick={() => setNewOrderOpen(true)}
+          onClick={openNewOrder}
           className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl bg-stone-900 text-amber-50 font-semibold text-lg hover:bg-stone-800 active:scale-[0.99] transition shadow-sm"
         >
           <Plus className="w-6 h-6" strokeWidth={2.5} />
           {t("dash.newOrder")}
+          {nextNumber !== null && (
+            <span className="tabular-nums opacity-70">· #{nextNumber}</span>
+          )}
         </button>
 
         <div className="space-y-3">
@@ -589,14 +674,26 @@ export default function DashboardPage() {
                   inputMode="numeric"
                   value={orderNumber}
                   onChange={(e) => {
-                    // Strip non-numeric characters and limit to 4 digits
                     const val = e.target.value.replace(/\D/g, "").slice(0, 4);
                     setOrderNumber(val);
+                    setNumberEdited(true);
                   }}
                   placeholder={t("order.placeholder")}
                   maxLength={4}
                   className="w-full px-4 py-4 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-3xl text-center font-bold tabular-nums"
                 />
+                {nextNumber !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOrderNumber(String(nextNumber));
+                      setNumberEdited(false);
+                    }}
+                    className="text-[11px] text-stone-500 hover:text-stone-900 underline underline-offset-2 mt-1.5"
+                  >
+                    {t("order.useNext", { n: nextNumber })}
+                  </button>
+                )}
               </div>
 
               <div>
@@ -621,7 +718,7 @@ export default function DashboardPage() {
 
               <button
                 type="submit"
-                disabled={creating || !orderNumber.trim()}
+                disabled={creating || (numberEdited && !orderNumber.trim())}
                 className="w-full py-3.5 rounded-xl bg-stone-900 text-amber-50 font-semibold hover:bg-stone-800 disabled:opacity-40 transition"
               >
                 {creating ? t("order.creating") : t("order.create")}
