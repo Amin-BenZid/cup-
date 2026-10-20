@@ -595,10 +595,10 @@ export default function DashboardPage() {
                     : "border-stone-200"
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-2xl font-bold tabular-nums text-stone-900">
+                      <span className="text-xl sm:text-2xl font-bold tabular-nums text-stone-900">
                         #{order.order_number}
                       </span>
                       <span
@@ -611,7 +611,8 @@ export default function DashboardPage() {
                         {ready ? t("dash.ready") : t("dash.preparing")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
+
+                    <div className="flex items-center gap-x-3 gap-y-1 text-xs text-stone-500 flex-wrap">
                       <OrderTimer
                         createdAt={order.created_at}
                         readyAt={order.ready_at}
@@ -632,34 +633,37 @@ export default function DashboardPage() {
                     </div>
 
                     {order.customer_phone && (
-                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3">
                         <span className="inline-flex items-center gap-1.5 text-xs text-stone-600 font-mono tabular-nums">
                           <Phone className="w-3.5 h-3.5 text-stone-400" />
                           {order.customer_phone}
                         </span>
-                        <a
-                          href={telHref(order)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 transition"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                          {t("dash.call")}
-                        </a>
-                        <a
-                          href={smsHref(order)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 transition"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          {t("dash.sms")}
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={telHref(order)}
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-10 sm:h-auto sm:py-1 sm:px-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 active:bg-stone-200 transition"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            {t("dash.call")}
+                          </a>
+                          <a
+                            href={smsHref(order)}
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 h-10 sm:h-auto sm:py-1 sm:px-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 active:bg-stone-200 transition"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            {t("dash.sms")}
+                          </a>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 sm:shrink-0">
                     <button
                       onClick={() => setQrOrder(order)}
                       title="QR"
-                      className="w-10 h-10 rounded-xl border border-stone-200 hover:bg-stone-50 flex items-center justify-center transition"
+                      aria-label="QR"
+                      className="w-11 h-11 sm:w-10 sm:h-10 shrink-0 rounded-xl border border-stone-200 hover:bg-stone-50 active:bg-stone-100 flex items-center justify-center transition"
                     >
                       <QrCode className="w-4 h-4 text-stone-500" />
                     </button>
@@ -668,7 +672,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() => updateStatus(order, "done")}
                         disabled={busy}
-                        className="h-10 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-sm font-medium flex items-center gap-2 transition disabled:opacity-50"
+                        className="flex-1 sm:flex-none h-11 sm:h-10 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-200 text-sm font-medium flex items-center justify-center gap-2 transition disabled:opacity-50"
                       >
                         <Package className="w-4 h-4" />
                         {t("dash.pickedUp")}
@@ -677,7 +681,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() => updateStatus(order, "ready")}
                         disabled={busy}
-                        className="h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold flex items-center gap-2 transition disabled:opacity-50"
+                        className="flex-1 sm:flex-none h-11 sm:h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-500 text-white text-sm font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
                       >
                         <Check className="w-4 h-4" strokeWidth={2.5} />
                         {busy ? t("dash.saving") : t("dash.markReady")}
