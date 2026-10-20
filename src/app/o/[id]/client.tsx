@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Coffee,
   Check,
@@ -48,6 +49,7 @@ export default function CustomerOrderClient({
   initialShop,
 }: Props) {
   const t = useT();
+  const router = useRouter();
   const hasInitial = initialOrder !== undefined;
 
   const [order, setOrder] = useState<Order | null>(initialOrder ?? null);
@@ -459,7 +461,14 @@ export default function CustomerOrderClient({
     stopAudio();
     try {
       localStorage.setItem(`cup-ack-${orderId}`, "1");
+      localStorage.removeItem("cup-active-order");
     } catch {}
+
+    // Give them a moment with the review, then return to the scan screen so
+    // the next order can start there.
+    window.setTimeout(() => {
+      router.replace("/o/latest");
+    }, 7000);
   }
 
   if (loading) {
@@ -602,8 +611,9 @@ export default function CustomerOrderClient({
               </div>
             </div>
 
-            {/* ENABLE SOUND — silent unlock, shown only while waiting */}
-            {enableState !== "hidden" && !acknowledged && !ready && (
+            {/* ENABLE SOUND — shown whenever audio is still locked, including
+                when the app opens directly on an already-ready order. */}
+            {enableState !== "hidden" && !acknowledged && (
               <div
                 className="rounded-2xl border px-4 py-3.5 space-y-1 transition-colors duration-300"
                 style={{
@@ -720,17 +730,6 @@ export default function CustomerOrderClient({
                 >
                   {t("cust.gotIt")}
                 </button>
-
-                {/* Safety net only: still locked at Ready means it's silent */}
-                {!audioUnlocked && (
-                  <button
-                    onClick={handleEnableSound}
-                    className="w-full text-xs underline underline-offset-4 py-1"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {t("cust.enableSound")}
-                  </button>
-                )}
               </div>
             ) : (
               <div className="space-y-4 text-center py-4">

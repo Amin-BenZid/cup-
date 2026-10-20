@@ -1,23 +1,38 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Coffee, ArrowLeft, QrCode } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { Coffee, QrCode, Loader2 } from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 
+const QrScanner = dynamic(() => import('@/components/QrScanner'), {
+  ssr: false,
+})
+
 const STORAGE_KEY = 'cup-active-order'
+
+function extractOrderId(text: string): string | null {
+  const uuid =
+    '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+  const inUrl = text.match(new RegExp(`/o/(${uuid})`, 'i'))
+  if (inUrl) return inUrl[1]
+  if (new RegExp(`^${uuid}$`, 'i').test(text.trim())) return text.trim()
+  return null
+}
 
 export default function LatestOrderPage() {
   const t = useT()
   const router = useRouter()
   const [checking, setChecking] = useState(true)
-  const [hasOrder, setHasOrder] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const [scanError, setScanError] = useState('')
 
   useEffect(() => {
     let cancelled = false
+
     ;(async () => {
       let orderId: string | null = null
       try {
@@ -25,19 +40,15 @@ export default function LatestOrderPage() {
       } catch {}
 
       if (!orderId) {
-        if (!cancelled) {
-          setHasOrder(false)
-          setChecking(false)
-        }
+        if (!cancelled) setChecking(false)
         return
       }
 
-      // Check if the order still exists and isn't done
       try {
-const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-store',
+        const res = await fetch(`/api/orders/${orderId}/status`, {
+          cache: 'no-store',
         }).catch(() => null)
 
-        // Fallback: try the shop-scoped status endpoint
         let status: string | null = null
         if (res && res.ok) {
           const json = await res.json().catch(() => ({}))
@@ -47,21 +58,15 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
         if (cancelled) return
 
         if (status === 'done' || status === null) {
-          // Order is gone or finished — clear and show "no order"
           try {
             localStorage.removeItem(STORAGE_KEY)
           } catch {}
-          setHasOrder(false)
           setChecking(false)
         } else {
-          // Redirect to the actual order page
           router.replace(`/o/${orderId}`)
         }
       } catch {
-        if (!cancelled) {
-          setHasOrder(false)
-          setChecking(false)
-        }
+        if (!cancelled) setChecking(false)
       }
     })()
 
@@ -69,6 +74,20 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
       cancelled = true
     }
   }, [router])
+
+  const handleScan = useCallback(
+    (text: string) => {
+      const id = extractOrderId(text)
+      if (!id) {
+        setScanError(t('scan.invalid'))
+        setScanning(false)
+        return
+      }
+      setScanning(false)
+      router.replace(`/o/${id}`)
+    },
+    [router, t],
+  )
 
   if (checking) {
     return (
@@ -78,19 +97,10 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
     )
   }
 
-  if (hasOrder) return null
-
   return (
     <main className="min-h-screen bg-[#faf7f2] text-stone-900 flex flex-col">
       <header className="px-6 pt-8 pb-2">
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition -ms-1.5"
-          >
-            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
-            {t('common.back')}
-          </Link>
+        <div className="max-w-md mx-auto flex items-center justify-end">
           <LanguageSwitcher />
         </div>
       </header>
@@ -112,10 +122,25 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
             </p>
           </div>
 
+          <button
+            onClick={() => {
+              setScanError('')
+              setScanning(true)
+            }}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-stone-900 text-amber-50 font-semibold hover:bg-stone-800 active:scale-[0.99] transition"
+          >
+            <QrCode className="w-5 h-5" />
+            {t('scan.button')}
+          </button>
+
+          {scanError && (
+            <p className="text-xs text-red-600">{scanError}</p>
+          )}
+
           <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-stone-900 flex items-center justify-center shrink-0">
-                <QrCode className="w-4 h-4 text-amber-100" />
+              <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                <QrCode className="w-4 h-4 text-stone-500" />
               </div>
               <div className="text-start">
                 <div className="text-sm font-medium">
@@ -127,14 +152,6 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
               </div>
             </div>
           </div>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-stone-300 text-sm font-medium hover:bg-white transition"
-          >
-            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
-            {t('pending.backHome')}
-          </Link>
         </div>
       </div>
 
@@ -144,6 +161,10 @@ const res = await fetch(`/api/orders/${orderId}/status`, {          cache: 'no-s
           <span>Cup</span>
         </div>
       </footer>
+
+      {scanning && (
+        <QrScanner onResult={handleScan} onClose={() => setScanning(false)} />
+      )}
     </main>
   )
 }

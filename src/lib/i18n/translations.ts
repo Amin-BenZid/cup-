@@ -175,6 +175,10 @@ export const translations = {
     "notif.enable": "Activer les notifications",
     "notif.enabling": "Activation…",
     "notif.notNow": "Plus tard",
+    "notif.blocked":
+      "Notifications bloquées. Autorisez-les dans Réglages → Cup.",
+    "notif.iosHint":
+      "Sur iPhone : Partager → « Sur l'écran d'accueil » pour être prévenu même page fermée.",
 
     // Common
     "common.loading": "Chargement…",
@@ -183,7 +187,6 @@ export const translations = {
     "common.askBarista": "Demandez au personnel.",
     "common.back": "Retour",
     "common.error": "Une erreur est survenue. Réessayez.",
-
 
     // Pending
     "pending.title": "En attente d'approbation",
@@ -359,12 +362,17 @@ export const translations = {
     "onboarding.go": "Aller",
     "cust.enableSound": "Activer le son",
     "cust.enableSoundHint":
-    "Appuyez une fois : votre téléphone sonnera quand la commande sera prête.",
+      "Appuyez une fois : votre téléphone sonnera quand la commande sera prête.",
     "onboarding.tryIt": "Essayer",
     "cust.soundOn": "Son activé",
     "order.useNext": "Utiliser le numéro suivant (#%n)",
     "billing.whatsappMsg":
       "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
+    "scan.button": "Scanner le QR",
+    "scan.hint": "Placez le QR code de votre commande dans le cadre.",
+    "scan.error":
+      "Impossible d'ouvrir la caméra. Autorisez l'accès dans les réglages.",
+    "scan.invalid": "QR code non reconnu. Réessayez.",
   },
 
   ar: {
@@ -518,6 +526,9 @@ export const translations = {
     "notif.enable": "تفعيل الإشعارات",
     "notif.enabling": "جارٍ التفعيل…",
     "notif.notNow": "ليس الآن",
+    "notif.blocked": "الإشعارات محظورة. فعّلها من الإعدادات ← Cup.",
+    "notif.iosHint":
+      "على iPhone: شارك ← «إضافة إلى الشاشة الرئيسية» لتصلك التنبيهات حتى والصفحة مغلقة.",
 
     // Common
     "common.loading": "جارٍ التحميل…",
@@ -526,7 +537,6 @@ export const translations = {
     "common.askBarista": "اسأل الموظف.",
     "common.back": "رجوع",
     "common.error": "حدث خطأ ما. حاول مرة أخرى.",
-
 
     // Pending
     "pending.title": "بانتظار الموافقة",
@@ -705,6 +715,10 @@ export const translations = {
     "cust.soundOn": "تم تفعيل الصوت",
     "cust.enableSoundHint":
       "اضغط مرة واحدة وسيرن هاتفك عندما يصبح طلبك جاهزاً.",
+    "scan.button": "مسح رمز QR",
+    "scan.hint": "ضع رمز QR الخاص بطلبك داخل الإطار.",
+    "scan.error": "تعذر فتح الكاميرا. اسمح بالوصول من الإعدادات.",
+    "scan.invalid": "رمز QR غير معروف. حاول مرة أخرى.",
   },
 
   en: {
@@ -869,6 +883,9 @@ export const translations = {
     "notif.enable": "Enable notifications",
     "notif.enabling": "Enabling…",
     "notif.notNow": "Not now",
+    "notif.blocked": "Notifications are blocked. Allow them in Settings → Cup.",
+    "notif.iosHint":
+      "On iPhone: Share → “Add to Home Screen” to get alerts even when this page is closed.",
 
     // Common
     "common.loading": "Loading…",
@@ -1051,6 +1068,10 @@ export const translations = {
     "cust.enableSoundHint":
       "Tap once and your phone will ring when your order is ready.",
   },
+  "scan.button": "Scan QR code",
+  "scan.hint": "Place your order's QR code inside the frame.",
+  "scan.error": "Camera unavailable. Allow access in Settings.",
+  "scan.invalid": "QR code not recognised. Try again.",
 } as const;
 
 export type TranslationKey = keyof typeof translations.fr;
