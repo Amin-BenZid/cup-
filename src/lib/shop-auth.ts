@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const COOKIE_NAME = "shop_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -56,10 +57,10 @@ export async function getShopSession(): Promise<{ shopId: string } | null> {
 }
 
 /**
- * Returns the authenticated shop id, optionally verifying it matches a
- * requested id. Never trust a client-supplied shop_id without this.
+ * Identity only: a valid session for this shop, regardless of billing.
+ * ONLY use this for support messaging, so an expired shop can reach you.
  */
-export async function requireShop(requestedId?: string) {
+export async function requireShopAuth(requestedId?: string) {
   const session = await getShopSession();
   if (!session) {
     return { ok: false as const, error: "Unauthorized", status: 401 };
@@ -68,6 +69,41 @@ export async function requireShop(requestedId?: string) {
     return { ok: false as const, error: "Forbidden", status: 403 };
   }
   return { ok: true as const, shopId: session.shopId };
+}
+
+/**
+ * Identity + entitlement. Everything else must use this.
+ */
+export async function requireShop(requestedId?: string) {
+  const auth = await requireShopAuth(requestedId);
+  if (!auth.ok) return auth;
+
+  const { data: shop } = await supabaseAdmin
+    .from("shops")
+    .select("status, trial_ends_at, subscription_ends_at")
+    .eq("id", auth.shopId)
+    .maybeSingle();
+
+  if (!shop) {
+    return { ok: false as const, error: "Unauthorized", status: 401 };
+  }
+
+  if (shop.status !== "active") {
+    return { ok: false as const, error: "Account inactive", status: 403 };
+  }
+
+  const now = Date.now();
+  const trialOk =
+    !!shop.trial_ends_at && new Date(shop.trial_ends_at).getTime() > now;
+  const subOk =
+    !!shop.subscription_ends_at &&
+    new Date(shop.subscription_ends_at).getTime() > now;
+
+  if (!trialOk && !subOk) {
+    return { ok: false as const, error: "Subscription expired", status: 403 };
+  }
+
+  return { ok: true as const, shopId: auth.shopId };
 }
 
 export const SHOP_COOKIE = COOKIE_NAME;

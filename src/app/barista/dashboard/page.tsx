@@ -157,6 +157,12 @@ export default function DashboardPage() {
           return;
         }
 
+        // 403 from a guarded route means the trial/subscription lapsed.
+        if (res.status === 403) {
+          router.replace("/expired");
+          return;
+        }
+
         if (!res.ok) return;
         const json = await res.json();
         setOrders(json.orders ?? []);
@@ -255,6 +261,11 @@ export default function DashboardPage() {
         return;
       }
 
+      if (res.status === 403) {
+        router.replace("/expired");
+        return;
+      }
+
       const json = await res.json();
       if (!res.ok) {
         if (json.code === "DUPLICATE_ORDER_NUMBER") {
@@ -308,10 +319,15 @@ export default function DashboardPage() {
         return;
       }
 
+      if (res.status === 403) {
+        router.replace("/expired");
+        return;
+      }
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setOrders(before);
-        setToast(json.error ?? `Failed (${res.status})`);
+        setToast(json.error ?? t("common.error"));
       } else {
         void loadOrders(shopId);
       }

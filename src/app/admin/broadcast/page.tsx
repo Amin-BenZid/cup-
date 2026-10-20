@@ -9,6 +9,9 @@ import {
   History,
   CheckCircle2,
   XCircle,
+  LifeBuoy,
+  Mail,
+  Phone,
 } from 'lucide-react'
 import CupLogo from '@/components/CupLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
@@ -24,11 +27,16 @@ type BroadcastHistory = {
 export default function BroadcastPage() {
   const t = useT()
   const router = useRouter()
-  
+
   const [active, setActive] = useState(false)
   const [message, setMessage] = useState('')
   const [history, setHistory] = useState<BroadcastHistory[]>([])
-  
+
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [savingContact, setSavingContact] = useState(false)
+  const [savedContact, setSavedContact] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -46,24 +54,33 @@ export default function BroadcastPage() {
         setHistory(j.history ?? [])
       })
       .finally(() => setLoading(false))
+
+    fetch('/api/admin/contact', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j?.contact) {
+          setContactEmail(j.contact.email ?? '')
+          setContactPhone(j.contact.phone ?? '')
+        }
+      })
+      .catch(() => {})
   }, [])
 
   async function save() {
     setSaving(true)
     setSaved(false)
-    
+
     try {
       const res = await fetch('/api/broadcast', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ active, message }),
       })
-      
+
       if (res.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
-        
-        // Refresh history
+
         const refreshRes = await fetch('/api/broadcast', { cache: 'no-store' })
         const refreshJson = await refreshRes.json()
         setHistory(refreshJson.history ?? [])
@@ -75,6 +92,34 @@ export default function BroadcastPage() {
       alert('Network error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function saveContact() {
+    setSavingContact(true)
+    setSavedContact(false)
+
+    try {
+      const res = await fetch('/api/admin/contact', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: contactEmail.trim(),
+          phone: contactPhone.trim(),
+        }),
+      })
+
+      if (res.ok) {
+        setSavedContact(true)
+        setTimeout(() => setSavedContact(false), 2500)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert('Failed to save: ' + (err.error || 'Unknown error'))
+      }
+    } catch {
+      alert('Network error')
+    } finally {
+      setSavingContact(false)
     }
   }
 
@@ -107,7 +152,7 @@ export default function BroadcastPage() {
       </header>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-8 space-y-8">
-        
+
         {/* COMPOSER */}
         <section className="bg-white border border-zinc-200 rounded-lg">
           <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
@@ -151,6 +196,78 @@ export default function BroadcastPage() {
             {saved && (
               <p className="text-xs text-emerald-600">
                 Broadcast updated successfully.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* SUPPORT CONTACT */}
+        <section className="bg-white border border-zinc-200 rounded-lg">
+          <div className="px-4 py-3 border-b border-zinc-100 flex items-center gap-2">
+            <LifeBuoy className="w-4 h-4 text-zinc-400" />
+            <h2 className="text-sm font-semibold">Support contact</h2>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <p className="text-[11px] text-zinc-500">
+              Shown to shops whose trial or subscription has ended, so they can
+              reach you. Leave a field empty to hide it.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-zinc-400 absolute start-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="support@yourdomain.com"
+                    className="w-full ps-10 pe-3 py-2 rounded-md border border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 outline-none text-sm transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
+                  Phone
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-zinc-400 absolute start-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="+216 00 000 000"
+                    dir="ltr"
+                    className="w-full ps-10 pe-3 py-2 rounded-md border border-zinc-200 bg-zinc-50 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 outline-none text-sm transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-zinc-500">
+                Used on the expired-account screen.
+              </span>
+              <button
+                onClick={saveContact}
+                disabled={savingContact}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 disabled:opacity-40 transition"
+              >
+                {savingContact ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : null}
+                {savingContact ? 'Saving…' : 'Save contact'}
+              </button>
+            </div>
+
+            {savedContact && (
+              <p className="text-xs text-emerald-600">
+                Support contact updated.
               </p>
             )}
           </div>

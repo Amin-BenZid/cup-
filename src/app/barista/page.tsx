@@ -84,8 +84,11 @@ export default function BaristaLogin() {
           setError(t('login.error.disabled'))
           return
         }
-        if (json.status === 'expired') {
-          setError(t('login.error.expired'))
+              if (json.status === 'expired') {
+          localStorage.setItem('shop_id', json.shop_id ?? '')
+          localStorage.setItem('shop_name', json.shop_name ?? '')
+          localStorage.setItem('shop_expired_reason', json.reason ?? 'trial')
+          router.push('/expired')
           return
         }
         
