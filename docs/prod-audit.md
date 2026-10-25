@@ -26,8 +26,8 @@ alter table public.client_errors      enable row level security;
 ### 2. Vercel plan [you]
 - Hobby is personal/non-commercial only; Cup charges 25 TND/month, so it needs **Pro**.
 - Load: barista dashboard polls `/api/orders/list` every **1.2 s** → ~36k requests/day per café open 12 h ≈ 1.1M/month, already over Hobby's ~1M function invocations for one café.
-- Also cut the load in code: slower polling or realtime for orders (see 12).
-- Status: ☐
+- Also cut the load in code: slower polling or realtime for orders (see 12). **Code side done 2026-10-25:** orders are live, and polling dropped from 1.2 s to 20 s while connected. Still needs Pro for commercial use.
+- Status: ☐ (plan) · ☑ (load)
 
 ### 3. Backups [you]
 - Supabase Free has no daily backups / PITR. Pro ($25/mo) adds daily backups (7-day retention) and no auto-pause.
@@ -78,7 +78,7 @@ alter table public.client_errors      enable row level security;
 - Status: ☐
 
 ## 🟡 Later
-- 12. Orders list still polls every 1.2 s: move to the same realtime ping pattern as support (big cost saving).
+- 12. ☑ Done 2026-10-25: live orders via Realtime Broadcast (`lib/realtime.ts`); polling is fallback only.
 - 13. Content-Security-Policy header (others already set in `next.config.ts`).
 - 14. Automated tests (orders lifecycle, billing, auth). Sandbox scripts from the admin rebuild (mock PostgREST + 44 auth checks) could seed this.
 - 15. Online payments instead of manual billing extension.
@@ -102,4 +102,4 @@ Decided 2026-10-25. Trigger: **first 10 clients**. Until then stay on Vercel + S
 - Removed public anon client and realtime-on-table usage. Shop routes guarded with `requireShop`.
 
 ## In progress
-- Live support chat (realtime + sent/delivered/seen receipts). Needs migration `supabase/migrations/20261025_support_receipts.sql` (`delivered_at`, `read_at` on `support_messages`). Code written in the sandbox: `lib/realtime.ts`, `lib/realtime-client.ts`, `lib/support.ts`, `api/support/route.ts`. Still to do: admin API + UI, barista `SupportModal`, translations, tests.
+- Live support chat with sent/delivered/seen receipts: not started in the repo. Reuse `lib/realtime.ts` (add support topics) and `useLiveTopic`. Receipts need a migration adding `delivered_at`, `read_at` to `support_messages`; write the code so it tolerates the columns being missing, so deploy order doesn't matter.

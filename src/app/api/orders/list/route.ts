@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireShop } from "@/lib/shop-auth";
+import { shopOrdersTopic } from "@/lib/realtime";
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { orders: data ?? [] },
+      { orders: data ?? [], topic: shopOrdersTopic(guard.shopId) },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e: unknown) {

@@ -1,6 +1,7 @@
 import CustomerOrderClient from './client'
 import { getPublicOrder } from '@/lib/public-order'
 import type { Shop } from '@/lib/themes'
+import { orderTopic } from '@/lib/realtime'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,7 @@ export default async function CustomerOrderPage({
         orderId={id}
         initialOrder={result.order}
         initialShop={result.shop as unknown as Shop | null}
+        topic={orderTopic(id)}
       />
     )
   }

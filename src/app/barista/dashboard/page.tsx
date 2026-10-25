@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { useLiveTopic } from "@/lib/realtime-client";
 import {
   Plus,
   LogOut,
@@ -56,6 +57,7 @@ export default function DashboardPage() {
   const [shopId, setShopId] = useState<string | null>(null);
   const [shop, setShop] = useState<ShopInfo | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersTopic, setOrdersTopic] = useState<string | null>(null);
 
   const [newOrderOpen, setNewOrderOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
@@ -164,13 +166,20 @@ export default function DashboardPage() {
         if (!res.ok) return;
         const json = await res.json();
         setOrders(json.orders ?? []);
+        if (typeof json.topic === "string") setOrdersTopic(json.topic);
       } catch {}
     },
     [router],
   );
 
-  // Fast polling: 1.2s while visible, paused when the tab is hidden, plus an
-  // immediate refresh on focus. The inFlight guard prevents request stacking.
+  // Live updates: the server pings this shop's channel on every order change
+  // (new order, ready, picked up, customer scanned), and we refetch at once.
+  // Polling stays as a safety net: every 20 s while the socket is up, every
+  // 3 s if it isn't. Paused when the tab is hidden; refresh on focus.
+  const refreshOrdersRef = useRef<() => void>(() => {});
+  const onOrdersPing = useCallback(() => refreshOrdersRef.current(), []);
+  const ordersLive = useLiveTopic(ordersTopic, onOrdersPing);
+
   useEffect(() => {
     if (!shopId) return;
 
@@ -187,11 +196,12 @@ export default function DashboardPage() {
       }
     };
 
+    refreshOrdersRef.current = () => void refresh();
     refresh();
 
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") refresh();
-    }, 1200);
+    }, ordersLive ? 20_000 : 3_000);
 
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();
@@ -207,7 +217,7 @@ export default function DashboardPage() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onFocus);
     };
-  }, [shopId, loadOrders]);
+  }, [shopId, loadOrders, ordersLive]);
 
   // Suggested next order number (server owns the counter)
   useEffect(() => {

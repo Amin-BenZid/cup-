@@ -2,6 +2,7 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireShop } from "@/lib/shop-auth";
 import { sendOrderReadyPush } from "@/lib/send-push";
+import { pingOrder } from "@/lib/realtime";
 
 export async function PATCH(
   req: NextRequest,
@@ -53,15 +54,18 @@ export async function PATCH(
     }
 
     // Must run inside the invocation, or Vercel can freeze before it sends.
-    if (status === "ready") {
-      after(async () => {
+    // Live ping first (customer page rings instantly), then the web push.
+    const shopId = existing.shop_id as string;
+    after(async () => {
+      await pingOrder(id, shopId);
+      if (status === "ready") {
         try {
           await sendOrderReadyPush(id);
         } catch (e) {
           console.error("Push error:", e);
         }
-      });
-    }
+      }
+    });
 
     return NextResponse.json({ order: data });
   } catch (e: unknown) {

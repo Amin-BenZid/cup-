@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireShop } from "@/lib/shop-auth";
+import { pingTopics, shopOrdersTopic } from "@/lib/realtime";
 
 type CreateOrderBody = {
   shop_id?: unknown;
@@ -85,6 +86,10 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
+
+    // Other devices of the same café see the new order instantly.
+    const shopId = guard.shopId;
+    after(() => pingTopics([shopOrdersTopic(shopId)], { kind: "created" }));
 
     return NextResponse.json(
       { order },

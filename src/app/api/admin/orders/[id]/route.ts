@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
 import { sendOrderReadyPush } from "@/lib/send-push";
 import { logAdminEvent } from "@/lib/admin-audit";
+import { pingOrder } from "@/lib/realtime";
 
 /** Admin override of an order's status: { status: preparing|ready|done } */
 export async function PATCH(
@@ -43,15 +44,17 @@ export async function PATCH(
     }
     if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (status === "ready") {
-      after(async () => {
+    const shopId = data.shop_id as string;
+    after(async () => {
+      await pingOrder(id, shopId);
+      if (status === "ready") {
         try {
           await sendOrderReadyPush(id);
         } catch (e) {
           console.error("Push error:", e);
         }
-      });
-    }
+      }
+    });
 
     await logAdminEvent(req, "order_status", {
       order: data.order_number,

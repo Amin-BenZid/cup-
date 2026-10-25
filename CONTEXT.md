@@ -42,7 +42,7 @@ Path alias: `@/*` → `src/*`.
 | Var | Used by |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase-admin.ts` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No longer used by any code (safe to remove) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Required** for live updates: the browser subscribes to Supabase Realtime *Broadcast* channels with it (no table access; keep RLS on). |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `lib/send-push.ts`, `NotificationSetup` (subject auto-prefixed `mailto:`) |
 | `PIN_PEPPER` | `lib/pin.ts`, `scripts/wrap-legacy-pins.mjs`. **Required**: login, signup and PIN reset fail without it. Must be identical across envs sharing the DB. Never lose it. |
 | `ADMIN_PASSWORD` | `/api/admin/login` |
@@ -360,6 +360,9 @@ Translation namespaces: `admin.*` (largest), `cz.*` (customize), `setup.*`, `cus
 - Commit style: conventional-ish (`feat(scope):`, `fix:`, `security:`, `perf:`).
 
 ---
+
+## 9a. Live updates (2026-10-25)
+Orders are pushed live over Supabase Realtime **Broadcast**. Server: `lib/realtime.ts` (`pingOrder`, `pingTopics`) POSTs to `/realtime/v1/api/broadcast` with the service key after create / status change / scan / cancel. Client: `lib/realtime-client.ts` (`useLiveTopic`). Payloads are only `{kind}` hints, never data. Topics are HMACs of order/shop ids (`ord-…`, `ords-…`), handed out by `/api/o/[id]`, the `/o/[id]` server render and `/api/orders/list`. Polling stays as a fallback: dashboard 20 s when live / 3 s when not (was 1.2 s), customer page 20 s / 4 s.
 
 ## 9b. Admin panel (rebuilt 2026-10-25)
 English-only admin with shell (`components/admin/AdminShell.tsx`, sidebar + iPhone bottom tabs) and pages: overview, shops, shop detail (full edit, billing dates, PIN/unlock, orders, delete with typed confirm), live, support, billing, analytics, reviews, activity, errors, broadcast, settings. All admin APIs use `requireAdmin(req)` (session + same-origin check). 2FA, revocable sessions, audit log, admin push notifications (signup, support, daily cron) and the admin PWA manifest are described in `docs/admin.md`. The old `admin.*` translation keys are now unused.

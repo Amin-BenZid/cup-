@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicOrder } from "@/lib/public-order";
+import { orderTopic } from "@/lib/realtime";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(
     }
 
     return NextResponse.json(
-      { order: result.order, shop: result.shop },
+      { order: result.order, shop: result.shop, topic: orderTopic(id) },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e: unknown) {

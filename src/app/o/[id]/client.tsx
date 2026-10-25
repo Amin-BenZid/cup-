@@ -21,6 +21,7 @@ import { useT } from "@/lib/i18n/context";
 import { setBadge, clearBadge } from "@/lib/badge";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { getFont, getPalette, paletteVars, type Shop } from "@/lib/themes";
+import { useLiveTopic } from "@/lib/realtime-client";
 
 // The game is below the fold and heavy — keep it out of the first JS payload.
 const CatchBeans = dynamic(() => import("@/components/CatchBeans"), {
@@ -40,12 +41,15 @@ type Props = {
   orderId: string;
   initialOrder?: Order | null;
   initialShop?: Shop | null;
+  /** Live channel for this order (from the server render). */
+  topic?: string | null;
 };
 
 export default function CustomerOrderClient({
   orderId,
   initialOrder,
   initialShop,
+  topic: initialTopic,
 }: Props) {
   const t = useT();
   const router = useRouter();
@@ -58,6 +62,7 @@ export default function CustomerOrderClient({
     hasInitial && !initialOrder ? t("common.orderNotFound") : "",
   );
   const [ringing, setRinging] = useState(false);
+  const [topic, setTopic] = useState<string | null>(initialTopic ?? null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [enableState, setEnableState] = useState<
@@ -231,6 +236,7 @@ export default function CustomerOrderClient({
         setOrder(orderData);
         setLoading(false);
         if (json.shop) setShop(json.shop as Shop);
+        if (typeof json.topic === "string") setTopic(json.topic);
 
         try {
           localStorage.setItem("cup-active-order", orderId);
@@ -278,7 +284,14 @@ export default function CustomerOrderClient({
     }
   }, [order, orderId, router]);
 
-  // ---------- status polling ----------
+  // ---------- live status ----------
+  // The server pings this order's channel the moment the barista taps
+  // "Ready", so the phone rings at once. Polling is only a safety net:
+  // every 20 s while the socket is up, every 4 s if it isn't.
+  const pollRef = useRef<() => void>(() => {});
+  const onOrderPing = useCallback(() => pollRef.current(), []);
+  const live = useLiveTopic(topic, onOrderPing);
+
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
@@ -292,6 +305,7 @@ export default function CustomerOrderClient({
 
         const updated = json.order as Order;
         setOrder(updated);
+        if (typeof json.topic === "string") setTopic(json.topic);
 
         try {
           const ack = localStorage.getItem(`cup-ack-${orderId}`);
@@ -303,9 +317,11 @@ export default function CustomerOrderClient({
       }
     }
 
+    pollRef.current = () => void poll();
+
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") poll();
-    }, 4000);
+    }, live ? 20_000 : 4_000);
 
     const onVisible = () => {
       if (document.visibilityState === "visible") poll();
@@ -317,7 +333,7 @@ export default function CustomerOrderClient({
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [orderId]);
+  }, [orderId, live]);
 
   // ---------- unlock on the first interaction ----------
   useEffect(() => {

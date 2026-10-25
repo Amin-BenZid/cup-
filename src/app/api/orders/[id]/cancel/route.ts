@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { pingOrder } from "@/lib/realtime";
 
 // The customer may only cancel an order that has been sitting untouched.
 const MIN_AGE_MS = 20 * 60 * 1000;
@@ -17,7 +18,7 @@ export async function POST(
 
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id, status, created_at")
+      .select("id, status, created_at, shop_id")
       .eq("id", id)
       .maybeSingle();
 
@@ -47,6 +48,7 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    after(() => pingOrder(id, order.shop_id as string));
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
