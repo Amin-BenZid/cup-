@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Megaphone, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { useT } from '@/lib/i18n/context'
 
 export default function BroadcastBanner() {
-  const t = useT()
   const [message, setMessage] = useState('')
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -16,8 +13,6 @@ export default function BroadcastBanner() {
       const res = await fetch('/api/broadcast', { cache: 'no-store' })
       const json = await res.json()
       const broadcast = json.broadcast
-      
-      console.log('[Banner] Fetched broadcast:', broadcast)
 
       if (broadcast?.active && broadcast?.message) {
         // Only show if they haven't dismissed this specific message
@@ -29,8 +24,8 @@ export default function BroadcastBanner() {
       } else {
         setVisible(false)
       }
-    } catch (e) {
-      console.error('[Banner] Fetch error:', e)
+    } catch {
+      // Banner is non-critical; keep whatever is showing.
     } finally {
       setLoading(false)
     }
@@ -39,20 +34,18 @@ export default function BroadcastBanner() {
   useEffect(() => {
     load()
 
-    // Listen for realtime changes
-    const channel = supabase
-      .channel('broadcast-settings')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'global_settings', filter: 'key=eq.broadcast' },
-        () => {
-          load()
-        }
-      )
-      .subscribe()
+    // Poll while visible (Supabase realtime was removed for security).
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') load()
+    }, 60_000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    document.addEventListener('visibilitychange', onVisible)
 
     return () => {
-      supabase.removeChannel(channel)
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
 

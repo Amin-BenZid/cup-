@@ -1,6 +1,6 @@
 # Cup (virtual-buzzer) — Project Context
 
-> Reference doc for future work. Written from a full read of the codebase on 2026-10-25 (HEAD `4735f55`).
+> Reference doc for future work. Written from a full read of the codebase on 2026-10-25 (HEAD `4735f55`), updated after the known-issues cleanup (branch `chore/cleanup-known-issues`).
 > If code and this doc disagree, the code wins. Update this file when you change routes, tables or flows.
 
 ---
@@ -27,7 +27,7 @@ Market: Tunisia (prices in TND, `+216` phone placeholder). UI languages: **Frenc
 | Next.js | **16.4.2**, App Router. ⚠️ AGENTS.md: APIs differ from older Next. Read `node_modules/next/dist/docs/` before writing code. |
 | React | 19.3 |
 | Styling | Tailwind CSS v4 (`@import "tailwindcss"` in `globals.css`), utility classes inline, CSS vars for per-shop theme |
-| DB / storage | Supabase. **All access is server-side through `supabaseAdmin`** (service-role key). `lib/supabase.ts` (anon client) exists but is effectively unused. |
+| DB / storage | Supabase. **All access is server-side through `supabaseAdmin`** (service-role key). There is no anon client. |
 | Push | `web-push` with VAPID; service worker `public/sw.js` |
 | QR | `qrcode.react` (generate, dashboard), `jsqr` (scan, `/o/latest`) |
 | Icons | `lucide-react` |
@@ -42,12 +42,14 @@ Path alias: `@/*` → `src/*`.
 | Var | Used by |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase-admin.ts` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/supabase.ts` (unused) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No longer used by any code (safe to remove) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `lib/send-push.ts`, `NotificationSetup` (subject auto-prefixed `mailto:`) |
 | `ADMIN_PASSWORD` | `/api/admin/login` |
 | `ADMIN_SECRET` | HMAC for admin cookie. Also the fallback for shop cookie. |
 | `SHOP_SESSION_SECRET` | HMAC for shop cookie |
-| `NEXT_PUBLIC_DEV_LAN_IP` (optional) | Dashboard QR URL when on localhost (default `192.168.0.228`, also in `next.config.ts` `allowedDevOrigins`) |
+| `NEXT_PUBLIC_DEV_LAN_IP` (optional, dev) | Dashboard QR URL when on localhost, and `next.config.ts` `allowedDevOrigins`. Unset = QR uses the current origin. Read via `lib/config.ts`. |
+| `SUPPORT_EMAIL` (optional) | Fallback email on `/expired` when no contact is set in admin (`/api/support-contact`) |
+| `NEXT_PUBLIC_MONTHLY_PRICE_TND` (optional) | Admin MRR price, default 25 (`lib/config.ts`) |
 | `VERCEL_OIDC_TOKEN` | Vercel-managed |
 
 ---
@@ -61,7 +63,7 @@ Path alias: `@/*` → `src/*`.
 ### Barista / shop
 - Login: `POST /api/auth` with `{ code, pin }`. The PIN is hashed with **unsalted SHA-256** (`lib/hash.ts`) and compared to `shops.pin_hash`.
 - Lockout: 5 failed attempts sets `locked_until = now + 15 min` (stored on the shop row). A success resets it.
-- If the PIN is valid but the shop is pending, disabled or expired, the server returns 403 with `status: pending|disabled|expired` and **sets no cookie**.
+- If the PIN is valid but the shop is pending or disabled, the server returns 403 with `status: pending|disabled` and **sets no cookie**. If it is **expired**, it returns 403 `status: expired` **and sets the cookie**, so support chat on `/expired` works (`requireShop` still blocks everything else).
 - On success it sets the HttpOnly cookie **`shop_session`** = `shopId.issuedMs.hmac` (base64url HMAC-SHA256, **30 days**). See `lib/shop-auth.ts`.
 - Guards (`lib/shop-auth.ts`):
   - `requireShopAuth(id?)`: identity only (valid cookie, matching shop id). **Use it only for support chat**, so expired shops can still reach the admin.
@@ -71,7 +73,7 @@ Path alias: `@/*` → `src/*`.
 
 ### Platform admin
 - Single shared password `ADMIN_PASSWORD`. `POST /api/admin/login` compares it in constant time.
-- Rate limit: 5 attempts per 15 min per IP, held **in memory** (per serverless instance, best effort).
+- Rate limit: 5 failed attempts per 15 min per IP, persisted in `global_settings` (`rl:admin_login:<sha256(ip)>`) via `lib/rate-limit.ts`, so it's shared across instances. Falls back to per-instance memory if the DB is unreachable.
 - Cookie **`admin_session`** = `issuedMs.hmacHex` (HMAC-SHA256 with `ADMIN_SECRET`), **7 days**. Checked by `isAdminAuthed()` in `lib/admin-auth.ts`.
 - Admin pages are client components. They call admin APIs and redirect to `/admin/login` on a 401. There is no middleware.
 
@@ -79,7 +81,7 @@ Path alias: `@/*` → `src/*`.
 
 ## 4. Data model (Supabase)
 
-The schema is not in the repo (no migrations or SQL files). The details below are inferred from queries.
+A **reconstructed** schema is in `supabase/schema.sql` (rebuilt from queries, not a verified dump; it has the `supabase db dump` command to replace it). RPC bodies still live only in Supabase.
 
 ### Tables
 **`shops`**
@@ -111,7 +113,7 @@ The schema is not in the repo (no migrations or SQL files). The details below ar
 
 **`support_messages`**: `id`, `shop_id`, `message`, `sender` `barista|admin`, `is_read`, `created_at`.
 
-**`global_settings`**: `key` (unique) → `value` jsonb. Keys: `broadcast` = `{active, message}`, `support_contact` = `{email, phone}`.
+**`global_settings`**: `key` (unique) → `value` jsonb. Keys: `broadcast` = `{active, message}`, `support_contact` = `{email, phone}`, `rl:<scope>:<hash>` = `{count, reset_at}` (rate limits).
 
 **`broadcast_history`**: `id`, `message`, `active`, `created_at`.
 
@@ -147,7 +149,7 @@ is_trial  = trial valid AND subscription not valid
 | `/barista/dashboard` | `app/barista/dashboard/page.tsx` | Main barista screen (details below). | many | orders 1.2 s, support 30 s |
 | `/barista/customize` | `app/barista/customize/page.tsx` | Branding and theme editor (details below). `?tab=branding|theme|game|messages`. Wrapped in `Suspense` (uses `useSearchParams`). | `GET/PATCH /api/shops/[id]`, `POST /api/shops/[id]/logo` | – |
 | `/expired` | `app/expired/page.tsx` | Trial or subscription wall (`shop_expired_reason`). Support chat button with unread badge, admin contact (email/phone), logout. | `GET /api/support-contact`, `GET /api/support`, `POST /api/auth/logout` | unread 15 s |
-| `/o/[id]` | `app/o/[id]/page.tsx` (server, `force-dynamic`) → `client.tsx` | Customer order page (details below). `layout.tsx` sets a per-order manifest `/o/<id>/manifest.webmanifest` so "Add to home screen" opens this order. | `GET /api/o/[id]`, `POST /api/orders/[id]/connect`, `/cancel`, `/api/push/subscribe`, `/api/reviews` | 4 s (visible only) |
+| `/o/[id]` | `app/o/[id]/page.tsx` (server, `force-dynamic`) → `client.tsx` | Customer order page (details below). The server renders the order and shop via `lib/public-order.ts`. `layout.tsx` sets a per-order manifest `/o/<id>/manifest.webmanifest` so "Add to home screen" opens this order. | polling `GET /api/o/[id]`, `POST /api/orders/[id]/connect`, `/cancel`, `/api/push/subscribe`, `/api/reviews` | 4 s (visible only) |
 | `/o/latest` | `app/o/latest/page.tsx` | PWA start point: if `cup-active-order` exists and isn't done, redirect to it. Otherwise show "no order" and a **QR scanner** (camera + jsQR, extracts the UUID from a `/o/<uuid>` URL or a bare UUID). | `GET /api/orders/[id]/status` | – |
 | `/admin/login` | `app/admin/login/page.tsx` | Password form | `POST /api/admin/login` | – |
 | `/admin` | `app/admin/page.tsx` | Admin home: nav (Live, Billing, Support, Reviews, Broadcast), "attention" strip (pending, expired, expiring ≤7 d), KPI cards (orders today, total orders, shops, avg rating), search plus status filter (all/pending/active/expired/disabled), shop list with derived badges, days-left chip, last order, 30 d and total counts. | `GET /api/admin/shops`, `GET /api/admin/support` | support unread 30 s |
@@ -185,7 +187,7 @@ is_trial  = trial valid AND subscription not valid
 - Right panel: `CustomerPreview` mock with a phone/desktop toggle and a preparing/ready toggle. It renders the palette, font, logo, messages, game stub and bean pattern.
 
 ### Customer order page details (`o/[id]/client.tsx`)
-- Can accept `initialOrder`/`initialShop` (server render path), but `page.tsx` currently passes only `orderId`, so it fetches `GET /api/o/[id]` on the client.
+- `page.tsx` loads the order and shop on the server (`getPublicOrder`) and passes `initialOrder`/`initialShop`, so the first paint already shows the branded page. Not found passes `null`, which shows the error. On a DB error it passes nothing, and the client falls back to fetching `GET /api/o/[id]`.
 - On load it saves `cup-active-order`, fires `POST /api/orders/[id]/connect`, and starts ringing if the order is already ready and not acknowledged. If it is already acknowledged or done, it redirects to `/o/latest`.
 - **Audio engine**: uses a Web Audio `AudioContext` and the decoded `/ready.mp3` buffer, played in a loop (falls back to an `<audio>` element). It unlocks on the first pointerdown or keydown, or with the "Enable sound" button. The context resumes when the page becomes visible again.
 - **When ready**: looping sound, vibration `[500,200,500,200,500]` every 2 s, title flashing every 800 ms, `setBadge(1)` (App Badging API). There is a big **Got it** button. Acknowledging stores `cup-ack-<id>`, clears the active order, shows "Enjoy" plus `ReviewPrompt`, and after 7 s goes to `/o/latest`.
@@ -204,7 +206,7 @@ Every handler uses `supabaseAdmin`. Errors return `{ error }` JSON. `ctx.params`
 ### Auth
 | Method | Path | Auth | Body / query | Response / effects |
 |---|---|---|---|---|
-| POST | `/api/auth` | public | `{code, pin}` | 200 `{shop:{id,name,code}}` and sets `shop_session`. 401 bad creds. 429 locked. 403 `{status:'pending', shop_id, shop_name}` / `{status:'disabled'}` / `{status:'expired', reason:'trial'|'subscription', shop_id, shop_name}`. Updates lockout counters. |
+| POST | `/api/auth` | public | `{code, pin}` | 200 `{shop:{id,name,code}}` and sets `shop_session`. 401 bad creds. 429 locked. 403 `{status:'pending', shop_id, shop_name}` / `{status:'disabled'}` / `{status:'expired', reason:'trial'|'subscription', shop_id, shop_name}` (expired also sets the cookie). Updates lockout counters. |
 | GET | `/api/auth/session` | cookie | – | `{shop:{id,name,status}, active, trial_ok, subscription_ok}`, or 401 `{shop:null}` |
 | POST | `/api/auth/logout` | – | – | clears `shop_session` |
 
@@ -232,11 +234,9 @@ Every handler uses `supabaseAdmin`. Errors return `{ error }` JSON. `ctx.params`
 ### Customer / public
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/api/o/[id]` | public | `{order:{id,order_number,status,created_at,ready_at,customer_connected}, shop:{name,tagline,logo_*,theme,game,messages}}`. Single joined query. **Never returns shop id.** `no-store`. |
-| GET | `/api/o/[id]/manifest` | public | Older per-order manifest JSON ("Coffee Ready"). **Unused** (the layout points to the route below). |
+| GET | `/api/o/[id]` | public | `{order:{id,order_number,status,created_at,ready_at,customer_connected}, shop:{name,tagline,logo_*,theme,game,messages}}`. Single joined query in `lib/public-order.ts` (shared with the server render). **Never returns shop id.** Malformed UUID → 404. `no-store`. |
 | GET | `/o/[id]/manifest.webmanifest` | public | Per-order PWA manifest "Cup - Ma commande", `start_url /o/<id>`, scope `/o/` |
 | POST | `/api/push/subscribe` | public | `{order_id, subscription}`, upsert by `endpoint` |
-| POST | `/push/subscribe` | public | **Legacy duplicate** of the above (not called by the client) |
 | POST | `/api/reviews` | public | `{order_id, rating:1|2|3, comment?}`. The order must be ready or done. Upsert by `order_id`. |
 | GET | `/api/broadcast` | public | `{broadcast:{active,message}, history:[last 10]}` |
 | GET | `/api/support-contact` | public | `{email, phone}` from `global_settings.support_contact` (fallback email hard-coded) |
@@ -301,9 +301,8 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 ### `src/components`
 | File | Purpose |
 |---|---|
-| `BroadcastBanner.tsx` | Fetches `/api/broadcast` and shows a dismissible banner (dismissal keyed by message) |
+| `BroadcastBanner.tsx` | Polls `/api/broadcast` (60 s while visible, plus on visibility) and shows a dismissible banner (dismissal keyed by message) |
 | `CatchBeans.tsx` | Waiting mini-game: drag a cup to catch falling beans, 3 lives, speed ramps up, best score in localStorage |
-| `ClientOnly.tsx` | Mount-gate wrapper. Imported in `layout.tsx` but **not rendered** |
 | `CozyPattern.tsx` | SVG coffee-bean background pattern (cozy palette) |
 | `CupLogo.tsx` | App logo image (`/logo.png`) |
 | `LanguageSwitcher.tsx` | fr/ar/en switcher (`compact` variant) |
@@ -315,9 +314,8 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 | `QrScanner.tsx` | Full-screen camera (`getUserMedia`) and jsQR decode loop |
 | `ReviewPrompt.tsx` | 3-face rating plus optional comment, `POST /api/reviews`, one per order (localStorage) |
 | `SupportModal.tsx` | Barista ↔ admin chat (polls 5 s, marks read) |
-| `ThemeProvider.tsx` | Applies palette vars and font. **Unused** |
 | `ui/ConfirmDialog.tsx` | Confirm modal (default/danger variants, loading). Used by admin shop detail. |
-| `ui/Modal.tsx` | Generic modal. **Unused** (the dashboard has its own) |
+| `ui/Modal.tsx` | Generic modal, used by `ConfirmDialog` (the dashboard has its own local one) |
 | `ui/SearchBar.tsx` | Search input (admin home) |
 | `ui/Toast.tsx` | Toast stack (`ToastItem`, `ToastKind`). Used with `hooks/useToasts`. |
 
@@ -326,13 +324,14 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 |---|---|
 | `admin-auth.ts` | Admin cookie sign/verify, `isAdminAuthed()`, `ADMIN_COOKIE`, `ADMIN_MAX_AGE` |
 | `shop-auth.ts` | Shop cookie sign/verify, `getShopSession`, `requireShopAuth`, `requireShop`, `SHOP_COOKIE`, `SHOP_MAX_AGE` |
-| `hash.ts` | `hashPin` (SHA-256 hex via WebCrypto) |
+| `hash.ts` | `hashPin` (SHA-256 hex via WebCrypto). To be replaced, see `docs/pin-hash-migration.md` |
+| `config.ts` | `MONTHLY_PRICE_TND`, `DEV_LAN_IP` (env-driven settings) |
+| `public-order.ts` | `getPublicOrder(id)`: customer-safe order and shop (no shop id), used by `/api/o/[id]` and the `/o/[id]` server render |
+| `rate-limit.ts` | `createRateLimiter(scope, max, windowMs)`, persisted in `global_settings` |
 | `supabase-admin.ts` | Service-role client (server only!) |
-| `supabase.ts` | Anon client (unused) |
 | `send-push.ts` | `sendOrderReadyPush(orderId)`: VAPID config, sends to all subscriptions, prunes 404/410 |
 | `badge.ts` | `setBadge`, `clearBadge`, `supportsBadge` (App Badging API) |
 | `themes.ts` | **Source of truth for the `Shop` client type.** `PALETTES` (stone [default], espresso, olive, clay, ink, cream, cozy [bean pattern]), `FONTS` (sans "Modern", serif "Editorial", display "Distinct"), `DEFAULT_THEME`, `getPalette`, `getFont`, `paletteVars` (`--bg --surface --surface-muted --border --text --text-muted --primary --primary-text --accent --accent-soft`) |
-| `types.ts` | **Stale** old `Shop`/`Order` types. Don't rely on them. |
 | `i18n/translations.ts` | `Locale = fr|ar|en`, `LOCALES` (with `dir`), `DEFAULT_LOCALE='fr'`, `translations` dict, `TranslationKey = keyof translations.fr`, `formatTemplate()` |
 | `i18n/context.tsx` | `I18nProvider` (reads `cup-locale` after mount, sets `<html lang/dir>`, toggles `font-arabic` on body), `useI18n()`, `useT()`. `t(key, {var})` replaces `%var` and falls back to fr, then to the key. |
 
@@ -343,7 +342,7 @@ Translation namespaces: `admin.*` (largest), `cz.*` (customize), `setup.*`, `cus
 - `useToasts()` returns `{toasts, push(kind, msg), dismiss(id)}`.
 
 ### `public/`
-`sw.js` (push and notificationclick), `ready.mp3` (ringtone, cached 1 day via `next.config.ts`), `ringtones/` (alternate sounds, currently unused by code), `icon-192/512.png`, `apple-icon.png`, `logo.png`.
+`sw.js` (push and notificationclick), `ready.mp3` (ringtone, cached 1 day via `next.config.ts`), `icon-192/512.png`, `apple-icon.png`, `logo.png`.
 
 ---
 
@@ -361,14 +360,22 @@ Translation namespaces: `admin.*` (largest), `cz.*` (customize), `setup.*`, `cus
 
 ---
 
-## 10. Known issues / gotchas (found while reading, NOT fixed)
+## 10. Known issues / gotchas
 
-Fixed on 2026-10-25: shop routes are now guarded with `requireShop`, `/pending` uses the new `/status` endpoint, the stale-order threshold is in seconds, and customize autosave compares against the saved value with a key-order-insensitive `sameJson` (this also stopped a save loop every ~900 ms for shops with a custom theme or messages).
+Fixed on 2026-10-25 (first pass): shop routes are guarded with `requireShop`, `/pending` uses the `/status` endpoint, the stale-order threshold is in seconds, and customize autosave uses a key-order-insensitive `sameJson` (this also stopped a save loop).
+
+Fixed on 2026-10-25 (cleanup branch):
+- Expired shops now get the session cookie on login, so support chat on `/expired` works.
+- Removed the legacy `/push/subscribe` and `/api/o/[id]/manifest` routes.
+- `/o/[id]` is server-rendered (no loader and no second request on first paint).
+- The admin login rate limit is persisted in the DB.
+- Hard-coded support email, LAN IP and price moved to env (`.env.example` added).
+- Deleted dead code: `lib/types.ts`, `lib/supabase.ts`, `ThemeProvider`, `ClientOnly`, empty `public/ringtones/`.
+- `BroadcastBanner` no longer opens a Supabase realtime channel with the anon key (it polls).
+- Reconstructed schema added at `supabase/schema.sql`.
 
 Still open:
-5. Expired shops that log in get no cookie (`/api/auth` returns 403 first), so support chat on `/expired` only works if an older session cookie is still valid. `/push/subscribe` duplicates `/api/push/subscribe`, and `/api/o/[id]/manifest` is unused (both kept in case old installed PWAs or cached bundles still use them).
-6. `o/[id]/page.tsx` doesn't pass `initialOrder`/`initialShop`, so the server-render path in `client.tsx` is dead code (it always fetches on the client).
-7. Security hardening: the PIN hash is unsalted SHA-256 of 6 digits (trivially brute-forced if the DB leaks), and the admin login rate limit lives in per-instance memory.
-8. Hard-coded values: fallback support email in `/api/support-contact`, `DEV_LAN_IP` default `192.168.0.228`, `MONTHLY_PRICE = 25` TND in admin billing.
-9. Dead or stale code: `lib/types.ts`, `lib/supabase.ts`, `ThemeProvider`, `ui/Modal`, the `ClientOnly` import, `public/ringtones/`.
-10. No DB schema or migrations in the repo. RPCs and constraints live only in Supabase.
+1. **PIN hash** is unsalted SHA-256 of 6 digits. The plan is in `docs/pin-hash-migration.md` (scrypt + salt + pepper, lazy upgrade plus a wrap script).
+2. `supabase/schema.sql` is reconstructed, not dumped. Run the `supabase db dump` command in its header, and from then on put changes in `supabase/migrations/`.
+3. Lint: `react-hooks/set-state-in-effect` errors in the dashboard and `BroadcastBanner` (pre-existing pattern).
+4. After deleting routes, `.next/types` is stale until the next `dev`/`build` (`tsc` complains about the missing routes).

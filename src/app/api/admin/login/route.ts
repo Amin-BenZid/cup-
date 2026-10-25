@@ -5,13 +5,10 @@ import {
   ADMIN_MAX_AGE,
   createSessionToken,
 } from "@/lib/admin-auth";
+import { createRateLimiter } from "@/lib/rate-limit";
 
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
-
-// Best effort: one Map per serverless instance. Not shared across regions and
-// lost on cold start, but it turns unlimited brute force into a slow one.
-const attempts = new Map<string, { count: number; resetAt: number }>();
+// 5 failed attempts per IP per 15 min, shared across all instances.
+const limiter = createRateLimiter("admin_login", 5, 15 * 60 * 1000);
 
 function keyFor(req: NextRequest) {
   return (
@@ -38,10 +35,8 @@ export async function POST(req: NextRequest) {
   }
 
   const key = keyFor(req);
-  const now = Date.now();
-  const record = attempts.get(key);
 
-  if (record && record.resetAt > now && record.count >= MAX_ATTEMPTS) {
+  if (await limiter.isBlocked(key)) {
     return NextResponse.json(
       { error: "Too many attempts. Try again in 15 minutes." },
       { status: 429 },
@@ -52,12 +47,11 @@ export async function POST(req: NextRequest) {
   const password = (body?.password ?? "").toString();
 
   if (!safeEqual(password, expected)) {
-    const count = record && record.resetAt > now ? record.count + 1 : 1;
-    attempts.set(key, { count, resetAt: now + WINDOW_MS });
+    await limiter.fail(key);
     return NextResponse.json({ error: "Wrong password" }, { status: 401 });
   }
 
-  attempts.delete(key);
+  await limiter.reset(key);
 
   const token = createSessionToken();
   const res = NextResponse.json({ ok: true });

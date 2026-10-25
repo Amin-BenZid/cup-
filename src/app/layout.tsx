@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
-import ClientOnly from "@/components/ClientOnly";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-const FALLBACK = { email: "aminebenzid2003@gmail.com", phone: "" };
+// Shown on /expired when no contact is set in /admin/broadcast.
+const FALLBACK = { email: process.env.SUPPORT_EMAIL ?? "", phone: "" };
 
 export async function GET() {
   try {

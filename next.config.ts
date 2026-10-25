@@ -1,7 +1,10 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.0.228'],
+  // Dev only: let phones on the LAN load the dev server (see NEXT_PUBLIC_DEV_LAN_IP).
+  allowedDevOrigins: process.env.NEXT_PUBLIC_DEV_LAN_IP
+    ? [process.env.NEXT_PUBLIC_DEV_LAN_IP]
+    : [],
   async headers() {
     return [
       {

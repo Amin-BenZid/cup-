@@ -28,6 +28,7 @@ import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import { useT } from "@/lib/i18n/context";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
+import { DEV_LAN_IP } from "@/lib/config";
 
 type Order = {
   id: string;
@@ -47,9 +48,6 @@ type ShopInfo = {
   logo_url?: string | null;
 };
 
-// Dev only: when the dashboard is opened on localhost, QR codes must point at
-// the machine's LAN address so a phone can reach it. Override via env.
-const DEV_LAN_IP = process.env.NEXT_PUBLIC_DEV_LAN_IP ?? "192.168.0.228";
 
 export default function DashboardPage() {
   const t = useT();
@@ -353,7 +351,7 @@ export default function DashboardPage() {
   function customerUrl(orderId: string) {
     if (typeof window === "undefined") return "";
     const { hostname, port, protocol } = window.location;
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
+    if (DEV_LAN_IP && (hostname === "localhost" || hostname === "127.0.0.1")) {
       return `http://${DEV_LAN_IP}:${port || "3000"}/o/${orderId}`;
     }
     return `${protocol}//${hostname}${port ? ":" + port : ""}/o/${orderId}`;

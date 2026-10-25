@@ -19,6 +19,7 @@ import {
 import CupLogo from "@/components/CupLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
+import { MONTHLY_PRICE_TND } from "@/lib/config";
 
 type Shop = {
   id: string;
@@ -44,8 +45,6 @@ export default function AdminBillingPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<BillingFilter>("all");
-
-  const MONTHLY_PRICE = 25; // TND (Used for MRR calculation only)
 
   useEffect(() => {
     async function load() {
@@ -119,7 +118,7 @@ export default function AdminBillingPage() {
       if (isTrialExpired && isSubExpired) expired++;
       else if (status === "active" && !isSubExpired) {
         active++;
-        calculatedMrr += MONTHLY_PRICE;
+        calculatedMrr += MONTHLY_PRICE_TND;
       } else trial++;
     });
 

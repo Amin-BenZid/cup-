@@ -3,6 +3,18 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hashPin } from "@/lib/hash";
 import { SHOP_COOKIE, SHOP_MAX_AGE, createShopToken } from "@/lib/shop-auth";
 
+function setSessionCookie(res: NextResponse, shopId: string) {
+  res.cookies.set({
+    name: SHOP_COOKIE,
+    value: createShopToken(shopId),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: SHOP_MAX_AGE,
+    path: "/",
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -93,7 +105,10 @@ export async function POST(req: NextRequest) {
     const subOk = !!subEnds && subEnds > now;
 
     if (!trialOk && !subOk) {
-      return NextResponse.json(
+      // Still issue the session cookie: the PIN was correct, and /expired
+      // needs identity for support chat (requireShopAuth). Every other shop
+      // route uses requireShop, which keeps rejecting until billing is renewed.
+      const res = NextResponse.json(
         {
           error: "expired",
           status: "expired",
@@ -103,22 +118,14 @@ export async function POST(req: NextRequest) {
         },
         { status: 403 },
       );
+      setSessionCookie(res, shop.id);
+      return res;
     }
 
     const res = NextResponse.json({
       shop: { id: shop.id, name: shop.name, code: shop.code },
     });
-
-    res.cookies.set({
-      name: SHOP_COOKIE,
-      value: createShopToken(shop.id),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: SHOP_MAX_AGE,
-      path: "/",
-    });
-
+    setSessionCookie(res, shop.id);
     return res;
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
