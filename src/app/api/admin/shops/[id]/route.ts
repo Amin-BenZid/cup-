@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { isAdminAuthed } from '@/lib/admin-auth'
-import { hashPin } from '@/lib/hash'
+import { hashPin } from '@/lib/pin'
 
 const SHOP_FIELDS =
   'id, name, tagline, status, created_at, code, phone, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, trial_ends_at, subscription_ends_at, billing_status, paid_current_month, login_attempts, locked_until'

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { hashPin } from '@/lib/hash'
+import { hashPin } from '@/lib/pin'
 
 function slugify(text: string) {
   return text

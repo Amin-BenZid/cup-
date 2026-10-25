@@ -23,7 +23,7 @@ create table if not exists public.shops (
   name                 text not null,
   tagline              text,
   code                 text not null unique,          -- login slug
-  pin_hash             text not null,                 -- SHA-256 hex (see docs/pin-hash-migration.md)
+  pin_hash             text not null,                 -- v2$scrypt$… (see src/lib/pin.ts)
   status               text not null default 'pending'
                          check (status in ('pending','active','disabled')),
   phone                text,

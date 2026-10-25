@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { hashPin } from "@/lib/hash";
+import { hashPin, verifyPin } from "@/lib/pin";
 import { SHOP_COOKIE, SHOP_MAX_AGE, createShopToken } from "@/lib/shop-auth";
 
 function setSessionCookie(res: NextResponse, shopId: string) {
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pin_hash = await hashPin(pin);
-    if (pin_hash !== shop.pin_hash) {
+    const { ok, needsRehash } = await verifyPin(pin, shop.pin_hash);
+    if (!ok) {
       const attempts = (shop.login_attempts || 0) + 1;
       const locked_until =
         attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null;
@@ -67,11 +67,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Reset lockout and, if the stored hash is a legacy format, upgrade it
+    // to v2 now that we know the PIN.
+    const fix: Record<string, unknown> = {};
     if (shop.login_attempts > 0 || shop.locked_until) {
-      await supabaseAdmin
-        .from("shops")
-        .update({ login_attempts: 0, locked_until: null })
-        .eq("id", shop.id);
+      fix.login_attempts = 0;
+      fix.locked_until = null;
+    }
+    if (needsRehash) fix.pin_hash = await hashPin(pin);
+    if (Object.keys(fix).length > 0) {
+      let q = supabaseAdmin.from("shops").update(fix).eq("id", shop.id);
+      // Don't clobber a PIN reset that happened while we were verifying.
+      if (fix.pin_hash) q = q.eq("pin_hash", shop.pin_hash);
+      await q;
     }
 
     if (shop.status === "pending") {

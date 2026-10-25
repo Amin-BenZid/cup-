@@ -44,6 +44,7 @@ Path alias: `@/*` → `src/*`.
 | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase-admin.ts` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No longer used by any code (safe to remove) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `lib/send-push.ts`, `NotificationSetup` (subject auto-prefixed `mailto:`) |
+| `PIN_PEPPER` | `lib/pin.ts`, `scripts/wrap-legacy-pins.mjs`. **Required**: login, signup and PIN reset fail without it. Must be identical across envs sharing the DB. Never lose it. |
 | `ADMIN_PASSWORD` | `/api/admin/login` |
 | `ADMIN_SECRET` | HMAC for admin cookie. Also the fallback for shop cookie. |
 | `SHOP_SESSION_SECRET` | HMAC for shop cookie |
@@ -61,7 +62,7 @@ Path alias: `@/*` → `src/*`.
 - localStorage keys: `cup-active-order` (resume target for `/o/latest`), `cup-ack-<orderId>` (acknowledged), `cup-locale`, `catch-beans-best`, review-done keys (`ReviewPrompt`), notification-dismiss keys (`NotificationSetup`), `dismissed-broadcast` (barista).
 
 ### Barista / shop
-- Login: `POST /api/auth` with `{ code, pin }`. The PIN is hashed with **unsalted SHA-256** (`lib/hash.ts`) and compared to `shops.pin_hash`.
+- Login: `POST /api/auth` with `{ code, pin }`. `verifyPin` (`lib/pin.ts`) checks it against `shops.pin_hash`: HMAC with `PIN_PEPPER`, then scrypt with a per-shop salt (`v2$scrypt$…`). Legacy unsalted SHA-256 hex and `v1w` (wrapped legacy) hashes still verify and are upgraded to `v2` on successful login.
 - Lockout: 5 failed attempts sets `locked_until = now + 15 min` (stored on the shop row). A success resets it.
 - If the PIN is valid but the shop is pending or disabled, the server returns 403 with `status: pending|disabled` and **sets no cookie**. If it is **expired**, it returns 403 `status: expired` **and sets the cookie**, so support chat on `/expired` works (`requireShop` still blocks everything else).
 - On success it sets the HttpOnly cookie **`shop_session`** = `shopId.issuedMs.hmac` (base64url HMAC-SHA256, **30 days**). See `lib/shop-auth.ts`.
@@ -90,7 +91,7 @@ A **reconstructed** schema is in `supabase/schema.sql` (rebuilt from queries, no
 | `id` uuid PK | Treated as secret-ish: never returned by the public order endpoint |
 | `name`, `tagline` | |
 | `code` | unique login slug (slugified; random suffix if taken; `shop-xxxxx` if < 3 chars) |
-| `pin_hash` | SHA-256 hex of the 6-digit PIN |
+| `pin_hash` | `v2$scrypt$N=…,r=…,p=…$salt$hash` (or legacy hex / `v1w`, see `lib/pin.ts`) |
 | `status` | `pending` \| `active` \| `disabled` (raw; "expired" is **derived**, never stored) |
 | `phone` | used by admin billing WhatsApp link |
 | `logo_url`, `logo_scale`, `logo_offset_x`, `logo_offset_y` | logo in the Supabase storage bucket `logos` |
@@ -324,7 +325,7 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 |---|---|
 | `admin-auth.ts` | Admin cookie sign/verify, `isAdminAuthed()`, `ADMIN_COOKIE`, `ADMIN_MAX_AGE` |
 | `shop-auth.ts` | Shop cookie sign/verify, `getShopSession`, `requireShopAuth`, `requireShop`, `SHOP_COOKIE`, `SHOP_MAX_AGE` |
-| `hash.ts` | `hashPin` (SHA-256 hex via WebCrypto). To be replaced, see `docs/pin-hash-migration.md` |
+| `pin.ts` | `hashPin` (v2 scrypt + salt + pepper), `verifyPin` (v2, v1w, legacy hex → `{ok, needsRehash}`). Node runtime only. |
 | `config.ts` | `MONTHLY_PRICE_TND`, `DEV_LAN_IP` (env-driven settings) |
 | `public-order.ts` | `getPublicOrder(id)`: customer-safe order and shop (no shop id), used by `/api/o/[id]` and the `/o/[id]` server render |
 | `rate-limit.ts` | `createRateLimiter(scope, max, windowMs)`, persisted in `global_settings` |
@@ -375,7 +376,7 @@ Fixed on 2026-10-25 (cleanup branch):
 - Reconstructed schema added at `supabase/schema.sql`.
 
 Still open:
-1. **PIN hash** is unsalted SHA-256 of 6 digits. The plan is in `docs/pin-hash-migration.md` (scrypt + salt + pepper, lazy upgrade plus a wrap script).
+1. **PIN hash rollout**: the code is done, but the steps in `docs/pin-hash-migration.md` (backup, `PIN_PEPPER` in Vercel, run `scripts/wrap-legacy-pins.mjs`, verify) still need running. Until the script runs, shops that haven't logged in since the deploy keep their weak hash.
 2. `supabase/schema.sql` is reconstructed, not dumped. Run the `supabase db dump` command in its header, and from then on put changes in `supabase/migrations/`.
 3. Lint: `react-hooks/set-state-in-effect` errors in the dashboard and `BroadcastBanner` (pre-existing pattern).
 4. After deleting routes, `.next/types` is stale until the next `dev`/`build` (`tsc` complains about the missing routes).

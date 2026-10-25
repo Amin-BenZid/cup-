@@ -1,6 +1,6 @@
 # PIN hash migration plan
 
-Status: **planned, not started.** Owner: Amin.
+Status: **code done** (`src/lib/pin.ts`, `scripts/wrap-legacy-pins.mjs`). **Rollout steps 0–4 below still to do.** Owner: Amin.
 
 ## Problem
 
