@@ -143,9 +143,9 @@ export function PageHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 mb-5">
+    <div className="flex flex-wrap items-start justify-between gap-3 mb-4 sm:mb-5">
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900">{title}</h1>
+        <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-900">{title}</h1>
         {subtitle && <div className="text-sm text-zinc-500 mt-0.5">{subtitle}</div>}
       </div>
       {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
@@ -197,7 +197,7 @@ export function Stat({
   const inner = (
     <div
       className={cx(
-        'h-full bg-white border rounded-xl p-3.5 transition',
+        'h-full bg-white border rounded-xl p-3 sm:p-3.5 transition',
         tone === 'warn' && 'border-amber-300 bg-amber-50/60',
         tone === 'bad' && 'border-red-300 bg-red-50/60',
         tone === 'good' && 'border-emerald-200',
@@ -206,10 +206,10 @@ export function Stat({
       )}
     >
       <div className="flex items-center justify-between text-zinc-500">
-        <span className="text-[11px] font-medium uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide truncate">{label}</span>
         {icon}
       </div>
-      <div className="mt-1.5 text-2xl font-semibold tabular-nums text-zinc-900 leading-tight">{value}</div>
+      <div className="mt-1.5 text-xl sm:text-2xl font-semibold tabular-nums text-zinc-900 leading-tight truncate">{value}</div>
       {hint && <div className="mt-0.5 text-[11px] text-zinc-500">{hint}</div>}
     </div>
   )
@@ -312,7 +312,7 @@ export function Field({
 }
 
 export const inputCls =
-  'w-full h-9 rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500 disabled:bg-zinc-50'
+  'w-full h-10 md:h-9 rounded-lg border border-zinc-300 bg-white px-3 text-base md:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500 disabled:bg-zinc-50'
 
 export function Segmented<T extends string>({
   value,

@@ -87,9 +87,9 @@ export default function LivePage() {
       />
       <ErrorBanner message={error} onRetry={reload} />
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-3 [&>*]:min-w-0 gap-2 sm:gap-3 mb-4">
         <Stat label="Preparing" value={open.filter((o) => o.status === 'preparing').length} />
-        <Stat label="Ready, not picked up" value={open.filter((o) => o.status === 'ready').length} />
+        <Stat label="Ready" value={open.filter((o) => o.status === 'ready').length} />
         <Stat label="Avg prep" value={duration(avgPrep)} hint="last 100" />
       </div>
 

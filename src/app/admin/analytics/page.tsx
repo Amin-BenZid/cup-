@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
       <ErrorBanner message={error} onRetry={reload} />
       {data?.truncated && <div className="mb-3 text-xs text-amber-700">Showing the first 50,000 orders of this period.</div>}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 [&>*]:min-w-0 lg:grid-cols-4 gap-3 mb-5">
         {loading && !t ? (
           [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[92px]" />)
         ) : t ? (
@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
         ) : null}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-2 gap-4 mb-4">
         <Card title="Orders per day">
           {data ? (
             <BarChart labelEvery={every} data={data.series.map((s) => ({ label: dayLabel(s.day), value: s.orders, title: dayLabel(s.day, false) }))} />

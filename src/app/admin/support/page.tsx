@@ -112,7 +112,7 @@ function Inbox() {
       <PageHeader title="Support" subtitle="Messages from cafés. Replies show up in their dashboard." />
       <ErrorBanner message={error} onRetry={reload} />
 
-      <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden grid md:grid-cols-[300px_1fr] h-[calc(100dvh-240px)] min-h-[420px]">
+      <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden grid md:grid-cols-[300px_1fr] h-[calc(100dvh-220px-env(safe-area-inset-bottom))] md:h-[calc(100dvh-200px)] min-h-[380px]">
         {/* Thread list */}
         <div className={cx('border-e border-zinc-100 flex flex-col min-h-0', selected && 'hidden md:flex')}>
           <div className="p-2 border-b border-zinc-100">
@@ -209,7 +209,7 @@ function Inbox() {
                   rows={1}
                   maxLength={2000}
                   placeholder="Write a reply…"
-                  className="flex-1 resize-none rounded-lg border border-zinc-300 px-3 py-2 text-sm max-h-32 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500"
+                  className="flex-1 resize-none rounded-lg border border-zinc-300 px-3 py-2 text-base md:text-sm max-h-32 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500"
                 />
                 <button
                   type="submit"

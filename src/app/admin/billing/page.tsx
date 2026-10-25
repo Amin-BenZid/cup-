@@ -88,7 +88,7 @@ export default function BillingPage() {
       <PageHeader title="Billing" subtitle={`${MONTHLY_PRICE_TND} TND / café / month`} />
       <ErrorBanner message={error} onRetry={reload} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 [&>*]:min-w-0 lg:grid-cols-4 gap-3 mb-5">
         {loading && !data ? (
           [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[92px]" />)
         ) : (

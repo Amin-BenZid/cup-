@@ -47,7 +47,7 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Settings & security" />
       <ErrorBanner message={settings.error} onRetry={settings.reload} />
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-2 gap-4">
         <div className="space-y-4">
           <NotificationsCard settings={settings.data} reloadSettings={settings.reload} />
         </div>
@@ -200,10 +200,14 @@ function NotificationsCard({ settings, reloadSettings }: { settings: Settings | 
       ) : needsInstall ? (
         <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 text-sm text-sky-900 space-y-2 mb-4">
           <div className="font-medium">On iPhone, install the admin app first</div>
-          <ol className="space-y-1.5 text-[13px]">
-            <li className="flex gap-2"><span className="font-semibold">1.</span> Open this page in <b>Safari</b> (cup site → /admin).</li>
-            <li className="flex gap-2"><span className="font-semibold">2.</span> Tap <Share className="inline w-4 h-4 -mt-0.5" /> <b>Share</b>, then <SquarePlus className="inline w-4 h-4 -mt-0.5" /> <b>Add to Home Screen</b>.</li>
-            <li className="flex gap-2"><span className="font-semibold">3.</span> Open <b>Cup Admin</b> from your home screen, sign in, come back here and tap <b>Turn on notifications</b>.</li>
+          <ol className="space-y-1.5 text-[13px] list-decimal ps-5">
+            <li>Open this page in <b>Safari</b> (your site → /admin).</li>
+            <li>
+              Tap <Share className="inline w-4 h-4 -mt-0.5" /> <b>Share</b>, then <SquarePlus className="inline w-4 h-4 -mt-0.5" /> <b>Add to Home Screen</b>.
+            </li>
+            <li>
+              Open <b>Cup Admin</b> from your home screen, sign in, come back here and tap <b>Turn on notifications</b>.
+            </li>
           </ol>
           <div className="text-[11px] text-sky-800/80">Needs iOS 16.4 or newer. Apple only allows web push for apps added to the home screen.</div>
         </div>

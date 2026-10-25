@@ -221,7 +221,7 @@ function Shell({ pathname, children }: { pathname: string; children: React.React
         </header>
 
         <main className="md:ps-60">
-          <div className="max-w-6xl mx-auto px-4 md:px-8 py-5 md:py-8 pb-28 md:pb-10">{children}</div>
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 pt-4 md:py-8 pb-[calc(env(safe-area-inset-bottom)+88px)] md:pb-10">{children}</div>
         </main>
 
         {/* Bottom tabs (mobile) */}
@@ -288,7 +288,10 @@ function Shell({ pathname, children }: { pathname: string; children: React.React
           </div>
         )}
 
-        <Toast toasts={toasts} onDismiss={dismiss} />
+        {/* transform makes this the containing block, so toasts sit above the tab bar */}
+        <div className="fixed inset-x-0 z-[110] bottom-[calc(env(safe-area-inset-bottom)+60px)] md:bottom-0 [transform:translateZ(0)]">
+          <Toast toasts={toasts} onDismiss={dismiss} />
+        </div>
       </div>
     </Ctx.Provider>
   )

@@ -76,7 +76,7 @@ export default function AdminOverview() {
       <ErrorBanner message={error} onRetry={reload} />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 [&>*]:min-w-0 lg:grid-cols-4 gap-3 mb-5">
         {loading && !c ? (
           [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[92px]" />)
         ) : c ? (
@@ -103,7 +103,7 @@ export default function AdminOverview() {
         ) : null}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-3 gap-4">
         {/* Left: attention */}
         <div className="lg:col-span-2 space-y-4">
           {data && !needsAttention && (

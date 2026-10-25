@@ -52,7 +52,7 @@ export default function BroadcastPage() {
       {loading && !data ? (
         <Skeleton className="h-64" />
       ) : (
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
             <Card
               title="Message"
@@ -63,7 +63,7 @@ export default function BroadcastPage() {
                 onChange={(e) => setDraft(e.target.value.slice(0, MAX))}
                 rows={3}
                 placeholder="e.g. Maintenance tonight 23:00–23:30, the app may be slow."
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-500"
               />
               <div className="flex items-center justify-between mt-1 mb-3 text-[11px] text-zinc-400">
                 <span>Baristas can dismiss it; a new message shows again.</span>

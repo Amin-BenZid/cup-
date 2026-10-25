@@ -165,7 +165,7 @@ export default function ShopDetailPage() {
               <ShopAvatar name={shop.name} logo={shop.logo_url} size={52} />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-semibold tracking-tight truncate">{shop.name}</h1>
+                  <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate max-w-full">{shop.name}</h1>
                   <StateBadge state={shop.state} trial={shop.is_trial} />
                   {isLocked(shop) && (
                     <Pill className="bg-red-100 text-red-700">
@@ -179,23 +179,23 @@ export default function ShopDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
               {shop.phone && (
                 <>
-                  <a href={`tel:${shop.phone}`} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50">
+                  <a href={`tel:${shop.phone}`} className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50">
                     <Phone className="w-4 h-4" /> Call
                   </a>
                   <a
                     href={`https://wa.me/${shop.phone.replace(/[^\d]/g, '')}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50"
+                    className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50"
                   >
                     <MessageCircle className="w-4 h-4" /> WhatsApp
                   </a>
                 </>
               )}
-              <Link href={`/admin/support?shop=${shop.id}`} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50">
+              <Link href={`/admin/support?shop=${shop.id}`} className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-300 bg-white text-sm hover:bg-zinc-50">
                 <MessageSquare className="w-4 h-4" /> Message
               </Link>
             </div>
@@ -378,9 +378,9 @@ function OverviewTab({
   }, [shop.phone, shop.name])
 
   return (
-    <div className="grid lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-2 space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 [&>*]:min-w-0 md:grid-cols-4 gap-3">
           <Stat label="Orders · 30d" value={stats.last30} hint={`${stats.total} all time`} />
           <Stat label="Avg prep" value={duration(stats.avgPrepSec)} hint="order → ready" />
           <Stat label="Scan rate" value={stats.connectRate === null ? '—' : `${stats.connectRate}%`} hint="customers who opened the page" />
@@ -516,7 +516,7 @@ function EditTab({
   }
 
   return (
-    <div className="grid lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 [&>*]:min-w-0 lg:grid-cols-2 gap-4">
       <Card title="Profile">
         <div className="space-y-3">
           <Field label="Name">
