@@ -85,6 +85,17 @@ alter table public.client_errors      enable row level security;
 - 16. `POST /api/push/subscribe` accepts any https endpoint (needs a valid order id): minor SSRF surface. Allowlist known push hosts.
 - 17. Unused `admin.*` keys in `lib/i18n/translations.ts`. Pre-existing lint error in `lib/i18n/context.tsx`.
 
+## Planned: move to a VPS at 10 paying clients
+Decided 2026-10-25. Trigger: **first 10 clients**. Until then stay on Vercel + Supabase, and fix items 1–4 above.
+
+- **Target:** one VPS (2 vCPU / 4 GB, EU, e.g. France/Germany, ~50 ms to Tunisia) with Docker Compose: Next.js (standalone) + Postgres 16 + Caddy (auto HTTPS). **Not** self-hosted Supabase (~10 containers to maintain).
+- **Code work (~3–4 days):** replace `supabaseAdmin` (~60 call sites, `.rpc`, storage) with a small data layer (postgres.js or Drizzle). Logos move to local disk or MinIO (rewrite `logo_url`). Cron becomes system cron. Drop or replace Vercel Analytics.
+- **Payoff:** real live updates (Postgres LISTEN/NOTIFY → SSE/WebSocket), so the 1.2 s order polling and support polling go away (fixes 2 and 12). ~€5–10/mo vs ~$45/mo. No Hobby commercial-use issue.
+- **Order:** (1) data layer swap tested on local Postgres loaded from `pg_dump` of Supabase `public` schema (+ RPCs). (2) Same app on the VPS, verified. (3) Only then live updates. Don't mix migration and new features.
+- **Day-one ops (non-negotiable):** nightly off-site `pg_dump` (or pgBackRest/WAL-G to S3) with a tested restore. Uptime alerts + Prometheus/Grafana. Firewall 80/443 only, key-only SSH, fail2ban, unattended upgrades.
+- **Domain:** decide before cutover. Changing the domain logs out baristas and breaks existing push subscriptions and home-screen apps. If it's going to change, change it during this migration.
+- **Cutover:** lower DNS TTL a day before. At night: maintenance mode → final dump → restore → copy logos → switch DNS. ~15 min downtime.
+
 ## Already done (2026-10-25)
 - PIN hashing: scrypt + salt + pepper, live; all rows `v1w`/`v2` (`docs/pin-hash-migration.md`).
 - Admin: 2FA, revocable sessions, same-origin check, audit log, rate-limited login, security headers (`docs/admin.md`).
