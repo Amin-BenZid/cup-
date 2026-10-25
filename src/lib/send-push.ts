@@ -3,6 +3,12 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 let configured = false;
 
+/** Configured web-push instance (shared by customer and admin pushes). */
+export function getWebPush() {
+  configure();
+  return configured ? webpush : null;
+}
+
 function configure() {
   if (configured) return;
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { isAdminAuthed } from "@/lib/admin-auth";
+import { requireAdmin } from "@/lib/admin-auth";
 
-export async function GET() {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
 
   const { data } = await supabaseAdmin
     .from("global_settings")
@@ -24,9 +23,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   const email = String(body?.email ?? "").trim().slice(0, 120);

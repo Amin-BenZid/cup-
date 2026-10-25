@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isAdminAuthed } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/admin-auth'
+import { logAdminEvent } from '@/lib/admin-audit'
 
-export async function GET() {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req)
+  if (denied) return denied
 
   const { data, error } = await supabaseAdmin
     .from('support_messages')
@@ -14,23 +14,25 @@ export async function GET() {
       shops ( name, logo_url )
     `)
     .order('created_at', { ascending: false })
-    .limit(100)
+    .limit(500)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   
   const unread = (data ?? []).filter(m => m.sender === 'barista' && !m.is_read).length
 
-  return NextResponse.json({ messages: data ?? [], unread })
+  return NextResponse.json(
+    { messages: data ?? [], unread },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const denied = await requireAdmin(req)
+  if (denied) return denied
   
   const body = await req.json().catch(() => ({}))
   const shop_id = (body?.shop_id ?? '').toString()
-  const message = (body?.message ?? '').toString().trim()
+  const message = (body?.message ?? '').toString().trim().slice(0, 2000)
 
   if (!shop_id || !message) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -48,13 +50,13 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await logAdminEvent(req, 'support_reply', { shop_id })
   return NextResponse.json({ message: data })
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const denied = await requireAdmin(req)
+  if (denied) return denied
   
   const body = await req.json().catch(() => ({}))
   const shop_id = (body?.shop_id ?? '').toString()

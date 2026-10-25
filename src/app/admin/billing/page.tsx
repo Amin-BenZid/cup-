@@ -1,401 +1,184 @@
-"use client";
+'use client'
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { MessageCircle, Search } from 'lucide-react'
+import { useAdmin } from '@/components/admin/AdminShell'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import {
-  ArrowLeft,
-  Loader2,
-  CreditCard,
-  Store,
-  Search,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  MessageCircle,
-  Check,
-  ChevronRight,
-} from "lucide-react";
-import CupLogo from "@/components/CupLogo";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { useT } from "@/lib/i18n/context";
-import { MONTHLY_PRICE_TND } from "@/lib/config";
+  adminFetch,
+  Button,
+  Card,
+  cx,
+  Empty,
+  ErrorBanner,
+  fmtDate,
+  inputCls,
+  PageHeader,
+  Pill,
+  Segmented,
+  ShopAvatar,
+  Skeleton,
+  Stat,
+  StateBadge,
+  useAdminData,
+  type ShopState,
+} from '@/components/admin/ui'
+import { MONTHLY_PRICE_TND } from '@/lib/config'
 
 type Shop = {
-  id: string;
-  name: string;
-  tagline?: string | null;
-  status: string;
-  created_at: string;
-  logo_url?: string | null;
-  trial_ends_at?: string | null;
-  subscription_ends_at?: string | null;
-  billing_status?: string | null;
-  phone?: string | null;
-  paid_current_month?: boolean;
-};
+  id: string
+  name: string
+  code: string
+  phone: string | null
+  status: ShopState
+  logo_url: string | null
+  is_trial: boolean
+  days_left: number
+  trial_ends_at: string | null
+  subscription_ends_at: string | null
+  paid_current_month: boolean | null
+}
 
-type BillingFilter = "all" | "trial" | "active" | "expired" | "unpaid";
+type Filter = 'attention' | 'trial' | 'paying' | 'expired' | 'unpaid' | 'all'
 
-export default function AdminBillingPage() {
-  const t = useT();
-  const router = useRouter();
+function reminderLink(s: Shop) {
+  if (!s.phone) return null
+  const msg = `Bonjour ${s.name}, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?`
+  return `https://wa.me/${s.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(msg)}`
+}
 
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<BillingFilter>("all");
+export default function BillingPage() {
+  const { toast } = useAdmin()
+  const { data, error, loading, reload } = useAdminData<{ shops: Shop[] }>('/api/admin/shops')
+  const [filter, setFilter] = useState<Filter>('attention')
+  const [q, setQ] = useState('')
+  const [pending, setPending] = useState<{ shop: Shop; months: number } | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/admin/shops", { cache: "no-store" });
-        if (res.status === 401) {
-          router.replace("/admin/login");
-          return;
-        }
-        const json = await res.json();
-        if (res.ok) setShops(json.shops);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [router]);
+  const shops = useMemo(() => (data?.shops ?? []).filter((s) => s.status !== 'pending'), [data])
 
-  const filtered = useMemo(() => {
-    return shops.filter((s) => {
-      const now = new Date();
-      const trialEnds = s.trial_ends_at ? new Date(s.trial_ends_at) : null;
-      const subEnds = s.subscription_ends_at
-        ? new Date(s.subscription_ends_at)
-        : null;
-      const isTrialExpired = trialEnds && now > trialEnds;
-      const isSubExpired = subEnds ? now > subEnds : true;
-      const status = s.billing_status || "trial";
+  const groups = useMemo(() => {
+    const paying = shops.filter((s) => s.status === 'active' && !s.is_trial)
+    const trial = shops.filter((s) => s.status === 'active' && s.is_trial)
+    const expired = shops.filter((s) => s.status === 'expired')
+    const attention = shops.filter((s) => s.status === 'expired' || (s.status === 'active' && s.days_left <= 7))
+    const unpaid = shops.filter((s) => s.status === 'active' && !s.is_trial && !s.paid_current_month)
+    return { paying, trial, expired, attention, unpaid, all: shops }
+  }, [shops])
 
-      // 1. Filter by Status
-      if (filter !== "all") {
-        if (filter === "expired" && !(isTrialExpired && isSubExpired))
-          return false;
-        if (filter === "trial" && status !== "trial") return false;
-        if (filter === "active" && !(status === "active" && !isSubExpired))
-          return false;
-        if (filter === "unpaid" && s.paid_current_month) return false;
-      }
+  const list = groups[filter]
+    .filter((s) => !q.trim() || `${s.name} ${s.code}`.toLowerCase().includes(q.trim().toLowerCase()))
+    .sort((a, b) => a.days_left - b.days_left)
 
-      // 2. Filter by Search
-      if (query.trim()) {
-        const q = query.toLowerCase();
-        return (
-          s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
-        );
-      }
-
-      return true;
-    });
-  }, [shops, filter, query]);
-
-  const { counts, mrr } = useMemo(() => {
-    let trial = 0,
-      active = 0,
-      expired = 0,
-      unpaid = 0;
-    let calculatedMrr = 0;
-    const now = new Date();
-
-    shops.forEach((s) => {
-      const trialEnds = s.trial_ends_at ? new Date(s.trial_ends_at) : null;
-      const subEnds = s.subscription_ends_at
-        ? new Date(s.subscription_ends_at)
-        : null;
-      const isTrialExpired = trialEnds && now > trialEnds;
-      const isSubExpired = subEnds ? now > subEnds : true;
-      const status = s.billing_status || "trial";
-
-      if (!s.paid_current_month) unpaid++;
-
-      if (isTrialExpired && isSubExpired) expired++;
-      else if (status === "active" && !isSubExpired) {
-        active++;
-        calculatedMrr += MONTHLY_PRICE_TND;
-      } else trial++;
-    });
-
-    return {
-      counts: { all: shops.length, trial, active, expired, unpaid },
-      mrr: calculatedMrr,
-    };
-  }, [shops]);
-
-  function getBillingLabel(shop: Shop) {
-    const now = new Date();
-    const trialEnds = shop.trial_ends_at ? new Date(shop.trial_ends_at) : null;
-    const subEnds = shop.subscription_ends_at
-      ? new Date(shop.subscription_ends_at)
-      : null;
-    const isTrialExpired = trialEnds && now > trialEnds;
-    const isSubExpired = subEnds ? now > subEnds : true;
-    const status = shop.billing_status || "trial";
-
-    if (isTrialExpired && isSubExpired) {
-      return {
-        label: "Expired",
-        color: "text-red-600",
-        bg: "bg-red-50",
-        icon: XCircle,
-      };
-    }
-    if (status === "active" && !isSubExpired) {
-      return {
-        label: "Active",
-        color: "text-emerald-600",
-        bg: "bg-emerald-50",
-        icon: CheckCircle2,
-      };
-    }
-    return {
-      label: "Trial",
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      icon: Clock,
-    };
-  }
-
-  // Calculate the time remaining
-  function getTimeRemaining(dateString?: string | null) {
-    if (!dateString) return { text: "—", color: "text-zinc-400" };
-
-    const now = new Date();
-    const end = new Date(dateString);
-    const diffMs = end.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return {
-        text: `Expired ${Math.abs(diffDays)}d ago`,
-        color: "text-red-600 font-medium",
-      };
-    }
-    if (diffDays === 0) {
-      return { text: "Ends today", color: "text-amber-600 font-medium" };
-    }
-    if (diffDays <= 7) {
-      return {
-        text: `Ends in ${diffDays} days`,
-        color: "text-amber-600 font-medium",
-      };
-    }
-    if (diffDays <= 30) {
-      return { text: `Ends in ${diffDays} days`, color: "text-zinc-600" };
-    }
-
-    const diffMonths = Math.floor(diffDays / 30);
-    return {
-      text: `Ends in ${diffMonths} month${diffMonths > 1 ? "s" : ""}`,
-      color: "text-zinc-500",
-    };
-  }
-
-  function getWhatsAppLink(shop: Shop) {
-    if (!shop.phone) return null;
-    const phone = shop.phone.replace(/\D/g, "");
-
-    // Use the translated message with the shop name injected
-    const messageText = t("billing.whatsappMsg").replace("%name", shop.name);
-    const message = encodeURIComponent(messageText);
-
-    return `https://wa.me/${phone}?text=${message}`;
+  async function extend() {
+    if (!pending) return
+    setBusy(true)
+    const r = await adminFetch(`/api/admin/shops/${pending.shop.id}/billing`, { method: 'POST', body: { months: pending.months } })
+    setBusy(false)
+    const p = pending
+    setPending(null)
+    if (!r.ok) return toast('error', r.data.error ?? 'Failed')
+    toast('success', `${p.shop.name}: +${p.months} month${p.months > 1 ? 's' : ''}`)
+    void reload()
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900 flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <button
-            onClick={() => router.push("/admin")}
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition -ms-2 p-2 rounded-md hover:bg-zinc-100"
-          >
-            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
-            Back
-          </button>
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm font-semibold">Billing</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher compact />
-            <CupLogo size={20} />
-          </div>
+    <div>
+      <PageHeader title="Billing" subtitle={`${MONTHLY_PRICE_TND} TND / café / month`} />
+      <ErrorBanner message={error} onRetry={reload} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        {loading && !data ? (
+          [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[92px]" />)
+        ) : (
+          <>
+            <Stat label="MRR (est.)" value={`${groups.paying.length * MONTHLY_PRICE_TND} TND`} hint={`${groups.paying.length} paying`} />
+            <Stat label="On trial" value={groups.trial.length} hint="could convert" />
+            <Stat label="Needs attention" value={groups.attention.length} tone={groups.attention.length ? 'warn' : 'default'} hint="expired or ≤7 days" />
+            <Stat label="Unpaid this month" value={groups.unpaid.length} tone={groups.unpaid.length ? 'bad' : 'default'} />
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-zinc-400 absolute start-3 top-1/2 -translate-y-1/2" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search café" className={cx(inputCls, 'ps-9')} />
         </div>
-      </header>
+      </div>
+      <div className="mb-3">
+        <Segmented<Filter>
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: 'attention', label: 'Needs attention', count: groups.attention.length },
+            { value: 'unpaid', label: 'Unpaid', count: groups.unpaid.length },
+            { value: 'trial', label: 'Trial', count: groups.trial.length },
+            { value: 'paying', label: 'Paying', count: groups.paying.length },
+            { value: 'expired', label: 'Expired', count: groups.expired.length },
+            { value: 'all', label: 'All', count: groups.all.length },
+          ]}
+        />
+      </div>
 
-      <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-8 space-y-6">
-        {/* MRR CARD */}
-        <section className="bg-white border border-zinc-200 rounded-lg p-5 flex items-center justify-between">
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">
-              Est. Monthly Revenue
-            </div>
-            <div className="text-3xl font-semibold tabular-nums">
-              {mrr} <span className="text-lg text-zinc-400">TND</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">
-              Unpaid
-            </div>
-            <div className="text-2xl font-semibold tabular-nums text-amber-600">
-              {counts.unpaid}
-            </div>
-          </div>
-        </section>
-
-        {/* SEARCH & FILTERS */}
-        <section className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by shop name..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-zinc-200 rounded-md text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 transition"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {(
-              ["all", "trial", "active", "expired", "unpaid"] as BillingFilter[]
-            ).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`flex items-center gap-2 shrink-0 px-3 py-1.5 rounded-md text-xs font-medium capitalize transition border ${
-                  filter === f
-                    ? "bg-zinc-900 text-white border-zinc-900"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300"
-                }`}
-              >
-                {f}
-                <span
-                  className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded ${
-                    filter === f
-                      ? "bg-zinc-700 text-white"
-                      : "bg-zinc-100 text-zinc-500"
-                  }`}
-                >
-                  {counts[f]}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* LIST */}
-        <section>
-          {loading ? (
-            <div className="py-20 flex justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-300" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-dashed border-zinc-300 rounded-lg">
-              <Store className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">
-                No shops match your filter.
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden divide-y divide-zinc-100">
-              {filtered.map((shop) => {
-                const badge = getBillingLabel(shop);
-                const Icon = badge.icon;
-                const waLink = getWhatsAppLink(shop);
-
-                const trialTime = getTimeRemaining(shop.trial_ends_at);
-                const subTime = getTimeRemaining(shop.subscription_ends_at);
-
-                return (
-                  <Link
-                    key={shop.id}
-                    href={`/admin/shops/${shop.id}`}
-                    className="group flex items-center justify-between gap-4 px-4 py-3 hover:bg-zinc-50 transition"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {shop.logo_url ? (
-                        <img
-                          src={shop.logo_url}
-                          alt=""
-                          className="w-9 h-9 rounded-md object-cover border border-zinc-200 shrink-0"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-md bg-zinc-900 flex items-center justify-center text-zinc-100 font-semibold text-xs shrink-0">
-                          {shop.name[0].toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-zinc-900 truncate">
-                            {shop.name}
-                          </span>
-                          {waLink && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                window.open(waLink, "_blank");
-                              }}
-                              className="p-1 rounded text-emerald-600 hover:bg-emerald-50 transition shrink-0 z-10"
-                              title="WhatsApp"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {shop.paid_current_month && (
-                            <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                              <Check className="w-2.5 h-2.5" /> Paid
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-3 text-[11px] text-zinc-500 mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Icon className={`w-3 h-3 ${badge.color}`} />
-                            <span className={badge.color}>{badge.label}</span>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            Trial:{" "}
-                            {shop.trial_ends_at
-                              ? new Date(
-                                  shop.trial_ends_at,
-                                ).toLocaleDateString()
-                              : "—"}
-                            <span className={`ml-1 ${trialTime.color}`}>
-                              ({trialTime.text})
-                            </span>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            Sub:{" "}
-                            {shop.subscription_ends_at
-                              ? new Date(
-                                  shop.subscription_ends_at,
-                                ).toLocaleDateString()
-                              : "—"}
-                            <span className={`ml-1 ${subTime.color}`}>
-                              ({subTime.text})
-                            </span>
-                          </span>
-                        </div>
+      <Card padded={false}>
+        {loading && !data ? (
+          <div className="p-4 space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div>
+        ) : list.length === 0 ? (
+          <Empty title="Nothing here" hint={filter === 'attention' ? 'No café is expiring soon. 🎉' : undefined} />
+        ) : (
+          <ul className="divide-y divide-zinc-100">
+            {list.map((s) => {
+              const wa = reminderLink(s)
+              return (
+                <li key={s.id} className="flex flex-col md:flex-row md:items-center gap-3 px-4 py-3">
+                  <Link href={`/admin/shops/${s.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                    <ShopAvatar name={s.name} logo={s.logo_url} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="truncate">{s.name}</span>
+                        <StateBadge state={s.status} trial={s.is_trial} />
+                        {s.status === 'active' && !s.is_trial && !s.paid_current_month && <Pill className="bg-red-100 text-red-700">unpaid</Pill>}
+                      </div>
+                      <div className="text-xs text-zinc-500">
+                        {s.is_trial ? `Trial ends ${fmtDate(s.trial_ends_at)}` : `Paid until ${fmtDate(s.subscription_ends_at)}`}
+                        {' · '}
+                        <span className={cx('tabular-nums', s.status === 'expired' ? 'text-orange-600' : s.days_left <= 3 ? 'text-red-600' : s.days_left <= 7 ? 'text-amber-600' : '')}>
+                          {s.status === 'expired' ? 'expired' : `${s.days_left}d left`}
+                        </span>
                       </div>
                     </div>
-
-                    <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-900 transition rtl:rotate-180 shrink-0" />
                   </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
-    </main>
-  );
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {wa && (
+                      <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-medium hover:bg-emerald-100" title="WhatsApp reminder">
+                        <MessageCircle className="w-3.5 h-3.5" /> Remind
+                      </a>
+                    )}
+                    {[1, 3, 12].map((m) => (
+                      <Button key={m} size="sm" onClick={() => setPending({ shop: s, months: m })}>
+                        +{m}m
+                      </Button>
+                    ))}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <ConfirmDialog
+        open={!!pending}
+        onClose={() => setPending(null)}
+        onConfirm={extend}
+        loading={busy}
+        variant="default"
+        title={pending ? `Extend ${pending.shop.name} by ${pending.months} month${pending.months > 1 ? 's' : ''}?` : ''}
+        description="Adds time from the current end date (or today if it already ended) and marks this month as paid."
+        confirmLabel="Extend"
+      />
+    </div>
+  )
 }

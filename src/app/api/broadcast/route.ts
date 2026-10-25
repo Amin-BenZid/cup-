@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isAdminAuthed } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/admin-auth'
+import { logAdminEvent } from '@/lib/admin-audit'
 
 export async function GET() {
   // 1. Fetch current active broadcast
@@ -36,13 +37,12 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const denied = await requireAdmin(req)
+  if (denied) return denied
   
   const body = await req.json().catch(() => ({}))
   const active = !!body.active
-  const message = (body.message ?? '').toString().trim()
+  const message = (body.message ?? '').toString().trim().slice(0, 280)
 
   const value = { active, message }
 
@@ -66,5 +66,6 @@ export async function PATCH(req: NextRequest) {
     })
   }
   
+  await logAdminEvent(req, active ? 'broadcast_on' : 'broadcast_off', { message })
   return NextResponse.json({ ok: true, broadcast: value })
 }

@@ -1,11 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isAdminAuthed } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/admin-auth'
 
-export async function GET() {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req)
+  if (denied) return denied
 
   // Fetch latest orders across ALL shops
   const { data: orders, error } = await supabaseAdmin
@@ -16,6 +15,7 @@ export async function GET() {
       status,
       created_at,
       ready_at,
+      customer_connected,
       shop_id,
       shops (
         name,
@@ -23,11 +23,14 @@ export async function GET() {
       )
     `)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ orders: orders ?? [] })
+  return NextResponse.json(
+    { orders: orders ?? [] },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
 }

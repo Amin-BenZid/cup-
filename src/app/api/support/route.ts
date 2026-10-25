@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireShopAuth } from "@/lib/shop-auth";
+import { notifyAdmin } from "@/lib/admin-notify";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,6 +34,24 @@ export async function POST(req: NextRequest) {
       console.error("Barista support insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Ping the admin's phone (at most once per shop every 2 minutes).
+    const shopId = guard.shopId;
+    after(async () => {
+      const { data: shop } = await supabaseAdmin
+        .from("shops")
+        .select("name")
+        .eq("id", shopId)
+        .maybeSingle();
+      await notifyAdmin({
+        kind: "support",
+        title: `Message from ${shop?.name ?? "a café"}`,
+        body: message.length > 140 ? `${message.slice(0, 137)}…` : message,
+        url: `/admin/support?shop=${shopId}`,
+        throttleKey: `support:${shopId}`,
+        throttleMs: 2 * 60 * 1000,
+      });
+    });
 
     return NextResponse.json({ message: data });
   } catch {

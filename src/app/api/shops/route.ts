@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { hashPin } from '@/lib/pin'
+import { notifyAdmin } from '@/lib/admin-notify'
 
 function slugify(text: string) {
   return text
@@ -72,6 +73,16 @@ export async function POST(req: NextRequest) {
       action: 'created',
       details: { name: data.name, code: data.code },
     })
+
+    // Ping the admin's phone: a new café is waiting for approval.
+    after(() =>
+      notifyAdmin({
+        kind: 'signup',
+        title: 'New café to approve',
+        body: `${data.name} (${data.code}) just signed up.`,
+        url: `/admin/shops/${data.id}`,
+      }),
+    )
 
     return NextResponse.json({ shop: data })
   } catch (e: unknown) {

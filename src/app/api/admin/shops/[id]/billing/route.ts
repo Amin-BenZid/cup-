@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isAdminAuthed } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/admin-auth'
+import { logAdminEvent } from '@/lib/admin-audit'
 
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const denied = await requireAdmin(req)
+  if (denied) return denied
 
   const { id } = await ctx.params
   const body = await req.json().catch(() => ({}))
   const months = Number(body?.months) || 0
 
-  if (months === 0) {
+  if (!Number.isInteger(months) || months < 1 || months > 24) {
     return NextResponse.json({ error: 'Invalid months' }, { status: 400 })
   }
 
@@ -54,6 +54,7 @@ export async function POST(
     action: 'billing_extended',
     details: { months, new_date: newDate.toISOString() },
   })
+  await logAdminEvent(req, 'billing_extended', { shop_id: id, months })
 
   return NextResponse.json({ shop: data })
 }

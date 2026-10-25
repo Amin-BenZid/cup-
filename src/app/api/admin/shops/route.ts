@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { isAdminAuthed } from "@/lib/admin-auth";
+import { requireAdmin } from "@/lib/admin-auth";
+import { deriveShopState } from "@/lib/admin-stats";
+import { MONTHLY_PRICE_TND } from "@/lib/config";
 
 type ShopRow = {
   id: string;
@@ -16,6 +18,9 @@ type ShopRow = {
   billing_status: string | null;
   phone: string | null;
   paid_current_month: boolean | null;
+  code: string;
+  has_created_order: boolean | null;
+  locked_until: string | null;
 };
 
 type StatRow = {
@@ -29,18 +34,15 @@ type StatRow = {
   rating_count: number;
 };
 
-const DAY = 24 * 60 * 60 * 1000;
-
-export async function GET() {
-  if (!(await isAdminAuthed())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
 
   const [shopsRes, statsRes] = await Promise.all([
     supabaseAdmin
       .from("shops")
       .select(
-        "id, name, tagline, status, created_at, logo_url, theme, game, trial_ends_at, subscription_ends_at, billing_status, phone, paid_current_month",
+        "id, name, tagline, status, created_at, logo_url, theme, game, trial_ends_at, subscription_ends_at, billing_status, phone, paid_current_month, code, has_created_order, locked_until",
       )
       .order("created_at", { ascending: false }),
     supabaseAdmin.rpc("admin_shop_stats"),
@@ -63,23 +65,7 @@ export async function GET() {
   const shops = ((shopsRes.data as ShopRow[] | null) ?? []).map((s) => {
     const st = statMap.get(s.id);
 
-    const trialEnd = s.trial_ends_at ? new Date(s.trial_ends_at).getTime() : 0;
-    const subEnd = s.subscription_ends_at
-      ? new Date(s.subscription_ends_at).getTime()
-      : 0;
-
-    const trialOk = trialEnd > now;
-    const subOk = subEnd > now;
-
-    // Derived state — the raw column only knows pending/active/disabled.
-    let state: "pending" | "disabled" | "expired" | "active" = "active";
-    if (s.status === "pending") state = "pending";
-    else if (s.status === "disabled") state = "disabled";
-    else if (!trialOk && !subOk) state = "expired";
-
-    const periodEnd = Math.max(subEnd, trialEnd);
-    const daysLeft = Math.max(0, Math.ceil((periodEnd - now) / DAY));
-
+    const { state, days_left: daysLeft, is_trial } = deriveShopState(s);
     const stats = {
       total: Number(st?.orders_total ?? 0),
       last7: Number(st?.orders_7d ?? 0),
@@ -99,8 +85,9 @@ export async function GET() {
       ...s,
       status: state,
       raw_status: s.status,
-      is_trial: !subOk && trialOk,
+      is_trial,
       days_left: daysLeft,
+      locked: !!s.locked_until && new Date(s.locked_until).getTime() > now,
       stats,
     };
   });
@@ -117,6 +104,9 @@ export async function GET() {
           (s) => s.status === "active" && s.days_left <= 7,
         ).length,
         totalReviews: ratingCount,
+        pending: shops.filter((s) => s.status === "pending").length,
+        payingShops: shops.filter((s) => s.status === "active" && !s.is_trial).length,
+        mrr: shops.filter((s) => s.status === "active" && !s.is_trial).length * MONTHLY_PRICE_TND,
         avgRating: ratingCount ? (ratingSum / ratingCount).toFixed(1) : "0.0",
       },
     },

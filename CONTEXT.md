@@ -361,6 +361,9 @@ Translation namespaces: `admin.*` (largest), `cz.*` (customize), `setup.*`, `cus
 
 ---
 
+## 9b. Admin panel (rebuilt 2026-10-25)
+English-only admin with shell (`components/admin/AdminShell.tsx`, sidebar + iPhone bottom tabs) and pages: overview, shops, shop detail (full edit, billing dates, PIN/unlock, orders, delete with typed confirm), live, support, billing, analytics, reviews, activity, errors, broadcast, settings. All admin APIs use `requireAdmin(req)` (session + same-origin check). 2FA, revocable sessions, audit log, admin push notifications (signup, support, daily cron) and the admin PWA manifest are described in `docs/admin.md`. The old `admin.*` translation keys are now unused.
+
 ## 10. Known issues / gotchas
 
 Fixed on 2026-10-25 (first pass): shop routes are guarded with `requireShop`, `/pending` uses the `/status` endpoint, the stale-order threshold is in seconds, and customize autosave uses a key-order-insensitive `sameJson` (this also stopped a save loop).

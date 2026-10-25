@@ -38,9 +38,11 @@ self.addEventListener('notificationclick', function (event) {
         ? self.navigator.clearAppBadge().catch(() => {})
         : Promise.resolve(),
       (async () => {
-        const url =
+        const path =
           (event.notification.data && event.notification.data.url) || '/'
-        const clientList = await clients.matchAll({ type: 'window' })
+        // Compare absolute URLs (client.url is always absolute).
+        const url = new URL(path, self.location.origin).href
+        const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true })
         for (const c of clientList) {
           if (c.url === url && 'focus' in c) return c.focus()
         }
