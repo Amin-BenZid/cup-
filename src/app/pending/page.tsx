@@ -43,7 +43,7 @@ export default function PendingPage() {
 
     async function check() {
       try {
-        const res = await fetch(`/api/shops/${shopId}`, {
+        const res = await fetch(`/api/shops/${shopId}/status`, {
           cache: "no-store",
         });
 
@@ -59,10 +59,13 @@ export default function PendingPage() {
         const json = await res.json();
         if (cancelled) return;
 
-        const s = json?.shop?.status as Status | undefined;
+        const s = json?.status as Status | undefined;
         if (s === "active") {
           setStatus("active");
-          setTimeout(() => router.push("/barista/dashboard"), 1200);
+          // No session exists yet, so the PIN login has to issue one. Drop the
+          // cached id first, or /barista would bounce straight to the dashboard.
+          localStorage.removeItem("shop_id");
+          setTimeout(() => router.push("/barista"), 1200);
         } else if (s === "disabled") {
           setStatus("disabled");
         } else if (s === "pending") {
@@ -84,10 +87,10 @@ export default function PendingPage() {
   function retry() {
     setStatus("pending");
     if (shopId) {
-      fetch(`/api/shops/${shopId}`, { cache: "no-store" })
+      fetch(`/api/shops/${shopId}/status`, { cache: "no-store" })
         .then((r) => r.json())
         .then((j) => {
-          const s = j?.shop?.status;
+          const s = j?.status;
           if (s === "active") setStatus("active");
           else if (s === "disabled") setStatus("disabled");
           else setStatus("pending");

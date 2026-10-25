@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireShop } from "@/lib/shop-auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,8 +10,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "shop_id required" }, { status: 400 });
     }
 
+    const guard = await requireShop(shop_id);
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status });
+    }
+
     const { data, error } = await supabaseAdmin.rpc("peek_order_number", {
-      p_shop_id: shop_id,
+      p_shop_id: guard.shopId,
     });
 
     if (error) {

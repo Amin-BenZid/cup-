@@ -476,7 +476,8 @@ export default function CustomerOrderClient({
     order?.created_at ?? null,
     order?.ready_at ?? null,
   );
-  const isStale = (elapsedLive ?? 0) > 30 * 60 * 1000;
+  // useElapsed returns seconds. The server only allows a cancel after 20 min.
+  const isStale = (elapsedLive ?? 0) > 30 * 60;
 
   async function handleCancelOrder() {
     setStaleError("");

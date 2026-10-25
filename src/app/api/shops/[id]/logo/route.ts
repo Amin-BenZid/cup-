@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireShop } from '@/lib/shop-auth'
 
 const MAX_BYTES = 2 * 1024 * 1024 // 2MB
 const ALLOWED = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
@@ -10,7 +11,12 @@ export async function POST(
 ) {
   try {
     const resolved = await ctx.params
-    const id = resolved.id
+
+    const guard = await requireShop(resolved.id)
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status })
+    }
+    const id = guard.shopId
 
     const form = await req.formData()
     const file = form.get('file')

@@ -56,6 +56,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Missing id" }, { status: 400 });
     }
 
+    const guard = await requireShop(id);
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status });
+    }
+
     let body: Record<string, unknown> = {};
     try {
       body = await req.json();
@@ -90,7 +95,7 @@ export async function PATCH(
     const { data, error } = await supabaseAdmin
       .from("shops")
       .update(update)
-      .eq("id", id)
+      .eq("id", guard.shopId)
       .select(
         "id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, has_created_order",
       )

@@ -199,7 +199,7 @@ export const translations = {
     "pending.autoRefresh":
       "Cette page se met à jour automatiquement. Vous pouvez la laisser ouverte.",
     "pending.approved": "Approuvé !",
-    "pending.redirecting": "Redirection vers votre tableau de bord…",
+    "pending.redirecting": "Connectez-vous pour ouvrir votre tableau de bord…",
     "pending.declined": "Demande refusée",
     "pending.declinedBody":
       "Malheureusement, cette demande n'a pas été approuvée. Contactez-nous si vous pensez qu'il s'agit d'une erreur.",
@@ -591,7 +591,7 @@ export const translations = {
     "pending.autoRefresh":
       "يتم تحديث هذه الصفحة تلقائياً. يمكنك إبقاؤها مفتوحة.",
     "pending.approved": "تمت الموافقة!",
-    "pending.redirecting": "جارٍ التحويل إلى لوحة التحكم…",
+    "pending.redirecting": "سجّل الدخول لفتح لوحة التحكم…",
     "pending.declined": "تم رفض الطلب",
     "pending.declinedBody":
       "للأسف لم تتم الموافقة على هذا الطلب. تواصل معنا إن كنت تعتقد أن هناك خطأ.",
@@ -989,7 +989,7 @@ export const translations = {
     "pending.autoRefresh":
       "This page updates automatically. You can leave it open.",
     "pending.approved": "Approved!",
-    "pending.redirecting": "Redirecting to your dashboard…",
+    "pending.redirecting": "Log in to open your dashboard…",
     "pending.declined": "Request declined",
     "pending.declinedBody":
       "Unfortunately, this request was not approved. Contact us if you think this is a mistake.",

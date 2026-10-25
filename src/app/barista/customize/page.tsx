@@ -37,6 +37,25 @@ import { useT } from '@/lib/i18n/context'
 type TabId = 'branding' | 'theme' | 'game' | 'messages'
 type DeviceId = 'phone' | 'desktop'
 
+// jsonb comes back with its keys reordered, and dropped undefined values never
+// reach the database, so compare key-order-insensitively and skip undefined.
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+    return `{${Object.keys(obj)
+      .filter((k) => obj[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson(obj[k])}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value ?? null)
+}
+
+function sameJson(a: unknown, b: unknown) {
+  return stableJson(a) === stableJson(b)
+}
+
 const INPUT_CLASS =
   'w-full px-3.5 py-2.5 rounded-lg border border-stone-200 bg-white text-sm outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 transition'
 
@@ -134,15 +153,12 @@ function CustomizeContent() {
       if (name !== (shop?.name ?? '')) payload.name = name
       if (tagline !== (shop?.tagline ?? '')) payload.tagline = tagline
       
-      // ONLY SAVE THEME IF IT'S DIFFERENT FROM DEFAULT
-      const currentThemeString = JSON.stringify(theme)
-      const defaultThemeString = JSON.stringify(DEFAULT_THEME)
-      if (currentThemeString !== defaultThemeString) {
-        payload.theme = theme
-      }
+      // Compare with what was last saved, not with the default — otherwise a
+      // reset to the default is never persisted.
+      if (!sameJson(theme, shop?.theme ?? DEFAULT_THEME)) payload.theme = theme
 
       if (game !== (shop?.game ?? 'catch-beans')) payload.game = game
-      if (JSON.stringify(messages) !== JSON.stringify(shop?.messages ?? {}))
+      if (!sameJson(messages, shop?.messages ?? {}))
         payload.messages = messages
       if (logoScale !== Number(shop?.logo_scale ?? 1))
         payload.logo_scale = logoScale

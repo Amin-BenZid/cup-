@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireShop } from '@/lib/shop-auth'
 
 export async function GET(
   _req: NextRequest,
@@ -12,10 +13,15 @@ export async function GET(
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
     }
 
+    const guard = await requireShop(id)
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status })
+    }
+
     const { data, error } = await supabaseAdmin
       .from('shops')
       .select('logo_url, theme, has_created_order')
-      .eq('id', id)
+      .eq('id', guard.shopId)
       .maybeSingle()
 
     if (error) {
