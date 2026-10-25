@@ -376,7 +376,7 @@ Fixed on 2026-10-25 (cleanup branch):
 - Reconstructed schema added at `supabase/schema.sql`.
 
 Still open:
-1. **PIN hash rollout**: the code is done, but the steps in `docs/pin-hash-migration.md` (backup, `PIN_PEPPER` in Vercel, run `scripts/wrap-legacy-pins.mjs`, verify) still need running. Until the script runs, shops that haven't logged in since the deploy keep their weak hash.
+1. **PIN hashing**: done and live (2026-10-25). Every row is `v1w` or `v2`; `v1w` upgrades to `v2` on login. Leftover cleanup: remove the legacy-hex branch from `verifyPin` (see `docs/pin-hash-migration.md`).
 2. `supabase/schema.sql` is reconstructed, not dumped. Run the `supabase db dump` command in its header, and from then on put changes in `supabase/migrations/`.
 3. Lint: `react-hooks/set-state-in-effect` errors in the dashboard and `BroadcastBanner` (pre-existing pattern).
 4. After deleting routes, `.next/types` is stale until the next `dev`/`build` (`tsc` complains about the missing routes).

@@ -1,6 +1,6 @@
 # PIN hash migration plan
 
-Status: **code done** (`src/lib/pin.ts`, `scripts/wrap-legacy-pins.mjs`). **Rollout steps 0–4 below still to do.** Owner: Amin.
+Status: **done, live on prod (2026-10-25).** All legacy hashes wrapped to `v1w`, and the login upgrade to `v2` is verified on prod. No backup table was created (none needed). Remaining: remove the raw-hex branch from `verifyPin` (no rows use it). Owner: Amin.
 
 ## Problem
 
