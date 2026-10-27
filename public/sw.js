@@ -10,7 +10,8 @@ self.addEventListener('push', function (event) {
   const options = {
     body: data.body || 'Your coffee is waiting at the counter.',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    // Monochrome mark: Android shows the badge as a silhouette in the status bar.
+    badge: '/badge-96.png',
     tag: data.tag || 'order-ready',
     requireInteraction: true,
     vibrate: [500, 200, 500, 200, 500],

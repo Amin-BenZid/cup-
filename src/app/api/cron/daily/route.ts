@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (parts.length) {
       sent = await notifyAdmin({
         kind: "billing",
-        title: "Cup daily check",
+        title: "Beep daily check",
         body: parts.join(" · ").slice(0, 240),
         url: "/admin/billing",
       });

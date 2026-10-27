@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
-/** PWA manifest for the installable "Cup Admin" app (iPhone home screen). */
+/** PWA manifest for the installable "Beep Admin" app (iPhone home screen). */
 export function GET() {
   return NextResponse.json(
     {
       id: '/admin',
-      name: 'Cup Admin',
-      short_name: 'Cup Admin',
-      description: 'Cup control panel',
+      name: 'Beep Admin',
+      short_name: 'Beep Admin',
+      description: 'Beep control panel',
       start_url: '/admin',
       scope: '/admin',
       display: 'standalone',

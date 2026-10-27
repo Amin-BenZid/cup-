@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import NotificationSetup from "@/components/NotificationSetup";
 import Logo from "@/components/Logo";
-import CupLogo from "@/components/CupLogo";
+import BrandLogo from "@/components/BrandLogo";
 import CozyPattern from "@/components/CozyPattern";
 import ReviewPrompt from "@/components/ReviewPrompt";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -924,7 +924,7 @@ export default function CustomerOrderClient({
         >
           <span>{t("cust.keepOpen")}</span>
           <span className="inline-flex items-center gap-1.5 opacity-70">
-            <CupLogo size={12} />
+            <BrandLogo size={12} />
             <span>{t("cust.poweredBy")}</span>
           </span>
         </footer>

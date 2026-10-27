@@ -206,7 +206,7 @@ function NotificationsCard({ settings, reloadSettings }: { settings: Settings | 
               Tap <Share className="inline w-4 h-4 -mt-0.5" /> <b>Share</b>, then <SquarePlus className="inline w-4 h-4 -mt-0.5" /> <b>Add to Home Screen</b>.
             </li>
             <li>
-              Open <b>Cup Admin</b> from your home screen, sign in, come back here and tap <b>Turn on notifications</b>.
+              Open <b>Beep Admin</b> from your home screen, sign in, come back here and tap <b>Turn on notifications</b>.
             </li>
           </ol>
           <div className="text-[11px] text-sky-800/80">Needs iOS 16.4 or newer. Apple only allows web push for apps added to the home screen.</div>

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, Loader2, Lock, ShieldCheck } from 'lucide-react'
-import CupLogo from '@/components/CupLogo'
+import BrandLogo from '@/components/BrandLogo'
 
 function safeNext(raw: string | null) {
   // Only allow in-app admin paths (no open redirects).
@@ -69,9 +69,9 @@ function LoginForm() {
     <main className="min-h-screen flex items-center justify-center p-6 bg-zinc-50">
       <form onSubmit={submit} className="w-full max-w-sm bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-3">
-          <CupLogo size={36} />
+          <BrandLogo size={36} />
           <div>
-            <div className="text-base font-semibold text-zinc-900">Cup Admin</div>
+            <div className="text-base font-semibold text-zinc-900">Beep Admin</div>
             <div className="text-xs text-zinc-500">Sign in to the control panel</div>
           </div>
         </div>

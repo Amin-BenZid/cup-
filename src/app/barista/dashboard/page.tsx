@@ -22,7 +22,7 @@ import {
   MessageCircle,
   LifeBuoy,
 } from "lucide-react";
-import CupLogo from "@/components/CupLogo";
+import BrandLogo from "@/components/BrandLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
@@ -417,7 +417,7 @@ export default function DashboardPage() {
                 className="w-10 h-10 rounded-xl object-cover border border-stone-200 shrink-0"
               />
             ) : (
-              <CupLogo size={40} />
+              <BrandLogo size={40} />
             )}
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-stone-400 font-semibold leading-none mb-1">

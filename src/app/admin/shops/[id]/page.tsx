@@ -373,7 +373,7 @@ function OverviewTab({
   const { shop, stats, reviewStats, messages } = data
   const reminder = useMemo(() => {
     if (!shop.phone) return null
-    const msg = `Bonjour ${shop.name}, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?`
+    const msg = `Bonjour ${shop.name}, c'est l'équipe Beep. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?`
     return `https://wa.me/${shop.phone.replace(/[^\d]/g, '')}?text=${encodeURIComponent(msg)}`
   }, [shop.phone, shop.name])
 

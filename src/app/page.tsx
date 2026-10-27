@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode, Bell, ArrowRight, Store, User, Gift } from "lucide-react";
-import CupLogo from "@/components/CupLogo";
+import BrandLogo from "@/components/BrandLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
 
@@ -39,8 +39,8 @@ export default function Home() {
       <header className="px-6 pt-8 pb-4">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <CupLogo size={36} />
-            <div className="text-sm font-semibold tracking-tight">Cup</div>
+            <BrandLogo size={36} />
+            <div className="text-[17px] font-bold tracking-[-0.045em]">beep</div>
           </div>
           <LanguageSwitcher />
         </div>
@@ -138,7 +138,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
-          <CupLogo size={14} />
+          <BrandLogo size={14} />
           <span>{t("landing.footer")}</span>
         </div>
       </footer>

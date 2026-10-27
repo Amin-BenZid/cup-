@@ -19,7 +19,7 @@ import {
   Store,
   X,
 } from 'lucide-react'
-import CupLogo from '@/components/CupLogo'
+import BrandLogo from '@/components/BrandLogo'
 import { Toast, type ToastKind } from '@/components/ui/Toast'
 import { useToasts } from '@/hooks/useToasts'
 import { adminFetch, cx } from './ui'
@@ -179,9 +179,9 @@ function Shell({ pathname, children }: { pathname: string; children: React.React
         {/* Sidebar (md+) */}
         <aside className="hidden md:flex fixed inset-y-0 start-0 w-60 flex-col border-e border-zinc-200 bg-white">
           <div className="h-14 flex items-center gap-2.5 px-4 border-b border-zinc-100">
-            <CupLogo size={26} />
+            <BrandLogo size={26} />
             <div className="leading-tight">
-              <div className="text-sm font-semibold">Cup Admin</div>
+              <div className="text-sm font-semibold">Beep Admin</div>
               <div className="text-[10px] text-zinc-500">Control panel</div>
             </div>
           </div>
@@ -211,8 +211,8 @@ function Shell({ pathname, children }: { pathname: string; children: React.React
         <header className="md:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-zinc-200 pt-[env(safe-area-inset-top)]">
           <div className="h-12 flex items-center justify-between px-4">
             <Link href="/admin" className="flex items-center gap-2">
-              <CupLogo size={22} />
-              <span className="text-sm font-semibold">Cup Admin</span>
+              <BrandLogo size={22} />
+              <span className="text-sm font-semibold">Beep Admin</span>
             </Link>
             <Link href="/admin/settings" className="p-2 -me-2 text-zinc-500" aria-label="Settings">
               <Settings className="w-5 h-5" />

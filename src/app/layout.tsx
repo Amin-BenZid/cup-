@@ -1,33 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
 import { Analytics } from "@vercel/analytics/next";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const ibmArabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-});
+const geistSans = { variable: "" };
+const geistMono = { variable: "" };
+const ibmArabic = { variable: "" };
 
 export const metadata: Metadata = {
   title: {
-    default: "Cup",
-    template: "%s · Cup",
+    default: "Beep",
+    template: "%s · Beep",
   },
   description:
     "Your coffee, ready when you are. Turn any phone into a café pager — no hardware.",
-  applicationName: "Cup",
+  applicationName: "Beep",
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -38,7 +25,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Cup",
+    title: "Beep",
     statusBarStyle: "default",
   },
   formatDetection: {

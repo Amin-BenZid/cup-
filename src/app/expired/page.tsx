@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock, LogOut, Mail, Phone, MessageCircle } from 'lucide-react'
-import CupLogo from '@/components/CupLogo'
+import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import SupportModal from '@/components/SupportModal'
 import { useT } from '@/lib/i18n/context'
@@ -76,8 +76,8 @@ export default function ExpiredPage() {
       <header className="px-6 pt-8 pb-2">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CupLogo size={32} />
-            <span className="text-sm font-semibold">Cup</span>
+            <BrandLogo size={32} />
+            <span className="text-sm font-semibold">beep</span>
           </div>
           <LanguageSwitcher />
         </div>
@@ -164,8 +164,8 @@ export default function ExpiredPage() {
 
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
-          <CupLogo size={14} />
-          <span>Cup</span>
+          <BrandLogo size={14} />
+          <span>beep</span>
         </div>
       </footer>
 

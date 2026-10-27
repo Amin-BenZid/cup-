@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import CupLogo from '@/components/CupLogo'
+import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 
@@ -134,7 +134,7 @@ export default function BaristaLogin() {
       <div className="flex-1 px-6 pb-10">
         <div className="max-w-md mx-auto pt-6 space-y-10">
           <div className="space-y-3">
-            <CupLogo size={44} />
+            <BrandLogo size={44} />
             <h1 className="text-3xl font-semibold tracking-tight pt-2">
               {t('login.title')}
             </h1>
@@ -211,7 +211,7 @@ export default function BaristaLogin() {
 
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
-          <CupLogo size={14} />
+          <BrandLogo size={14} />
           <span>{t('login.footer')}</span>
         </div>
       </footer>

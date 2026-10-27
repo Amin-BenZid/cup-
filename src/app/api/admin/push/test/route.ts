@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (denied) return denied;
   const sent = await notifyAdmin({
     kind: "test",
-    title: "Cup Admin",
+    title: "Beep Admin",
     body: "Notifications are working ✅",
     url: "/admin",
   });

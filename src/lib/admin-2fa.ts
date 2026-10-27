@@ -54,7 +54,7 @@ export async function verifyAdminCode(code: string): Promise<boolean> {
 export async function beginEnrolment(account: string) {
   const secret = generateTotpSecret();
   await setSetting(PENDING_KEY, { box: seal(secret), created_at: Date.now() });
-  return { secret, uri: otpauthUri(secret, account, "Cup Admin") };
+  return { secret, uri: otpauthUri(secret, account, "Beep Admin") };
 }
 
 /** Finish enrolment: the code must match the pending secret. */

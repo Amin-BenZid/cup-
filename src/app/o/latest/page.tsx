@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Coffee, QrCode, Loader2 } from 'lucide-react'
-import CupLogo from '@/components/CupLogo'
+import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 
@@ -92,7 +92,7 @@ export default function LatestOrderPage() {
   if (checking) {
     return (
       <main className="min-h-screen bg-[#faf7f2] flex items-center justify-center">
-        <CupLogo size={44} />
+        <BrandLogo size={44} />
       </main>
     )
   }
@@ -157,8 +157,8 @@ export default function LatestOrderPage() {
 
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
-          <CupLogo size={14} />
-          <span>Cup</span>
+          <BrandLogo size={14} />
+          <span>beep</span>
         </div>
       </footer>
 

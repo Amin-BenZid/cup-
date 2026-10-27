@@ -1,4 +1,6 @@
-# Cup (virtual-buzzer) — Project Context
+# Beep (formerly Cup; repo virtual-buzzer) — Project Context
+
+> **Renamed 2026-10-27: Cup → Beep**, logo option 2 "Ping" (a dot sending one signal). Mark = `components/BrandLogo.tsx` (inline SVG; also `BrandMark`, `BrandWordmark`), icons in `public/` (`icon-192/512`, `apple-icon`, `logo.png`, `badge-96.png`) and `app/icon.png`. Colours ink `#1d1916`, cream `#faf7f2`. Internal keys (`cup-*` localStorage, cookie names, repo name) were left as-is on purpose so nobody gets logged out. The rest of this doc still says "Cup" for history.
 
 > Reference doc for future work. Written from a full read of the codebase on 2026-10-25 (HEAD `4735f55`), updated after the known-issues cleanup (branch `chore/cleanup-known-issues`).
 > If code and this doc disagree, the code wins. Update this file when you change routes, tables or flows.

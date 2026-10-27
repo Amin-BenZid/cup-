@@ -1,7 +1,7 @@
 "use client";
 
 import { QrCode } from "lucide-react";
-import CupLogo from "@/components/CupLogo";
+import BrandLogo from "@/components/BrandLogo";
 import { useT } from "@/lib/i18n/context";
 
 export default function NotFound() {
@@ -24,8 +24,8 @@ export default function NotFound() {
 
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">
-          <CupLogo size={14} />
-          <span>Cup</span>
+          <BrandLogo size={14} />
+          <span>beep</span>
         </div>
       </footer>
     </main>

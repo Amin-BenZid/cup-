@@ -115,7 +115,7 @@ export const translations = {
       "Ce commerce a été désactivé. Contactez le support.",
 
     // Dashboard
-    "dash.role": "Cup · Équipe",
+    "dash.role": "Beep · Équipe",
     "dash.customize": "Personnaliser",
     "dash.logout": "Déconnexion",
     "dash.newOrder": "Nouvelle commande",
@@ -164,7 +164,7 @@ export const translations = {
     "cust.whileYouWait": "En attendant",
     "cust.keepOpen":
       "Gardez cette page ouverte. Elle se met à jour automatiquement.",
-    "cust.poweredBy": "Propulsé par Cup",
+    "cust.poweredBy": "Propulsé par Beep",
     "cust.waitingFor": "En attente depuis",
     "cust.readyIn": "Prêt en",
 
@@ -176,7 +176,7 @@ export const translations = {
     "notif.enabling": "Activation…",
     "notif.notNow": "Plus tard",
     "notif.blocked":
-      "Notifications bloquées. Autorisez-les dans Réglages → Cup.",
+      "Notifications bloquées. Autorisez-les dans Réglages → Beep.",
     "notif.iosHint":
       "Sur iPhone : Partager → « Sur l'écran d'accueil » pour être prévenu même page fermée.",
 
@@ -351,7 +351,7 @@ export const translations = {
     "banner.dismiss": "Fermer",
 
     // Onboarding
-    "onboarding.title": "Bienvenue sur Cup !",
+    "onboarding.title": "Bienvenue sur Beep !",
     "onboarding.subtitle": "Préparons votre commerce en 2 étapes simples.",
     "onboarding.logo": "Téléchargez votre logo",
     "onboarding.logoDesc": "Montrez votre marque à vos clients.",
@@ -367,7 +367,7 @@ export const translations = {
     "cust.soundOn": "Son activé",
     "order.useNext": "Utiliser le numéro suivant (#%n)",
     "billing.whatsappMsg":
-      "Bonjour %name, c'est l'équipe Cup. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
+      "Bonjour %name, c'est l'équipe Beep. Votre abonnement arrive à échéance. Souhaitez-vous continuer ?",
     "scan.button": "Scanner le QR",
     "scan.hint": "Placez le QR code de votre commande dans le cadre.",
     "scan.error":
@@ -513,7 +513,7 @@ export const translations = {
     "login.error.disabled": "تم تعطيل هذا المتجر. تواصل مع الدعم.",
 
     // Dashboard
-    "dash.role": "Cup · الفريق",
+    "dash.role": "Beep · الفريق",
     "dash.customize": "تخصيص",
     "dash.logout": "خروج",
     "dash.newOrder": "طلب جديد",
@@ -558,7 +558,7 @@ export const translations = {
     "cust.readyStep": "جاهز",
     "cust.whileYouWait": "في أثناء الانتظار",
     "cust.keepOpen": "أبقِ هذه الصفحة مفتوحة. يتم تحديثها تلقائياً.",
-    "cust.poweredBy": "بدعم من Cup",
+    "cust.poweredBy": "بدعم من Beep",
     "cust.waitingFor": "في الانتظار منذ",
     "cust.readyIn": "جاهز خلال",
 
@@ -568,7 +568,7 @@ export const translations = {
     "notif.enable": "تفعيل الإشعارات",
     "notif.enabling": "جارٍ التفعيل…",
     "notif.notNow": "ليس الآن",
-    "notif.blocked": "الإشعارات محظورة. فعّلها من الإعدادات ← Cup.",
+    "notif.blocked": "الإشعارات محظورة. فعّلها من الإعدادات ← Beep.",
     "notif.iosHint":
       "على iPhone: شارك ← «إضافة إلى الشاشة الرئيسية» لتصلك التنبيهات حتى والصفحة مغلقة.",
 
@@ -741,7 +741,7 @@ export const translations = {
     "banner.dismiss": "إغلاق",
 
     // Onboarding
-    "onboarding.title": "مرحباً بك في Cup!",
+    "onboarding.title": "مرحباً بك في Beep!",
     "onboarding.subtitle": "لنجهز متجرك في خطوتين سهلتين.",
     "onboarding.logo": "ارفع شعارك",
     "onboarding.logoDesc": "أظهر علامتك التجارية لعملائك.",
@@ -752,7 +752,7 @@ export const translations = {
     "onboarding.go": "اذهب",
     "onboarding.tryIt": "جرب",
     "billing.whatsappMsg":
-      "مرحباً %name، معك فريق Cup. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟",
+      "مرحباً %name، معك فريق Beep. اشتراكك على وشك الانتهاء. هل ترغب في الاستمرار؟",
     "cust.enableSound": "تفعيل الصوت",
     "cust.soundOn": "تم تفعيل الصوت",
     "cust.enableSoundHint":
@@ -814,7 +814,7 @@ export const translations = {
     "setup.error.pinLength": "PIN must be exactly 6 digits.",
 
     "billing.whatsappMsg":
-      "Hello %name, this is the Cup team. Your subscription is ending soon. Would you like to continue?",
+      "Hello %name, this is the Beep team. Your subscription is ending soon. Would you like to continue?",
     // Order with phone
     "order.number": "Order number",
     "order.phone": "Customer phone",
@@ -908,7 +908,7 @@ export const translations = {
     "login.error.disabled": "This shop has been disabled. Contact support.",
 
     // Dashboard
-    "dash.role": "Cup · Staff",
+    "dash.role": "Beep · Staff",
     "dash.customize": "Customize",
     "dash.logout": "Log out",
     "dash.newOrder": "New Order",
@@ -955,7 +955,7 @@ export const translations = {
     "cust.readyStep": "Ready",
     "cust.whileYouWait": "While you wait",
     "cust.keepOpen": "Keep this page open. It updates automatically.",
-    "cust.poweredBy": "Powered by Cup",
+    "cust.poweredBy": "Powered by Beep",
     "cust.waitingFor": "Waiting for",
     "cust.readyIn": "Ready in",
 
@@ -966,7 +966,7 @@ export const translations = {
     "notif.enable": "Enable notifications",
     "notif.enabling": "Enabling…",
     "notif.notNow": "Not now",
-    "notif.blocked": "Notifications are blocked. Allow them in Settings → Cup.",
+    "notif.blocked": "Notifications are blocked. Allow them in Settings → Beep.",
     "notif.iosHint":
       "On iPhone: Share → “Add to Home Screen” to get alerts even when this page is closed.",
 
@@ -1136,7 +1136,7 @@ export const translations = {
     "banner.dismiss": "Dismiss",
 
     // Onboarding
-    "onboarding.title": "Welcome to Cup!",
+    "onboarding.title": "Welcome to Beep!",
     "onboarding.subtitle": "Let's set up your shop in 2 simple steps.",
     "onboarding.logo": "Upload your logo",
     "onboarding.logoDesc": "Showcase your brand to customers.",
