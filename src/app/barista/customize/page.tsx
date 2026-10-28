@@ -33,6 +33,7 @@ import LogoAdjuster from '@/components/LogoAdjuster'
 import Logo from '@/components/Logo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { handleAccessDenied } from '@/lib/shop-access-client'
 
 type TabId = 'branding' | 'theme' | 'game' | 'messages'
 type DeviceId = 'phone' | 'desktop'
@@ -98,7 +99,8 @@ function CustomizeContent() {
 
     ;(async () => {
       const res = await fetch(`/api/shops/${id}`, { cache: 'no-store' })
-      const json = await res.json()
+      if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
+      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(json.error ?? 'Failed to load shop')
         setLoading(false)
@@ -130,7 +132,8 @@ function CustomizeContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(partial),
         })
-        const json = await res.json()
+        if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
+        const json = await res.json().catch(() => ({}))
         if (!res.ok) {
           setError(json.error ?? 'Save failed')
           return
@@ -143,7 +146,7 @@ function CustomizeContent() {
         setSaving(false)
       }
     },
-    [shopId]
+    [shopId, router]
   )
 
   useEffect(() => {

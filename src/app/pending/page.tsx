@@ -16,7 +16,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
 import { formatTemplate } from "@/lib/i18n/translations";
 
-type Status = "pending" | "active" | "disabled" | "unknown";
+type Status = "pending" | "active" | "disabled" | "deleted" | "unknown";
 
 export default function PendingPage() {
   const t = useT();
@@ -48,7 +48,13 @@ export default function PendingPage() {
         });
 
         if (res.status === 404) {
-          if (!cancelled) setStatus("disabled");
+          // The café was deleted: forget it on this device and stop polling.
+          if (!cancelled) {
+            localStorage.removeItem("shop_id");
+            localStorage.removeItem("shop_name");
+            setStatus("deleted");
+            clearInterval(interval);
+          }
           return;
         }
 
@@ -188,6 +194,26 @@ export default function PendingPage() {
                   {t("pending.redirecting")}
                 </p>
               </div>
+            </>
+          )}
+
+          {status === "deleted" && (
+            <>
+              <div className="flex justify-center">
+                <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+                  <XCircle className="w-10 h-10 text-red-700" strokeWidth={2.2} />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-semibold tracking-tight">{t("account.deleted.title")}</h1>
+                <p className="text-stone-500 text-[15px] leading-relaxed max-w-sm mx-auto">{t("account.deleted.body")}</p>
+              </div>
+              <Link
+                href="/setup"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-stone-900 text-amber-50 text-sm font-medium hover:bg-stone-800 transition"
+              >
+                {t("account.newShop")}
+              </Link>
             </>
           )}
 

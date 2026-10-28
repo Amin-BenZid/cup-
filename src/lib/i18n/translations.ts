@@ -112,6 +112,20 @@ export const translations = {
     "login.setupLink": "Créez-en un",
     "login.footer": "Gardez cet onglet ouvert pendant votre service",
 
+    // Account state screens
+    "account.disabled.title": "Votre commerce est en pause",
+    "account.disabled.body": "L’équipe Beep a mis en pause l’accès à votre tableau de bord. Écrivez-nous pour le réactiver.",
+    "account.archived.title": "Ce commerce est fermé",
+    "account.archived.body": "Ce compte a été fermé par l’équipe Beep. Contactez-nous si vous pensez que c’est une erreur.",
+    "account.deleted.title": "Ce commerce n’existe plus",
+    "account.deleted.body": "Ce compte a été supprimé avec ses commandes et ses données. Vous pouvez créer un nouveau commerce ou nous contacter.",
+    "account.newShop": "Créer un nouveau commerce",
+    "account.backToLogin": "Retour à la connexion",
+    "account.autoRefresh": "Cette page se met à jour toute seule dès que l’accès revient.",
+    "support.error.send": "Votre message n’a pas pu être envoyé. Réessayez.",
+    "support.error.network": "Pas de connexion. Vérifiez internet et réessayez.",
+    "support.error.unavailable": "Le support n’est plus disponible pour ce commerce.",
+
     // Forgot PIN
     "forgot.link": "PIN oublié ?",
     "forgot.title": "PIN oublié ?",
@@ -532,6 +546,20 @@ export const translations = {
     "login.setupLink": "أنشئ واحداً",
     "login.footer": "أبقِ هذه الصفحة مفتوحة خلال نوبتك",
 
+    // Account state screens
+    "account.disabled.title": "متجرك موقوف مؤقتاً",
+    "account.disabled.body": "أوقف فريق Beep الوصول إلى لوحة التحكم مؤقتاً. راسلنا لإعادة تفعيله.",
+    "account.archived.title": "تم إغلاق هذا المتجر",
+    "account.archived.body": "أغلق فريق Beep هذا الحساب. تواصل معنا إذا كنت تعتقد أن ذلك خطأ.",
+    "account.deleted.title": "هذا المتجر لم يعد موجوداً",
+    "account.deleted.body": "تم حذف هذا الحساب مع طلباته وبياناته. يمكنك إنشاء متجر جديد أو التواصل معنا.",
+    "account.newShop": "إنشاء متجر جديد",
+    "account.backToLogin": "العودة إلى تسجيل الدخول",
+    "account.autoRefresh": "تتحدث هذه الصفحة تلقائياً عند عودة الوصول.",
+    "support.error.send": "تعذر إرسال رسالتك. حاول مرة أخرى.",
+    "support.error.network": "لا يوجد اتصال. تحقق من الإنترنت وحاول مجدداً.",
+    "support.error.unavailable": "الدعم لم يعد متاحاً لهذا المتجر.",
+
     // Forgot PIN
     "forgot.link": "نسيت الرمز؟",
     "forgot.title": "نسيت الرمز السري؟",
@@ -947,6 +975,20 @@ export const translations = {
     "login.newShop": "New shop?",
     "login.setupLink": "Set one up",
     "login.footer": "Keep this tab open during your shift",
+
+    // Account state screens
+    "account.disabled.title": "Your café is paused",
+    "account.disabled.body": "The Beep team has paused access to your dashboard. Message us to turn it back on.",
+    "account.archived.title": "This café is closed",
+    "account.archived.body": "This account was closed by the Beep team. Contact us if you think it’s a mistake.",
+    "account.deleted.title": "This café no longer exists",
+    "account.deleted.body": "This account was deleted along with its orders and data. You can create a new café or contact us.",
+    "account.newShop": "Create a new café",
+    "account.backToLogin": "Back to login",
+    "account.autoRefresh": "This page updates by itself as soon as access is back.",
+    "support.error.send": "Your message couldn’t be sent. Please try again.",
+    "support.error.network": "No connection. Check your internet and try again.",
+    "support.error.unavailable": "Support isn’t available for this café any more.",
 
     // Forgot PIN
     "forgot.link": "Forgot PIN?",

@@ -1,43 +1,46 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getShopSession } from "@/lib/shop-auth";
+import { getShopSession, SHOP_COOKIE } from "@/lib/shop-auth";
+import { getShopAccess } from "@/lib/shop-access";
 
+const NO_STORE = { "Cache-Control": "no-store" };
+
+/**
+ * Who is signed in and what they can do right now. `state` drives which
+ * screen the staff app shows (see lib/shop-access.ts). 401 means there is no
+ * usable session: signed out, or the café was deleted.
+ */
 export async function GET() {
   const session = await getShopSession();
-
   if (!session) {
-    return NextResponse.json(
-      { shop: null, active: false },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    );
+    return NextResponse.json({ shop: null, active: false, state: "signed_out" }, { status: 401, headers: NO_STORE });
   }
 
-  const { data: shop } = await supabaseAdmin
-    .from("shops")
-    .select("id, name, status, trial_ends_at, subscription_ends_at")
-    .eq("id", session.shopId)
-    .maybeSingle();
+  const access = await getShopAccess(session.shopId);
 
-  if (!shop) {
-    return NextResponse.json({ shop: null, active: false }, { status: 401 });
+  if (access.state === "deleted") {
+    const res = NextResponse.json({ shop: null, active: false, state: "deleted" }, { status: 401, headers: NO_STORE });
+    // The café is gone: drop its cookie so nothing keeps using it.
+    res.cookies.set({
+      name: SHOP_COOKIE,
+      value: "",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 0,
+      path: "/",
+    });
+    return res;
   }
-
-  const now = Date.now();
-  const trialOk =
-    !!shop.trial_ends_at && new Date(shop.trial_ends_at).getTime() > now;
-  const subOk =
-    !!shop.subscription_ends_at &&
-    new Date(shop.subscription_ends_at).getTime() > now;
-
-  const active = shop.status === "active" && (trialOk || subOk);
 
   return NextResponse.json(
     {
-      shop: { id: shop.id, name: shop.name, status: shop.status },
-      active,
-      trial_ok: trialOk,
-      subscription_ok: subOk,
+      shop: access.shop,
+      active: access.state === "ok",
+      state: access.state,
+      reason: access.reason ?? null,
+      trial_ok: access.trial_ok ?? false,
+      subscription_ok: access.subscription_ok ?? false,
     },
-    { headers: { "Cache-Control": "no-store" } },
+    { headers: NO_STORE },
   );
 }

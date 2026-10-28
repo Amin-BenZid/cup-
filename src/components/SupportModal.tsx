@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Send, LifeBuoy, Loader2 } from "lucide-react";
+import { X, Send, LifeBuoy, Loader2, AlertCircle } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
 
 type Message = {
@@ -14,19 +14,27 @@ type Message = {
 export default function SupportModal({
   shopId,
   onClose,
+  onAccessLost,
 }: {
   shopId: string;
   onClose: () => void;
+  /** Called on 401/403: the café can't use support any more (deleted, closed…). */
+  onAccessLost?: () => void;
 }) {
   const t = useT();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function load() {
     try {
       const res = await fetch(`/api/support?shop_id=${shopId}`);
+      if (res.status === 401 || res.status === 403) {
+        onAccessLost?.();
+        return;
+      }
       if (res.ok) {
         const json = await res.json();
         setMessages(json.messages ?? []);
@@ -66,6 +74,7 @@ export default function SupportModal({
     if (!text.trim() || sending) return;
 
     setSending(true);
+    setError("");
     const msgText = text.trim();
     setText(""); // Clear input immediately for better UX
 
@@ -80,13 +89,17 @@ export default function SupportModal({
         const newMsg = await res.json();
         // Add to UI immediately
         setMessages((prev) => [newMsg.message, ...prev]);
+      } else if (res.status === 401 || res.status === 403) {
+        setText(msgText);
+        if (onAccessLost) onAccessLost();
+        else setError(t("support.error.unavailable"));
       } else {
         setText(msgText);
-        alert("Failed to send message. Please try again.");
+        setError(t("support.error.send"));
       }
-    } catch (err) {
+    } catch {
       setText(msgText);
-      console.error(err);
+      setError(t("support.error.network"));
     } finally {
       setSending(false);
     }
@@ -144,11 +157,31 @@ export default function SupportModal({
           onSubmit={send}
           className="p-4 border-t border-stone-100 bg-white rounded-b-3xl shrink-0"
         >
+          {error && (
+            <div
+              role="alert"
+              className="mb-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2.5 rounded-xl"
+            >
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span className="flex-1">{error}</span>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="text-red-400 hover:text-red-700"
+                aria-label={t("forgot.close")}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                if (error) setError("");
+              }}
               placeholder={t("support.placeholder")}
               className="flex-1 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition"
             />

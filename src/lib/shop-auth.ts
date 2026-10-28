@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getArchive } from "@/lib/shop-archive";
 
 const COOKIE_NAME = "shop_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -63,10 +64,22 @@ export async function getShopSession(): Promise<{ shopId: string } | null> {
 export async function requireShopAuth(requestedId?: string) {
   const session = await getShopSession();
   if (!session) {
-    return { ok: false as const, error: "Unauthorized", status: 401 };
+    return { ok: false as const, error: "Unauthorized", status: 401, code: "signed_out" };
   }
   if (requestedId && session.shopId !== requestedId) {
-    return { ok: false as const, error: "Forbidden", status: 403 };
+    return { ok: false as const, error: "Forbidden", status: 403, code: "forbidden" };
+  }
+  // The cookie can outlive the café: refuse deleted and archived ones.
+  const { data: shop } = await supabaseAdmin
+    .from("shops")
+    .select("id")
+    .eq("id", session.shopId)
+    .maybeSingle();
+  if (!shop) {
+    return { ok: false as const, error: "Unauthorized", status: 401, code: "deleted" };
+  }
+  if (await getArchive(session.shopId)) {
+    return { ok: false as const, error: "Account closed", status: 403, code: "archived" };
   }
   return { ok: true as const, shopId: session.shopId };
 }
@@ -75,8 +88,14 @@ export async function requireShopAuth(requestedId?: string) {
  * Identity + entitlement. Everything else must use this.
  */
 export async function requireShop(requestedId?: string) {
-  const auth = await requireShopAuth(requestedId);
-  if (!auth.ok) return auth;
+  const session = await getShopSession();
+  if (!session) {
+    return { ok: false as const, error: "Unauthorized", status: 401, code: "signed_out" };
+  }
+  if (requestedId && session.shopId !== requestedId) {
+    return { ok: false as const, error: "Forbidden", status: 403, code: "forbidden" };
+  }
+  const auth = { ok: true as const, shopId: session.shopId };
 
   const { data: shop } = await supabaseAdmin
     .from("shops")
@@ -85,11 +104,11 @@ export async function requireShop(requestedId?: string) {
     .maybeSingle();
 
   if (!shop) {
-    return { ok: false as const, error: "Unauthorized", status: 401 };
+    return { ok: false as const, error: "Unauthorized", status: 401, code: "deleted" };
   }
 
   if (shop.status !== "active") {
-    return { ok: false as const, error: "Account inactive", status: 403 };
+    return { ok: false as const, error: "Account inactive", status: 403, code: "inactive" };
   }
 
   const now = Date.now();
@@ -100,7 +119,7 @@ export async function requireShop(requestedId?: string) {
     new Date(shop.subscription_ends_at).getTime() > now;
 
   if (!trialOk && !subOk) {
-    return { ok: false as const, error: "Subscription expired", status: 403 };
+    return { ok: false as const, error: "Subscription expired", status: 403, code: "expired" };
   }
 
   return { ok: true as const, shopId: auth.shopId };

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Upload, X, ZoomIn, ZoomOut, Check, ImageIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { handleAccessDenied } from '@/lib/shop-access-client'
 
 const OUTPUT_SIZE = 512
 
@@ -19,6 +21,7 @@ export default function LogoUploader({
   const [preview, setPreview] = useState<string | null>(null)
   const [showCrop, setShowCrop] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const router = useRouter()
   const [error, setError] = useState('')
 
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -177,7 +180,8 @@ export default function LogoUploader({
         method: 'POST',
         body: form,
       })
-      const json = await res.json()
+      if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
+      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(json.error ?? 'Upload failed')
         return
@@ -189,7 +193,7 @@ export default function LogoUploader({
     } finally {
       setUploading(false)
     }
-  }, [preview, scale, offset, shopId, onUploaded])
+  }, [preview, scale, offset, shopId, onUploaded, router])
 
   useEffect(() => {
     return () => {

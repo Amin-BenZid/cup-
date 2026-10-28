@@ -27,6 +27,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
+import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
 import { useT } from "@/lib/i18n/context";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { DEV_LAN_IP } from "@/lib/config";
@@ -133,6 +134,11 @@ export default function DashboardPage() {
     const check = async () => {
       try {
         const res = await fetch(`/api/support?shop_id=${shopId}`);
+        if (res.status === 401 || res.status === 403) {
+          await handleAccessDenied(router);
+          return;
+        }
+        if (!res.ok) return;
         const json = await res.json();
         setUnreadSupport(json.unread ?? 0);
       } catch {}
@@ -140,7 +146,7 @@ export default function DashboardPage() {
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
-  }, [shopId]);
+  }, [shopId, router]);
 
   const loadOrders = useCallback(
     async (id: string) => {
@@ -149,18 +155,10 @@ export default function DashboardPage() {
           cache: "no-store",
         });
 
-        // Session expired or revoked — send them back to the PIN screen.
-        if (res.status === 401) {
-          localStorage.removeItem("shop_id");
-          localStorage.removeItem("shop_name");
-          router.replace("/barista");
-          return;
-        }
-
-        // 403 from a guarded route means the trial/subscription lapsed.
-        if (res.status === 403) {
-          router.replace("/expired");
-          return;
+        // Signed out, deleted, archived, paused, pending or expired: show
+        // the screen for the café's real state.
+        if (res.status === 401 || res.status === 403) {
+          if (await handleAccessDenied(router)) return;
         }
 
         if (!res.ok) return;
@@ -262,16 +260,8 @@ export default function DashboardPage() {
         }),
       });
 
-      if (res.status === 401) {
-        localStorage.removeItem("shop_id");
-        localStorage.removeItem("shop_name");
-        router.replace("/barista");
-        return;
-      }
-
-      if (res.status === 403) {
-        router.replace("/expired");
-        return;
+      if (res.status === 401 || res.status === 403) {
+        if (await handleAccessDenied(router)) return;
       }
 
       const json = await res.json();
@@ -320,16 +310,8 @@ export default function DashboardPage() {
         body: JSON.stringify({ status }),
       });
 
-      if (res.status === 401) {
-        localStorage.removeItem("shop_id");
-        localStorage.removeItem("shop_name");
-        router.replace("/barista");
-        return;
-      }
-
-      if (res.status === 403) {
-        router.replace("/expired");
-        return;
+      if (res.status === 401 || res.status === 403) {
+        if (await handleAccessDenied(router)) return;
       }
 
       const json = await res.json().catch(() => ({}));
@@ -353,8 +335,7 @@ export default function DashboardPage() {
 
   function logout() {
     void fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    localStorage.removeItem("shop_id");
-    localStorage.removeItem("shop_name");
+    clearShopStorage();
     router.replace("/barista");
   }
 
@@ -827,7 +808,14 @@ export default function DashboardPage() {
       )}
 
       {supportOpen && shopId && (
-        <SupportModal shopId={shopId} onClose={() => setSupportOpen(false)} />
+        <SupportModal
+          shopId={shopId}
+          onClose={() => setSupportOpen(false)}
+          onAccessLost={() => {
+            setSupportOpen(false);
+            void handleAccessDenied(router);
+          }}
+        />
       )}
 
       {toast && (
