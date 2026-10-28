@@ -8,6 +8,7 @@ import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 import { typeShopCode } from '@/lib/shop-code'
+import ForgotPin from '@/components/ForgotPin'
 
 export default function BaristaLogin() {
   const t = useT()
@@ -18,6 +19,7 @@ export default function BaristaLogin() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(true)
+  const [forgotOpen, setForgotOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -166,9 +168,18 @@ export default function BaristaLogin() {
 
             {/* PIN INPUT */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-900">
-                {t('setup.pinLabel')}
-              </label>
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium text-stone-900">
+                  {t('setup.pinLabel')}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="text-sm text-stone-500 hover:text-stone-900 underline underline-offset-2"
+                >
+                  {t('forgot.link')}
+                </button>
+              </div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -212,6 +223,8 @@ export default function BaristaLogin() {
           </form>
         </div>
       </div>
+
+      {forgotOpen && <ForgotPin initialCode={code} onClose={() => setForgotOpen(false)} />}
 
       <footer className="px-6 pb-8 pt-4">
         <div className="max-w-md mx-auto flex items-center justify-center gap-2 text-[11px] text-stone-400">

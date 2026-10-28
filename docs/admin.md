@@ -27,5 +27,12 @@ Requires iOS 16.4+. Alerts: new café to approve, new support message (max 1 per
 - **Delete forever**: only for archived cafés, confirmed by typing the café code. Deletes explicitly (no reliance on cascades): push subscriptions of its orders, reviews, orders, support messages, shop history, logo files (`logos/<id>/*`), `admin_notify_throttle:support:<id>`, the shop row, then the archive record. If it stops halfway, pressing delete again finishes it. Logged as `shop_deleted` with counts.
 - Code in `src/lib/shop-archive.ts`, API `POST /api/admin/shops/[id]/archive` and `DELETE /api/admin/shops/[id]`.
 
+## Forgot PIN
+- Staff login → "Forgot PIN?" → café enters its code → gets a 6-letter **reference**. Nothing is reset automatically.
+- Same answer and a fresh reference for every code (real or not), writes run after the response: no way to probe which café codes exist. 5 requests / IP / hour. Archived cafés: silently ignored.
+- Admin gets a push + an unread support message, and a blue banner on the café page with the reference(s). **Verify by calling the phone number on file** (never a number the caller gives), check the reference, set a new PIN ("Random" button helps), say it on the call.
+- Setting a new PIN or "Dismiss" clears the request; requests expire after 7 days. Repeat asks within 30 min add a reference without re-notifying.
+- Stored in `global_settings.pin_reset_request:<shopId>`. Code: `src/lib/pin-reset.ts`, `POST /api/auth/forgot`, `src/components/ForgotPin.tsx`.
+
 ## Storage (no schema changes)
-Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`, `shop_archive:<shopId>`.
+Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`, `shop_archive:<shopId>`, `pin_reset_request:<shopId>`, `rl:pin_forgot:<hash>`.

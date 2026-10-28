@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { hashPin } from "@/lib/pin";
 import { logAdminEvent } from "@/lib/admin-audit";
 import { deleteShopCompletely, getArchive } from "@/lib/shop-archive";
+import { clearPinResetRequest, getPinResetRequest, requestRefs } from "@/lib/pin-reset";
 import { avg, DAY_MS, dayKey, deriveShopState, fetchAllRows, lastNDays, prepSeconds } from "@/lib/admin-stats";
 
 const SHOP_FIELDS =
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const since30 = new Date(Date.now() - 30 * DAY_MS).toISOString();
 
-    const [ordersRes, reviewsRes, historyRes, messagesRes, recentRes, totalRes, archive] =
+    const [ordersRes, reviewsRes, historyRes, messagesRes, recentRes, totalRes, archive, pinReset] =
       await Promise.all([
         supabaseAdmin
           .from("orders")
@@ -70,6 +71,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           .select("id", { count: "exact", head: true })
           .eq("shop_id", id),
         getArchive(id),
+        getPinResetRequest(id),
       ]);
 
     const reviews = reviewsRes.data ?? [];
@@ -100,6 +102,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           ...deriveShopState(shop),
           archived: !!archive,
           archived_at: archive?.archived_at ?? null,
+          pin_reset: pinReset ? { at: pinReset.at, refs: requestRefs(pinReset) } : null,
         },
         orders: ordersRes.data ?? [],
         reviews,
@@ -143,7 +146,8 @@ function parseDate(v: unknown): string | null | undefined {
  * Partial update. Accepted fields:
  *   name, tagline, code, phone, status (pending|active|disabled),
  *   trial_ends_at, subscription_ends_at (ISO or null), paid_current_month,
- *   billing_status (trial|active), new_pin (6 digits), unlock (true)
+ *   billing_status (trial|active), new_pin (6 digits), unlock (true),
+ *   dismiss_pin_request (true)
  */
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   const denied = await requireAdmin(req);
@@ -251,6 +255,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       logs.push({ action: "pin_reset", details: {} });
     }
 
+    let dismissPinRequest = false;
+    if (body.dismiss_pin_request === true) {
+      dismissPinRequest = true;
+      logs.push({ action: "pin_request_dismissed", details: {} });
+    }
+
     if (body.unlock === true) {
       update.login_attempts = 0;
       update.locked_until = null;
@@ -259,8 +269,17 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 
     if (edited.length) logs.push({ action: "edited", details: { fields: edited } });
 
-    if (Object.keys(update).length === 0) {
+    if (Object.keys(update).length === 0 && !dismissPinRequest) {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+    }
+    // A new PIN answers any open "forgot PIN" request.
+    if (dismissPinRequest || "pin_hash" in update) await clearPinResetRequest(id);
+    if (Object.keys(update).length === 0) {
+      await supabaseAdmin
+        .from("shop_history")
+        .insert(logs.map((l) => ({ shop_id: id, action: l.action, details: l.details })));
+      await logAdminEvent(req, "shop_updated", { shop: before.name, actions: logs.map((l) => l.action) });
+      return NextResponse.json({ ok: true });
     }
 
     const { data, error } = await supabaseAdmin
@@ -287,13 +306,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       actions: logs.map((l) => l.action),
     });
 
-    const archive = await getArchive(id);
+    const [archive, pinReset] = await Promise.all([getArchive(id), getPinResetRequest(id)]);
     return NextResponse.json({
       shop: {
         ...data,
         ...deriveShopState(data),
         archived: !!archive,
         archived_at: archive?.archived_at ?? null,
+        pin_reset: pinReset ? { at: pinReset.at, refs: requestRefs(pinReset) } : null,
       },
     });
   } catch (e) {

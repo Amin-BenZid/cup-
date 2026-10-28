@@ -71,6 +71,7 @@ type Shop = {
   is_trial: boolean
   archived?: boolean
   archived_at?: string | null
+  pin_reset?: { at: string; refs: string[] } | null
 }
 
 type Order = {
@@ -252,6 +253,44 @@ export default function ShopDetailPage() {
                 </Button>
                 <Button variant="danger" onClick={() => setDeleteOpen(true)}>
                   <Trash2 className="w-4 h-4" /> Delete forever
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Forgot-PIN request from the login page */}
+          {!shop.archived && shop.pin_reset && (
+            <div className="rounded-xl border border-sky-300 bg-sky-50 px-4 py-3 mb-5">
+              <div className="flex items-start gap-2 text-sm text-sky-950">
+                <KeyRound className="w-4 h-4 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium">
+                    Forgot PIN · asked {timeAgo(shop.pin_reset.at)} · ref{' '}
+                    <span className="font-mono tracking-wider">{shop.pin_reset.refs.join(' / ')}</span>
+                  </div>
+                  <ol className="list-decimal ps-4 mt-1 space-y-0.5 text-sky-900">
+                    <li>
+                      {shop.phone ? (
+                        <>Call the café on <span className="font-medium tabular-nums">{shop.phone}</span> (the number on file, not one they send you) and ask for the reference.</>
+                      ) : (
+                        <>No phone on file — confirm it’s really the owner another way before going on.</>
+                      )}
+                    </li>
+                    <li>If it matches, set a new PIN in “Edit &amp; access” and tell it to them on that call.</li>
+                  </ol>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3 ps-6">
+                {shop.phone && (
+                  <a href={`tel:${shop.phone}`} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-sky-900 text-white text-sm font-medium hover:bg-sky-800">
+                    <Phone className="w-4 h-4" /> Call café
+                  </a>
+                )}
+                <Button onClick={() => setTab('edit')}>
+                  <KeyRound className="w-4 h-4" /> Set new PIN
+                </Button>
+                <Button variant="ghost" loading={busy === 'dismiss-pin'} onClick={() => patch({ dismiss_pin_request: true }, 'Request dismissed', 'dismiss-pin')}>
+                  Dismiss
                 </Button>
               </div>
             </div>
@@ -645,6 +684,17 @@ function EditTab({
                   placeholder="••••••"
                   onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 />
+                <Button
+                  variant="ghost"
+                  title="Random PIN"
+                  onClick={() => {
+                    const a = new Uint32Array(1)
+                    crypto.getRandomValues(a)
+                    setPin(String(a[0] % 1_000_000).padStart(6, '0'))
+                  }}
+                >
+                  Random
+                </Button>
                 <Button
                   disabled={pin.length !== 6}
                   loading={busy === 'pin'}

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { deriveShopState } from "@/lib/admin-stats";
 import { MONTHLY_PRICE_TND } from "@/lib/config";
 import { listArchives } from "@/lib/shop-archive";
+import { listPinResetRequests } from "@/lib/pin-reset";
 
 type ShopRow = {
   id: string;
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  const [shopsRes, statsRes, archives] = await Promise.all([
+  const [shopsRes, statsRes, archives, pinResets] = await Promise.all([
     supabaseAdmin
       .from("shops")
       .select(
@@ -48,6 +49,7 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false }),
     supabaseAdmin.rpc("admin_shop_stats"),
     listArchives(),
+    listPinResetRequests(),
   ]);
 
   if (shopsRes.error) {
@@ -94,6 +96,7 @@ export async function GET(req: NextRequest) {
       days_left: daysLeft,
       archived: !!archive,
       archived_at: archive?.archived_at ?? null,
+      pin_reset_requested: pinResets.has(s.id),
       locked: !!s.locked_until && new Date(s.locked_until).getTime() > now,
       stats,
     };
