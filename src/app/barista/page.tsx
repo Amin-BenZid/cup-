@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { apiErrorText } from '@/lib/i18n/api-error'
 import { typeShopCode } from '@/lib/shop-code'
 import ForgotPin from '@/components/ForgotPin'
 
@@ -95,7 +96,7 @@ export default function BaristaLogin() {
           return
         }
         
-        setError(json.error ?? t('login.error.failed'))
+        setError(apiErrorText(t, json, 'login.error.failed'))
         setPin('')
         return
       }
@@ -105,7 +106,7 @@ export default function BaristaLogin() {
       localStorage.setItem('shop_code', json.shop.code)
       router.push('/barista/dashboard')
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('setup.error.network'))
+      setError(t('setup.error.network'))
     } finally {
       setLoading(false)
     }

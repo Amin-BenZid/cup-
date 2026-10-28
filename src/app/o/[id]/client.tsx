@@ -252,7 +252,7 @@ export default function CustomerOrderClient({
         } catch {}
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : t("common.loadFailed"));
+          setError(t("common.loadFailed"));
           setLoading(false);
         }
       }

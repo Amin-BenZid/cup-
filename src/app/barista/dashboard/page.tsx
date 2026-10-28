@@ -28,6 +28,7 @@ import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
+import { apiErrorText } from "@/lib/i18n/api-error";
 import { useT } from "@/lib/i18n/context";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { DEV_LAN_IP } from "@/lib/config";
@@ -266,10 +267,7 @@ export default function DashboardPage() {
 
       const json = await res.json();
       if (!res.ok) {
-        if (json.code === "DUPLICATE_ORDER_NUMBER") {
-          return setToast(t("order.error.duplicate"));
-        }
-        return setToast(json.error ?? t("common.error"));
+        return setToast(apiErrorText(t, json, "common.error"));
       }
 
       // Paint it on this screen instantly — the server response is the truth.
@@ -287,7 +285,7 @@ export default function DashboardPage() {
       setNextVersion((v) => v + 1);
       void loadOrders(shopId);
     } catch (e) {
-      setToast(e instanceof Error ? e.message : t("setup.error.network"));
+      setToast(t("setup.error.network"));
     } finally {
       setCreating(false);
     }
@@ -317,13 +315,13 @@ export default function DashboardPage() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setOrders(before);
-        setToast(json.error ?? t("common.error"));
+        setToast(apiErrorText(t, json, "common.error"));
       } else {
         void loadOrders(shopId);
       }
     } catch (e) {
       setOrders(before);
-      setToast(e instanceof Error ? e.message : t("setup.error.network"));
+      setToast(t("setup.error.network"));
     } finally {
       setBusyIds((prev) => {
         const n = new Set(prev);
@@ -350,7 +348,7 @@ export default function DashboardPage() {
 
   function smsBody(order: Order) {
     return t("dash.smsBody", {
-      shop: shop?.name ?? "Coffee",
+      shop: shop?.name ?? t("common.shopFallback"),
       order: order.order_number,
     });
   }
@@ -650,8 +648,8 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 sm:shrink-0">
                     <button
                       onClick={() => setQrOrder(order)}
-                      title="QR"
-                      aria-label="QR"
+                      title={t("dash.qrButton")}
+                      aria-label={t("dash.qrButton")}
                       className="w-11 h-11 sm:w-10 sm:h-10 shrink-0 rounded-xl border border-stone-200 hover:bg-stone-50 active:bg-stone-100 flex items-center justify-center transition"
                     >
                       <QrCode className="w-4 h-4 text-stone-500" />

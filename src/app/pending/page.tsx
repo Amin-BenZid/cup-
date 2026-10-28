@@ -257,7 +257,7 @@ export default function PendingPage() {
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-stone-900 text-amber-50 text-sm font-medium hover:bg-stone-800 transition"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  Retry
+                  {t("common.retry")}
                 </button>
                 <Link href="/" className="text-sm underline text-stone-700">
                   {t("pending.backHome")}

@@ -6,6 +6,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const order_id = (body?.order_id ?? '').toString()
     const subscription = body?.subscription
+    // The customer's language, so "your order is ready" arrives in it.
+    const locale = ['fr', 'ar', 'en'].includes(body?.locale) ? body.locale : 'fr'
 
     if (!order_id || !subscription?.endpoint) {
       return NextResponse.json(
@@ -20,7 +22,12 @@ export async function POST(req: NextRequest) {
         {
           order_id,
           endpoint: subscription.endpoint,
-          subscription,
+          subscription: {
+            endpoint: subscription.endpoint,
+            expirationTime: subscription.expirationTime ?? null,
+            keys: subscription.keys,
+            locale,
+          },
         },
         { onConflict: 'endpoint' }
       )

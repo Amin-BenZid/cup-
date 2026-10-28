@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     if (!code || !pin) {
       return NextResponse.json(
-        { error: "Code and PIN required" },
+        { error: "Code and PIN required", code: "MISSING_FIELDS" },
         { status: 400 },
       );
     }
@@ -48,14 +48,14 @@ export async function POST(req: NextRequest) {
 
     if (error || !shop) {
       return NextResponse.json(
-        { error: "Invalid Café Code or PIN" },
+        { error: "Invalid Café Code or PIN", code: "INVALID_CREDENTIALS" },
         { status: 401 },
       );
     }
 
     if (shop.locked_until && new Date(shop.locked_until) > new Date()) {
       return NextResponse.json(
-        { error: "Too many failed attempts. Try again in 15 minutes." },
+        { error: "Too many failed attempts. Try again in 15 minutes.", code: "TOO_MANY_ATTEMPTS" },
         { status: 429 },
       );
     }
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         .eq("id", shop.id);
 
       return NextResponse.json(
-        { error: "Invalid Café Code or PIN" },
+        { error: "Invalid Café Code or PIN", code: "INVALID_CREDENTIALS" },
         { status: 401 },
       );
     }

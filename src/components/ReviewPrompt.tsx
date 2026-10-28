@@ -35,17 +35,16 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, rating, comment }),
       })
-      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(json.error ?? 'Failed to save review')
+        setError(t('review.error'))
         return
       }
       try {
         localStorage.setItem(STORAGE_KEY + orderId, '1')
       } catch {}
       setSubmitted(true)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error')
+    } catch {
+      setError(t('setup.error.network'))
     } finally {
       setSubmitting(false)
     }

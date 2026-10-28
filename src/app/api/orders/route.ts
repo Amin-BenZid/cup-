@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   // A number is only sent when the barista edited it.
   if (suppliedNumber && !/^\d{1,4}$/.test(suppliedNumber)) {
     return NextResponse.json(
-      { error: "Order number must be 1 to 4 digits" },
+      { error: "Order number must be 1 to 4 digits", code: "INVALID_NUMBER" },
       { status: 400 },
     );
   }
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const cleaned = rawPhone.replace(/[\s\-().]/g, "");
     if (!/^\+?\d{6,20}$/.test(cleaned)) {
       return NextResponse.json(
-        { error: "Invalid phone number" },
+        { error: "Invalid phone number", code: "INVALID_PHONE" },
         { status: 400 },
       );
     }

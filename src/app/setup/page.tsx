@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, KeyRound } from 'lucide-react'
 import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { apiErrorText } from '@/lib/i18n/api-error'
 import { typeShopCode } from '@/lib/shop-code'
 
 export default function SetupPage() {
@@ -36,7 +37,7 @@ export default function SetupPage() {
       const json = await res.json()
 
       if (!res.ok) {
-        setError(json.error ?? t('setup.error.failedCreate'))
+        setError(apiErrorText(t, json, 'setup.error.failedCreate'))
         return
       }
 
@@ -45,7 +46,7 @@ export default function SetupPage() {
       localStorage.setItem('shop_code', json.shop.code)
       router.push('/pending')
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('setup.error.network'))
+      setError(t('setup.error.network'))
     } finally {
       setLoading(false)
     }

@@ -102,7 +102,7 @@ function CustomizeContent() {
       if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(json.error ?? 'Failed to load shop')
+        setError(t('cz.error.load'))
         setLoading(false)
         return
       }
@@ -135,18 +135,18 @@ function CustomizeContent() {
         if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
         const json = await res.json().catch(() => ({}))
         if (!res.ok) {
-          setError(json.error ?? 'Save failed')
+          setError(t('cz.error.save'))
           return
         }
         setShop(json.shop)
         setSavedAt(Date.now())
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Network error')
+        setError(t('setup.error.network'))
       } finally {
         setSaving(false)
       }
     },
-    [shopId, router]
+    [shopId, router, t]
   )
 
   useEffect(() => {
@@ -768,6 +768,7 @@ function CustomerPreview({
   labelPreparing: string
   labelReady: string
 }) {
+  const t = useT()
   const [mode, setMode] = useState<'preparing' | 'ready'>('preparing')
   const primary = primaryOverride ?? palette.primary
 
@@ -930,7 +931,7 @@ function CustomerPreview({
                   }}
                 >
                   <span>{labelWhileWait}</span>
-                  <span>Score 12</span>
+                  <span>{t('game.score')} 12</span>
                 </div>
                 <div
                   className="h-24 relative"

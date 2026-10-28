@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Upload, X, ZoomIn, ZoomOut, Check, ImageIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { handleAccessDenied } from '@/lib/shop-access-client'
+import { useT } from '@/lib/i18n/context'
+import { apiErrorText } from '@/lib/i18n/api-error'
 
 const OUTPUT_SIZE = 512
 
@@ -22,6 +24,7 @@ export default function LogoUploader({
   const [showCrop, setShowCrop] = useState(false)
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState('')
 
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -59,11 +62,11 @@ export default function LogoUploader({
         file.type
       )
     ) {
-      setError('Only PNG, JPG, WEBP, or SVG')
+      setError(t('logo.error.type'))
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('Max 5MB')
+      setError(t('logo.error.size'))
       return
     }
 
@@ -167,7 +170,7 @@ export default function LogoUploader({
       canvas.toBlob((b) => resolve(b), 'image/png', 0.92)
     )
     if (!blob) {
-      setError('Failed to process image')
+      setError(t('logo.error.process'))
       return
     }
 
@@ -183,17 +186,17 @@ export default function LogoUploader({
       if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(json.error ?? 'Upload failed')
+        setError(apiErrorText(t, json, 'logo.error.upload'))
         return
       }
       onUploaded(json.logo_url)
       reset()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload error')
+    } catch {
+      setError(t('logo.error.upload'))
     } finally {
       setUploading(false)
     }
-  }, [preview, scale, offset, shopId, onUploaded, router])
+  }, [preview, scale, offset, shopId, onUploaded, router, t])
 
   useEffect(() => {
     return () => {
@@ -208,7 +211,7 @@ export default function LogoUploader({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={currentUrl}
-            alt="logo"
+            alt={t('cz.branding.logo')}
             className="w-14 h-14 rounded-xl object-cover border border-stone-200"
           />
         ) : (
@@ -246,7 +249,7 @@ export default function LogoUploader({
           >
             <div className="flex items-center justify-between px-5 py-3 border-b border-stone-200">
               <div>
-                <div className="text-sm font-semibold">Adjust your logo</div>
+                <div className="text-sm font-semibold">{t('logo.adjustTitle')}</div>
                 <div className="text-xs text-stone-500">
                   Drag to move · pinch or scroll to zoom
                 </div>
@@ -254,7 +257,7 @@ export default function LogoUploader({
               <button
                 onClick={() => !uploading && reset()}
                 className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition"
-                aria-label="Close"
+                aria-label={t('qr.close')}
               >
                 <X className="w-4 h-4 text-stone-500" />
               </button>
@@ -273,7 +276,7 @@ export default function LogoUploader({
                 <img
                   ref={imgRef}
                   src={preview}
-                  alt="crop preview"
+                  alt={t('logo.adjustTitle')}
                   draggable={false}
                   className="absolute inset-0 w-full h-full pointer-events-none select-none"
                   style={{
@@ -308,7 +311,7 @@ export default function LogoUploader({
                 disabled={uploading}
                 className="flex-1 py-3 rounded-xl border border-stone-300 text-sm font-medium hover:bg-stone-50 disabled:opacity-50 transition"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={apply}
@@ -320,7 +323,7 @@ export default function LogoUploader({
                 ) : (
                   <>
                     <Check className="w-4 h-4" />
-                    Use image
+                    {t('logo.use')}
                   </>
                 )}
               </button>

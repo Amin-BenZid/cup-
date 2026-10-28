@@ -25,13 +25,13 @@ export async function POST(
     }
     if (!ALLOWED.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Only PNG, JPG, WEBP, SVG' },
+        { error: 'Only PNG, JPG, WEBP, SVG', code: 'FILE_TYPE' },
         { status: 400 }
       )
     }
     if (file.size > MAX_BYTES) {
       return NextResponse.json(
-        { error: 'Max 2MB' },
+        { error: 'Max 2MB', code: 'FILE_TOO_LARGE' },
         { status: 400 }
       )
     }

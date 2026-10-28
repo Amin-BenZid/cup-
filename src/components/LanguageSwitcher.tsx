@@ -10,7 +10,7 @@ export default function LanguageSwitcher({
 }: {
   compact?: boolean
 }) {
-  const { locale, setLocale, ready } = useI18n()
+  const { locale, setLocale, ready, t } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
 
@@ -44,7 +44,7 @@ export default function LanguageSwitcher({
       <button
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition"
-        aria-label="Change language"
+        aria-label={t('lang.change')}
       >
         <Globe className="w-4 h-4" />
         {!compact && (

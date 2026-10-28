@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Bell, X } from 'lucide-react'
-import { useT } from '@/lib/i18n/context'
+import { useI18n } from '@/lib/i18n/context'
 
 const DISMISS_KEY = 'notif-banner-dismissed'
 
@@ -16,7 +16,7 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function NotificationSetup({ orderId }: { orderId: string }) {
-  const t = useT()
+  const { t, locale } = useI18n()
 
   // Dismissal is per order: a new coffee should ask again.
   const dismissKey = `${DISMISS_KEY}-${orderId}`
@@ -104,6 +104,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
           body: JSON.stringify({
             order_id: orderId,
             subscription: sub.toJSON(),
+            locale,
           }),
         }).catch(() => {})
       } catch (e) {
@@ -130,7 +131,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
 
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!publicKey) {
-        setError('Notifications are not configured.')
+        setError(t('notif.error.unavailable'))
         setStatus('idle')
         return
       }
@@ -146,20 +147,19 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId, subscription: sub.toJSON() }),
+        body: JSON.stringify({ order_id: orderId, subscription: sub.toJSON(), locale }),
       })
 
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        setError(json.error ?? 'Failed to save subscription')
+        setError(t('notif.error.save'))
         setStatus('idle')
         return
       }
 
       setStatus('granted')
       setVisible(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed')
+    } catch {
+      setError(t('notif.error.save'))
       setStatus('idle')
     }
   }
@@ -250,7 +250,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
             setVisible(false)
           }}
           className="w-6 h-6 rounded-md hover:bg-stone-100 flex items-center justify-center shrink-0"
-          aria-label="Dismiss"
+          aria-label={t('common.dismiss')}
         >
           <X className="w-3.5 h-3.5" style={{ color: 'var(--text-muted, #a8a29e)' }} />
         </button>

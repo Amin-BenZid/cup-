@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
     const pin = (body?.pin ?? '').toString()
 
     if (!name) {
-      return NextResponse.json({ error: 'Shop name required' }, { status: 400 })
+      return NextResponse.json({ error: 'Shop name required', code: 'NAME_REQUIRED' }, { status: 400 })
     }
     if (pin.length !== 6) {
       return NextResponse.json(
-        { error: 'PIN must be exactly 6 digits' },
+        { error: 'PIN must be exactly 6 digits', code: 'PIN_LENGTH' },
         { status: 400 }
       )
     }

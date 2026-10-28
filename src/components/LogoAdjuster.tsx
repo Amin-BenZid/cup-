@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import Logo from './Logo'
+import { useT } from '@/lib/i18n/context'
 
 type Props = {
   url: string
@@ -21,6 +22,7 @@ export default function LogoAdjuster({
   offsetY,
   onChange,
 }: Props) {
+  const t = useT()
   const [dragging, setDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{
     x: number
@@ -75,7 +77,7 @@ export default function LogoAdjuster({
 
         <div className="flex-1 space-y-3">
           <div className="text-xs text-stone-500">
-            Drag the preview to reposition
+            {t('logo.drag')}
           </div>
 
           <div className="flex items-center gap-2">
@@ -106,7 +108,7 @@ export default function LogoAdjuster({
             className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-900 transition"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset
+            {t('logo.reset')}
           </button>
         </div>
       </div>

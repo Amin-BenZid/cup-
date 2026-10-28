@@ -68,8 +68,32 @@ export function screenFor(state: AccessState): string | null {
  * Call after a 401/403. Returns true if it navigated away (the caller should
  * stop), false if access is actually fine (e.g. a one-off error).
  */
+// Several requests can fail at the same moment (orders, support, ...). They
+// share one check, and once the café is known to be deleted that answer
+// sticks for a few seconds: the check clears the cookie, so a second check would only say
+// "signed out" and send the café to the login screen instead.
+let inflight: Promise<AccessInfo | null> | null = null
+let deletedAt = 0
+const DELETED_MEMORY_MS = 10_000
+
+async function checkOnce(): Promise<AccessInfo | null> {
+  if (Date.now() - deletedAt < DELETED_MEMORY_MS) return { state: 'deleted', reason: null, shop: null }
+  if (!inflight) {
+    inflight = fetchAccess().then((info) => {
+      if (info?.state === 'deleted') deletedAt = Date.now()
+      return info
+    })
+    void inflight.finally(() => {
+      setTimeout(() => {
+        inflight = null
+      }, 2000)
+    })
+  }
+  return inflight
+}
+
 export async function handleAccessDenied(router: Router): Promise<boolean> {
-  const info = await fetchAccess()
+  const info = await checkOnce()
   if (!info) return false
   if (info.state === 'signed_out' || info.state === 'deleted') clearShopStorage()
   if (info.shop?.name) {

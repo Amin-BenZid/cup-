@@ -28,6 +28,13 @@ function configure() {
   configured = true;
 }
 
+// Customer push text, in the language the customer was using.
+const READY_TEXT: Record<string, { title: string; body: string }> = {
+  fr: { title: "Votre commande est prête", body: "Récupérez-la au comptoir" },
+  ar: { title: "طلبك جاهز", body: "استلمه من الكاونتر" },
+  en: { title: "Your order is ready", body: "Pick it up at the counter" },
+};
+
 export async function sendOrderReadyPush(orderId: string) {
   configure();
 
@@ -38,16 +45,14 @@ export async function sendOrderReadyPush(orderId: string) {
 
   if (!subs || subs.length === 0) return;
 
-  const payload = JSON.stringify({
-    title: "Your order is ready",
-    body: "Pick it up at the counter",
-    url: `/o/${orderId}`,
-  });
-
   await Promise.all(
     subs.map(async (row) => {
+      const { locale, ...subscription } = row.subscription ?? {};
+      // Older subscriptions have no language saved: French is the app default.
+      const text = READY_TEXT[locale] ?? READY_TEXT.fr;
+      const payload = JSON.stringify({ ...text, url: `/o/${orderId}` });
       try {
-        await webpush.sendNotification(row.subscription, payload);
+        await webpush.sendNotification(subscription, payload);
       } catch (err: unknown) {
         const status = (err as { statusCode?: number })?.statusCode;
         if (status === 404 || status === 410) {

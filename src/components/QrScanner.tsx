@@ -99,7 +99,7 @@ export default function QrScanner({
         <button
           onClick={onClose}
           className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
-          aria-label="Close"
+          aria-label={t('qr.close')}
         >
           <X className="w-4 h-4" />
         </button>
