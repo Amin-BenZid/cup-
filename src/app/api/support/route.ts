@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       await notifyAdmin({
         kind: "support",
-        title: `Message from ${shop?.name ?? "a café"}`,
+        title: `Message from ${shop?.name ?? "a shop"}`,
         body: message.length > 140 ? `${message.slice(0, 137)}…` : message,
         url: `/admin/support?shop=${shopId}`,
         throttleKey: `support:${shopId}`,

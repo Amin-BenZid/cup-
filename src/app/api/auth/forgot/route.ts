@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { normalizeShopCode } from "@/lib/shop-code";
+import { normalizePhone } from "@/lib/phone";
 import { clientIp } from "@/lib/admin-auth";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { notifyAdmin } from "@/lib/admin-notify";
@@ -39,6 +40,13 @@ export async function POST(req: NextRequest) {
     if (code.length < 3) {
       return NextResponse.json({ error: "code_required" }, { status: 400 });
     }
+    // Optional number to call back. Same check for every caller, so it says
+    // nothing about whether the shop exists.
+    const rawPhone = String(body?.phone ?? "").trim();
+    const callback = rawPhone ? normalizePhone(rawPhone) : null;
+    if (rawPhone && !callback) {
+      return NextResponse.json({ error: "Invalid phone number", code: "INVALID_PHONE" }, { status: 400 });
+    }
 
     // Every outcome gets a brand-new reference and the same response, so a
     // caller can't tell whether the code exists. Writes run after the
@@ -64,15 +72,17 @@ export async function POST(req: NextRequest) {
             ref,
             refs: [...requestRefs(existing), ref].slice(-5),
             last_at: now,
+            callback: callback ?? existing.callback ?? null,
           });
           return;
         }
-        await savePinResetRequest(shopId, { at: now, last_at: now, ref, refs: [ref] });
+        await savePinResetRequest(shopId, { at: now, last_at: now, ref, refs: [ref], callback });
         await supabaseAdmin.from("support_messages").insert({
           shop_id: shopId,
           message:
             `🔑 Forgot PIN — new PIN requested from the login page (ref ${ref}). ` +
-            `Call the café's phone number on file to confirm it's them before setting a new PIN.`,
+            (callback ? `They left the number ${callback} (not verified). ` : "") +
+            `Call the shop's phone number on file to confirm it's them before setting a new PIN.`,
           sender: "barista",
           is_read: false,
         });
@@ -82,7 +92,7 @@ export async function POST(req: NextRequest) {
         await notifyAdmin({
           kind: "support",
           title: `PIN reset request · ${name}`,
-          body: `Ref ${ref}. Call the café to confirm, then set a new PIN.`,
+          body: `Ref ${ref}. Call the shop to confirm, then set a new PIN.`,
           url: `/admin/shops/${shopId}`,
         });
       });

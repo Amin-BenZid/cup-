@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Beep',
     short_name: 'Beep',
-    description: 'Your coffee, ready when you are.',
+    description: 'Your order, ready when you are.',
     start_url: '/',
     display: 'standalone',
     background_color: '#faf7f2',

@@ -15,7 +15,14 @@ export const PIN_RESET_COOLDOWN_MS = 30 * 60 * 1000;
 export const PIN_RESET_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** `refs`: every reference shown to the café for this request (newest last). */
-export type PinResetRequest = { at: string; ref: string; refs?: string[]; last_at?: string };
+export type PinResetRequest = {
+  at: string;
+  ref: string;
+  refs?: string[];
+  last_at?: string;
+  /** Number the requester typed in. NOT verified — anyone can type one. */
+  callback?: string | null;
+};
 
 // No 0/O/1/I so it's easy to read out over the phone.
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

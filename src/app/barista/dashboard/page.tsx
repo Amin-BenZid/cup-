@@ -27,6 +27,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
+import PhonePrompt, { phonePromptSnoozed } from "@/components/PhonePrompt";
 import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
 import { apiErrorText } from "@/lib/i18n/api-error";
 import { useT } from "@/lib/i18n/context";
@@ -77,6 +78,7 @@ export default function DashboardPage() {
   const [unreadSupport, setUnreadSupport] = useState(0);
 
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [askPhone, setAskPhone] = useState(false);
 
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const customizeRef = useRef<HTMLDivElement | null>(null);
@@ -107,6 +109,7 @@ export default function DashboardPage() {
             logo_url: json.shop.logo_url,
           });
           localStorage.setItem("shop_name", json.shop.name);
+          setAskPhone(json.shop.has_phone === false && !phonePromptSnoozed(json.shop.id));
         }
       } catch {}
     })();
@@ -532,6 +535,10 @@ export default function DashboardPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-5 py-6 space-y-6">
+        {shop && askPhone && (
+          <PhonePrompt shopId={shop.id} onDone={() => setAskPhone(false)} />
+        )}
+
         {shop && showOnboarding && (
           <OnboardingChecklist
             shopId={shop.id}

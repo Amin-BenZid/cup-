@@ -71,7 +71,7 @@ type Shop = {
   is_trial: boolean
   archived?: boolean
   archived_at?: string | null
-  pin_reset?: { at: string; refs: string[] } | null
+  pin_reset?: { at: string; refs: string[]; callback: string | null } | null
 }
 
 type Order = {
@@ -271,19 +271,34 @@ export default function ShopDetailPage() {
                   <ol className="list-decimal ps-4 mt-1 space-y-0.5 text-sky-900">
                     <li>
                       {shop.phone ? (
-                        <>Call the café on <span className="font-medium tabular-nums">{shop.phone}</span> (the number on file, not one they send you) and ask for the reference.</>
+                        <>Call the shop on <span className="font-medium tabular-nums">{shop.phone}</span> (the number on file, not one they send you) and ask for the reference.</>
                       ) : (
-                        <>No phone on file — confirm it’s really the owner another way before going on.</>
+                        <>
+                          <span className="font-medium">No phone on file.</span>{' '}
+                          {shop.pin_reset.callback ? (
+                            <>They left <span className="font-medium tabular-nums">{shop.pin_reset.callback}</span>, but anyone can type a number: call it, ask for the reference, and make sure it’s really the owner (shop details, earlier messages) before giving a PIN.</>
+                          ) : (
+                            <>Confirm it’s really the owner another way before going on.</>
+                          )}
+                        </>
                       )}
                     </li>
+                    {shop.phone && shop.pin_reset.callback && shop.pin_reset.callback !== shop.phone && (
+                      <li className="text-amber-800">
+                        They also typed <span className="tabular-nums">{shop.pin_reset.callback}</span>, which is not the number on file. Use the number on file.
+                      </li>
+                    )}
                     <li>If it matches, set a new PIN in “Edit &amp; access” and tell it to them on that call.</li>
                   </ol>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 mt-3 ps-6">
-                {shop.phone && (
-                  <a href={`tel:${shop.phone}`} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-sky-900 text-white text-sm font-medium hover:bg-sky-800">
-                    <Phone className="w-4 h-4" /> Call café
+                {(shop.phone || shop.pin_reset.callback) && (
+                  <a
+                    href={`tel:${shop.phone || shop.pin_reset.callback}`}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-sky-900 text-white text-sm font-medium hover:bg-sky-800"
+                  >
+                    <Phone className="w-4 h-4" /> {shop.phone ? 'Call shop' : 'Call the number they left'}
                   </a>
                 )}
                 <Button onClick={() => setTab('edit')}>

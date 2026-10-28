@@ -38,6 +38,8 @@ export function describeHistory(action: string, details: unknown): string {
       if ('subscription_ends_at' in x)
         return `subscription end set to ${x.subscription_ends_at ? shortDate(x.subscription_ends_at) : 'none'}`
       return 'billing dates changed'
+    case 'phone_added':
+      return 'added a phone number'
     case 'pin_reset_requested':
       return `asked for a new PIN from the login page${x.ref ? ` (ref ${x.ref})` : ''}`
     case 'pin_request_dismissed':

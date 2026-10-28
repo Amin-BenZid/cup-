@@ -22,7 +22,7 @@ export async function GET(
     const { data, error } = await supabaseAdmin
       .from("shops")
       .select(
-        "id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, has_created_order",
+        "id, name, tagline, status, logo_url, logo_scale, logo_offset_x, logo_offset_y, theme, game, messages, has_created_order, phone",
       )
       .eq("id", id)
       .maybeSingle();
@@ -36,7 +36,9 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ shop: data });
+    // Only say whether a phone is on file; the number itself isn't needed here.
+    const { phone, ...shop } = data;
+    return NextResponse.json({ shop: { ...shop, has_phone: !!phone } });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("[shops GET] crash:", e);

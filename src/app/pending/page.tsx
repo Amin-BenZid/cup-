@@ -139,7 +139,7 @@ export default function PendingPage() {
                 </h1>
                 <p className="text-stone-500 text-[15px] leading-relaxed max-w-sm mx-auto">
                   {formatTemplate(t("pending.body"), {
-                    name: shopName || "Café",
+                    name: shopName || t("common.shopFallback"),
                   })}
                 </p>
               </div>

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s · Beep",
   },
   description:
-    "Your coffee, ready when you are. Turn any phone into a café pager — no hardware.",
+    "Your order, ready when you are. Turn any phone into a pager for your shop, restaurant or food truck — no hardware.",
   applicationName: "Beep",
   icons: {
     icon: [

@@ -3,12 +3,12 @@ self.addEventListener('push', function (event) {
   try {
     data = event.data ? event.data.json() : {}
   } catch (e) {
-    data = { title: 'Order ready', body: 'Your coffee is ready.' }
+    data = { title: 'Order ready', body: 'Your order is ready.' }
   }
 
   const title = data.title || 'Order ready'
   const options = {
-    body: data.body || 'Your coffee is waiting at the counter.',
+    body: data.body || 'Pick it up at the counter.',
     icon: '/icon-192.png',
     // Monochrome mark: Android shows the badge as a silhouette in the status bar.
     badge: '/badge-96.png',

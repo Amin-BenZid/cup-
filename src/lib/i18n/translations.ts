@@ -112,6 +112,17 @@ export const translations = {
     "login.setupLink": "Créez-en un",
     "login.footer": "Gardez cet onglet ouvert pendant votre service",
 
+    // Phone number
+    "forgot.phoneLabel": "Numéro pour vous joindre (facultatif)",
+    "forgot.phoneHint": "Utile si vous n’avez pas encore enregistré de numéro. Nous vérifierons quand même que c’est bien vous.",
+    "phone.title": "Ajoutez un numéro de téléphone",
+    "phone.body": "Nous l’utilisons uniquement pour vérifier que c’est bien vous si vous oubliez votre PIN.",
+    "phone.placeholder": "ex. 22 123 456",
+    "phone.save": "Enregistrer",
+    "phone.later": "Plus tard",
+    "phone.saved": "Numéro enregistré",
+    "phone.error.taken": "Un numéro est déjà enregistré. Contactez le support pour le changer.",
+
     // Errors and small UI bits
     "login.error.invalid": "Code du commerce ou PIN incorrect.",
     "login.error.tooMany": "Trop de tentatives. Réessayez dans 15 minutes.",
@@ -570,6 +581,17 @@ export const translations = {
     "login.setupLink": "أنشئ واحداً",
     "login.footer": "أبقِ هذه الصفحة مفتوحة خلال نوبتك",
 
+    // Phone number
+    "forgot.phoneLabel": "رقم للتواصل معك (اختياري)",
+    "forgot.phoneHint": "مفيد إذا لم تسجّل رقماً بعد. سنتأكد مع ذلك من أنك صاحب المتجر.",
+    "phone.title": "أضف رقم هاتف",
+    "phone.body": "نستخدمه فقط للتأكد من هويتك إذا نسيت رمزك السري.",
+    "phone.placeholder": "22 123 456",
+    "phone.save": "حفظ",
+    "phone.later": "لاحقاً",
+    "phone.saved": "تم حفظ الرقم",
+    "phone.error.taken": "يوجد رقم مسجّل بالفعل. تواصل مع الدعم لتغييره.",
+
     // Errors and small UI bits
     "login.error.invalid": "رمز المتجر أو الرمز السري غير صحيح.",
     "login.error.tooMany": "محاولات كثيرة جداً. حاول مرة أخرى بعد 15 دقيقة.",
@@ -1024,6 +1046,17 @@ export const translations = {
     "login.setupLink": "Set one up",
     "login.footer": "Keep this tab open during your shift",
 
+    // Phone number
+    "forgot.phoneLabel": "Number to reach you (optional)",
+    "forgot.phoneHint": "Helpful if you haven’t saved a number yet. We’ll still check it’s really you.",
+    "phone.title": "Add a phone number",
+    "phone.body": "We only use it to check it’s really you if you forget your PIN.",
+    "phone.placeholder": "e.g. 22 123 456",
+    "phone.save": "Save",
+    "phone.later": "Later",
+    "phone.saved": "Number saved",
+    "phone.error.taken": "A number is already saved. Contact support to change it.",
+
     // Errors and small UI bits
     "login.error.invalid": "Wrong shop code or PIN.",
     "login.error.tooMany": "Too many attempts. Try again in 15 minutes.",
@@ -1049,28 +1082,28 @@ export const translations = {
     "dash.qrButton": "Show QR code",
 
     // Account state screens
-    "account.disabled.title": "Your café is paused",
+    "account.disabled.title": "Your shop is paused",
     "account.disabled.body": "The Beep team has paused access to your dashboard. Message us to turn it back on.",
-    "account.archived.title": "This café is closed",
+    "account.archived.title": "This shop is closed",
     "account.archived.body": "This account was closed by the Beep team. Contact us if you think it’s a mistake.",
-    "account.deleted.title": "This café no longer exists",
-    "account.deleted.body": "This account was deleted along with its orders and data. You can create a new café or contact us.",
-    "account.newShop": "Create a new café",
+    "account.deleted.title": "This shop no longer exists",
+    "account.deleted.body": "This account was deleted along with its orders and data. You can create a new shop or contact us.",
+    "account.newShop": "Create a new shop",
     "account.backToLogin": "Back to login",
     "account.autoRefresh": "This page updates by itself as soon as access is back.",
     "support.error.send": "Your message couldn’t be sent. Please try again.",
     "support.error.network": "No connection. Check your internet and try again.",
-    "support.error.unavailable": "Support isn’t available for this café any more.",
+    "support.error.unavailable": "Support isn’t available for this shop any more.",
 
     // Forgot PIN
     "forgot.link": "Forgot PIN?",
     "forgot.title": "Forgot your PIN?",
-    "forgot.body": "No problem. For your security, only the Beep team can give you a new PIN. We call your café’s phone number to check it’s really you.",
+    "forgot.body": "No problem. For your security, only the Beep team can give you a new PIN. We call your shop’s phone number to check it’s really you.",
     "forgot.codeLabel": "Shop code",
     "forgot.submit": "Ask for a new PIN",
     "forgot.sentTitle": "Request sent",
     "forgot.refLabel": "Your reference",
-    "forgot.step1": "We’ll call your café’s phone number shortly.",
+    "forgot.step1": "We’ll call your shop’s phone number shortly.",
     "forgot.step2": "Tell us this reference to confirm it’s you.",
     "forgot.step3": "We give you your new PIN on the call.",
     "forgot.never": "Beep will never ask for your PIN. Don’t share it with anyone.",

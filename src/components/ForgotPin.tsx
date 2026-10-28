@@ -9,12 +9,13 @@ type Contact = { email: string; phone: string }
 
 /**
  * "Forgot PIN?" sheet for the staff login. Nothing is reset here: it sends a
- * request to the Beep team, who call the café's phone on file to verify and
- * then give a new PIN. The reference lets the café prove the request is theirs.
+ * request to the Beep team, who call the shop's phone on file to verify and
+ * then give a new PIN. The reference lets the shop prove the request is theirs.
  */
 export default function ForgotPin({ initialCode, onClose }: { initialCode: string; onClose: () => void }) {
   const t = useT()
   const [code, setCode] = useState(initialCode)
+  const [phone, setPhone] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [ref, setRef] = useState<string | null>(null)
@@ -47,10 +48,11 @@ export default function ForgotPin({ initialCode, onClose }: { initialCode: strin
       const res = await fetch('/api/auth/forgot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, phone: phone.trim() || undefined }),
       })
       const json = await res.json().catch(() => ({}))
       if (res.status === 429) return setError(t('forgot.error.tooMany'))
+      if (json.code === 'INVALID_PHONE') return setError(t('order.error.phone'))
       if (!res.ok || !json.ref) return setError(t('forgot.error.generic'))
       setRef(String(json.ref))
     } catch {
@@ -97,6 +99,21 @@ export default function ForgotPin({ initialCode, onClose }: { initialCode: strin
                   placeholder={t('setup.codePlaceholder')}
                   className="w-full px-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition font-mono"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-stone-900">{t('forgot.phoneLabel')}</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  dir="ltr"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s()-]/g, '').slice(0, 20))}
+                  placeholder={t('phone.placeholder')}
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition tabular-nums rtl:text-end"
+                />
+                <p className="text-xs text-stone-500">{t('forgot.phoneHint')}</p>
               </div>
 
               {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}

@@ -62,7 +62,7 @@ function Inbox() {
     for (const m of data?.messages ?? []) {
       let t = map.get(m.shop_id)
       if (!t) {
-        t = { shop_id: m.shop_id, name: m.shops?.name ?? 'Unknown café', logo_url: m.shops?.logo_url ?? null, messages: [], unread: 0, last: m }
+        t = { shop_id: m.shop_id, name: m.shops?.name ?? 'Unknown shop', logo_url: m.shops?.logo_url ?? null, messages: [], unread: 0, last: m }
         map.set(m.shop_id, t)
       }
       t.messages.push(m)
@@ -74,6 +74,7 @@ function Inbox() {
 
   const current = threads.find((t) => t.shop_id === selected)
   const currentName = current?.name ?? shopInfo?.shop?.name ?? ''
+  const currentLogo = current?.logo_url ?? shopInfo?.shop?.logo_url ?? null
 
   // Mark the open thread as read.
   const unreadInCurrent = current?.unread ?? 0
@@ -118,7 +119,7 @@ function Inbox() {
           <div className="p-2 border-b border-zinc-100">
             <div className="relative">
               <Search className="w-4 h-4 text-zinc-400 absolute start-3 top-1/2 -translate-y-1/2" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search cafés" className={cx(inputCls, 'ps-9 h-8')} />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search shops" className={cx(inputCls, 'ps-9 h-8')} />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -128,13 +129,19 @@ function Inbox() {
               <Empty title="No conversations" />
             ) : (
               filtered.map((t) => (
-                <button
+                <div
                   key={t.shop_id}
-                  onClick={() => open(t.shop_id)}
-                  className={cx('w-full flex items-center gap-2.5 px-3 py-2.5 text-start border-b border-zinc-50', t.shop_id === selected ? 'bg-zinc-100' : 'hover:bg-zinc-50')}
+                  className={cx('w-full flex items-center gap-2.5 px-3 py-2.5 border-b border-zinc-50', t.shop_id === selected ? 'bg-zinc-100' : 'hover:bg-zinc-50')}
                 >
-                  <ShopAvatar name={t.name} logo={t.logo_url} size={34} />
-                  <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/admin/shops/${t.shop_id}`}
+                    title={`Open ${t.name}`}
+                    aria-label={`Open ${t.name}`}
+                    className="shrink-0 rounded-lg hover:opacity-80 focus-visible:ring-2 focus-visible:ring-zinc-900"
+                  >
+                    <ShopAvatar name={t.name} logo={t.logo_url} size={34} />
+                  </Link>
+                  <button onClick={() => open(t.shop_id)} className="flex-1 min-w-0 text-start">
                     <div className="flex items-center justify-between gap-2">
                       <span className={cx('text-sm truncate', t.unread ? 'font-semibold' : 'font-medium')}>{t.name}</span>
                       <span className="text-[10px] text-zinc-400 shrink-0">{timeAgo(t.last.created_at)}</span>
@@ -146,8 +153,8 @@ function Inbox() {
                       </span>
                       {t.unread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold leading-[18px] text-center">{t.unread}</span>}
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -165,15 +172,27 @@ function Inbox() {
                 <button onClick={() => open('')} className="md:hidden p-1.5 -ms-1 rounded-md hover:bg-zinc-100" aria-label="Back">
                   <ArrowLeft className="w-4 h-4" />
                 </button>
-                <span className="text-sm font-semibold truncate flex-1">{currentName || '…'}</span>
-                <Link href={`/admin/shops/${selected}`} className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900">
-                  Café <ExternalLink className="w-3 h-3" />
+                <Link
+                  href={`/admin/shops/${selected}`}
+                  title="Open shop profile"
+                  className="flex items-center gap-2 min-w-0 flex-1 rounded-lg -my-1 py-1 pe-2 hover:bg-zinc-50"
+                >
+                  <ShopAvatar name={currentName || '?'} logo={currentLogo} size={28} />
+                  <span className="text-sm font-semibold truncate">{currentName || '…'}</span>
+                </Link>
+                <Link href={`/admin/shops/${selected}`} className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900 shrink-0">
+                  Profile <ExternalLink className="w-3 h-3" />
                 </Link>
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2 bg-zinc-50/60">
                 {(current?.messages ?? []).length === 0 && <Empty title="No messages yet" hint="Write the first one below." />}
                 {(current?.messages ?? []).map((m) => (
-                  <div key={m.id} className={cx('flex', m.sender === 'admin' ? 'justify-end' : 'justify-start')}>
+                  <div key={m.id} className={cx('flex items-end gap-2', m.sender === 'admin' ? 'justify-end' : 'justify-start')}>
+                    {m.sender !== 'admin' && (
+                      <Link href={`/admin/shops/${selected}`} title="Open shop profile" className="shrink-0 hover:opacity-80">
+                        <ShopAvatar name={currentName || '?'} logo={currentLogo} size={26} />
+                      </Link>
+                    )}
                     <div
                       className={cx(
                         'max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words',

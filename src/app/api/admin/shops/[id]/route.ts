@@ -102,7 +102,9 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           ...deriveShopState(shop),
           archived: !!archive,
           archived_at: archive?.archived_at ?? null,
-          pin_reset: pinReset ? { at: pinReset.at, refs: requestRefs(pinReset) } : null,
+          pin_reset: pinReset
+            ? { at: pinReset.at, refs: requestRefs(pinReset), callback: pinReset.callback ?? null }
+            : null,
         },
         orders: ordersRes.data ?? [],
         reviews,
@@ -313,7 +315,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         ...deriveShopState(data),
         archived: !!archive,
         archived_at: archive?.archived_at ?? null,
-        pin_reset: pinReset ? { at: pinReset.at, refs: requestRefs(pinReset) } : null,
+        pin_reset: pinReset
+          ? { at: pinReset.at, refs: requestRefs(pinReset), callback: pinReset.callback ?? null }
+          : null,
       },
     });
   } catch (e) {

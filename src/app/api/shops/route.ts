@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     after(() =>
       notifyAdmin({
         kind: 'signup',
-        title: 'New café to approve',
+        title: 'New shop to approve',
         body: `${data.name} (${data.code}) just signed up.`,
         url: `/admin/shops/${data.id}`,
       }),

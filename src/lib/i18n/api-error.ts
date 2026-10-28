@@ -14,6 +14,7 @@ const BY_CODE: Record<string, TranslationKey> = {
   DUPLICATE_ORDER_NUMBER: "order.error.duplicate",
   FILE_TYPE: "logo.error.type",
   FILE_TOO_LARGE: "logo.error.size",
+  PHONE_ALREADY_SET: "phone.error.taken",
 };
 
 type T = (key: TranslationKey, values?: Record<string, string | number>) => string;
