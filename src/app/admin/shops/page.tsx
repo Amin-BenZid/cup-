@@ -33,10 +33,12 @@ type Shop = {
   days_left: number
   locked: boolean
   has_created_order: boolean | null
+  archived?: boolean
+  archived_at?: string | null
   stats: { total: number; last7: number; last30: number; today: number; last_order_at: string | null; rating: number; rating_count: number }
 }
 
-type Filter = 'all' | ShopState | 'trial'
+type Filter = 'all' | ShopState | 'trial' | 'archived'
 type Sort = 'newest' | 'orders' | 'last_order' | 'days_left' | 'name'
 
 export default function ShopsPage() {
@@ -45,7 +47,10 @@ export default function ShopsPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<Sort>('newest')
 
-  const shops = useMemo(() => data?.shops ?? [], [data])
+  const allShops = useMemo(() => data?.shops ?? [], [data])
+  // Archived cafés only show under the Archived filter.
+  const shops = useMemo(() => allShops.filter((s) => !s.archived), [allShops])
+  const archived = useMemo(() => allShops.filter((s) => s.archived), [allShops])
 
   const counts = useMemo(
     () => ({
@@ -55,16 +60,18 @@ export default function ShopsPage() {
       trial: shops.filter((s) => s.status === 'active' && s.is_trial).length,
       expired: shops.filter((s) => s.status === 'expired').length,
       disabled: shops.filter((s) => s.status === 'disabled').length,
+      archived: archived.length,
     }),
-    [shops],
+    [shops, archived],
   )
 
   const list = useMemo(() => {
     const query = q.trim().toLowerCase()
-    const out = shops.filter((s) => {
+    const source = filter === 'archived' ? archived : shops
+    const out = source.filter((s) => {
       if (filter === 'trial' && !(s.status === 'active' && s.is_trial)) return false
       if (filter === 'active' && !(s.status === 'active' && !s.is_trial)) return false
-      if (filter !== 'all' && filter !== 'trial' && filter !== 'active' && s.status !== filter) return false
+      if (filter !== 'all' && filter !== 'trial' && filter !== 'active' && filter !== 'archived' && s.status !== filter) return false
       if (!query) return true
       return [s.name, s.code, s.tagline ?? '', s.phone ?? ''].join(' ').toLowerCase().includes(query)
     })
@@ -76,7 +83,7 @@ export default function ShopsPage() {
       name: (a, b) => a.name.localeCompare(b.name),
     }
     return out.sort(by[sort])
-  }, [shops, q, filter, sort])
+  }, [shops, archived, q, filter, sort])
 
   return (
     <div>
@@ -113,6 +120,7 @@ export default function ShopsPage() {
             { value: 'trial', label: 'Trial', count: counts.trial },
             { value: 'expired', label: 'Expired', count: counts.expired },
             { value: 'disabled', label: 'Disabled', count: counts.disabled },
+            { value: 'archived', label: 'Archived', count: counts.archived || undefined },
           ]}
         />
       </div>
@@ -121,7 +129,11 @@ export default function ShopsPage() {
         {loading && !data ? (
           <div className="p-4 space-y-3">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}</div>
         ) : list.length === 0 ? (
-          <Empty title={shops.length ? 'No cafés match' : 'No cafés yet'} hint={shops.length ? 'Try another filter or search.' : 'New sign-ups will show up here.'} />
+          filter === 'archived' && !archived.length ? (
+            <Empty title="Nothing archived" hint="Archive a café from its page (Edit & access → Danger zone)." />
+          ) : (
+            <Empty title={shops.length ? 'No cafés match' : 'No cafés yet'} hint={shops.length ? 'Try another filter or search.' : 'New sign-ups will show up here.'} />
+          )
         ) : (
           <>
             <div className="hidden md:grid grid-cols-[1fr_110px_80px_80px_120px_20px] gap-3 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-zinc-400 border-b border-zinc-100">
@@ -158,11 +170,11 @@ export default function ShopsPage() {
                       </div>
                     </div>
                     <div className="md:hidden flex flex-col items-end gap-1">
-                      <StateBadge state={s.status} trial={s.is_trial} />
+                      {s.archived ? <Pill className="bg-zinc-800 text-white">Archived</Pill> : <StateBadge state={s.status} trial={s.is_trial} />}
                       <span className="text-[11px] text-zinc-500 tabular-nums">{s.stats.last30} / 30d</span>
                     </div>
                     <div className="hidden md:block">
-                      <StateBadge state={s.status} trial={s.is_trial} />
+                      {s.archived ? <Pill className="bg-zinc-800 text-white">Archived</Pill> : <StateBadge state={s.status} trial={s.is_trial} />}
                     </div>
                     <div className="hidden md:block text-end text-sm tabular-nums">{s.stats.today || <span className="text-zinc-300">0</span>}</div>
                     <div className="hidden md:block text-end text-sm tabular-nums">{s.stats.last30}</div>

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
 import { hashPin } from "@/lib/pin";
 import { logAdminEvent } from "@/lib/admin-audit";
+import { deleteShopCompletely, getArchive } from "@/lib/shop-archive";
 import { avg, DAY_MS, dayKey, deriveShopState, fetchAllRows, lastNDays, prepSeconds } from "@/lib/admin-stats";
 
 const SHOP_FIELDS =
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const since30 = new Date(Date.now() - 30 * DAY_MS).toISOString();
 
-    const [ordersRes, reviewsRes, historyRes, messagesRes, recentRes, totalRes] =
+    const [ordersRes, reviewsRes, historyRes, messagesRes, recentRes, totalRes, archive] =
       await Promise.all([
         supabaseAdmin
           .from("orders")
@@ -68,6 +69,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           .from("orders")
           .select("id", { count: "exact", head: true })
           .eq("shop_id", id),
+        getArchive(id),
       ]);
 
     const reviews = reviewsRes.data ?? [];
@@ -93,7 +95,12 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     return NextResponse.json(
       {
-        shop: { ...shop, ...deriveShopState(shop) },
+        shop: {
+          ...shop,
+          ...deriveShopState(shop),
+          archived: !!archive,
+          archived_at: archive?.archived_at ?? null,
+        },
         orders: ordersRes.data ?? [],
         reviews,
         history: historyRes.data ?? [],
@@ -197,6 +204,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     }
 
     if (typeof body.status === "string") {
+      if (body.status !== before.status && (await getArchive(id))) {
+        return NextResponse.json({ error: "This café is archived. Restore it first." }, { status: 409 });
+      }
       if (!["pending", "active", "disabled"].includes(body.status)) {
         return NextResponse.json({ error: "Bad status" }, { status: 400 });
       }
@@ -277,13 +287,27 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       actions: logs.map((l) => l.action),
     });
 
-    return NextResponse.json({ shop: { ...data, ...deriveShopState(data) } });
+    const archive = await getArchive(id);
+    return NextResponse.json({
+      shop: {
+        ...data,
+        ...deriveShopState(data),
+        archived: !!archive,
+        archived_at: archive?.archived_at ?? null,
+      },
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
+/**
+ * Permanent delete. Only for archived cafés, and the client must send the
+ * café code as typed confirmation. Removes orders, push subscriptions,
+ * reviews, support messages, history, logo files and per-shop settings,
+ * then the shop row. Safe to retry if it stops halfway.
+ */
 export async function DELETE(req: NextRequest, ctx: Ctx) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
@@ -292,23 +316,37 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     const { id } = await ctx.params;
     const body = await req.json().catch(() => ({}));
 
-    const { data: shop } = await supabaseAdmin
+    const { data: shop, error: shopErr } = await supabaseAdmin
       .from("shops")
       .select("name, code")
       .eq("id", id)
       .maybeSingle();
+    if (shopErr) return NextResponse.json({ error: shopErr.message }, { status: 500 });
     if (!shop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    if (!(await getArchive(id))) {
+      return NextResponse.json({ error: "Archive the café before deleting it." }, { status: 409 });
+    }
+
     // Typed confirmation: the client must send the café code.
-    if (String(body?.confirm ?? "") !== shop.code) {
+    if (String(body?.confirm ?? "").trim() !== shop.code) {
       return NextResponse.json({ error: "Type the café code to confirm" }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin.from("shops").delete().eq("id", id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    let report;
+    try {
+      report = await deleteShopCompletely(id);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed";
+      await logAdminEvent(req, "shop_delete_failed", { shop: shop.name, code: shop.code, error: message }, false);
+      return NextResponse.json(
+        { error: `Delete stopped partway (${message}). Press delete again to finish.` },
+        { status: 500 },
+      );
+    }
 
-    await logAdminEvent(req, "shop_deleted", { shop: shop.name, code: shop.code });
-    return NextResponse.json({ ok: true });
+    await logAdminEvent(req, "shop_deleted", { shop: shop.name, code: shop.code, ...report });
+    return NextResponse.json({ ok: true, deleted: report });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed";
     return NextResponse.json({ error: message }, { status: 500 });

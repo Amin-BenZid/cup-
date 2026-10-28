@@ -38,6 +38,10 @@ export function describeHistory(action: string, details: unknown): string {
       if ('subscription_ends_at' in x)
         return `subscription end set to ${x.subscription_ends_at ? shortDate(x.subscription_ends_at) : 'none'}`
       return 'billing dates changed'
+    case 'archived':
+      return 'was archived'
+    case 'restored':
+      return 'was restored from the archive'
     case 'edited':
       return `details edited (${Array.isArray(x.fields) ? x.fields.join(', ') : 'fields'})`
     default:
@@ -56,7 +60,10 @@ const AUDIT: Record<string, string> = {
   support_contact_updated: 'Updated support contact',
   notify_prefs_updated: 'Changed notification settings',
   shop_updated: 'Updated a café',
-  shop_deleted: 'Deleted a café',
+  shop_deleted: 'Deleted a café forever',
+  shop_delete_failed: 'Café delete stopped partway',
+  shop_archived: 'Archived a café',
+  shop_restored: 'Restored a café',
   billing_extended: 'Extended a subscription',
   support_reply: 'Replied to support',
   broadcast_on: 'Published a broadcast',
@@ -68,7 +75,7 @@ const AUDIT: Record<string, string> = {
 export function describeAudit(event: string, details?: Record<string, unknown>): string {
   const base = AUDIT[event] ?? event.replace(/_/g, ' ')
   if (!details) return base
-  if (event === 'shop_updated' || event === 'shop_deleted') return `${base}: ${details.shop ?? ''}`
+  if (['shop_updated', 'shop_deleted', 'shop_delete_failed', 'shop_archived', 'shop_restored'].includes(event)) return `${base}: ${details.shop ?? ''}`
   if (event === 'login_failed') return `${base} (${details.reason === '2fa' ? 'wrong code' : 'wrong password'})`
   if (event === 'order_status') return `${base}: #${details.order ?? '?'} → ${details.status ?? '?'}`
   if (event === 'billing_extended') return `${base} by ${details.months ?? '?'} month(s)`

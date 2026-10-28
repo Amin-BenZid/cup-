@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { countRecentErrors } from "@/lib/admin-errors";
 import { DAY_MS, dayKey, deriveShopState, fetchAllRows, lastNDays } from "@/lib/admin-stats";
 import { MONTHLY_PRICE_TND } from "@/lib/config";
+import { listArchives } from "@/lib/shop-archive";
 
 type ShopLite = {
   id: string;
@@ -63,7 +64,11 @@ export async function GET(req: NextRequest) {
         countRecentErrors(24),
       ]);
 
-    const shops = shopsRes.rows.map((s) => ({ ...s, ...deriveShopState(s) }));
+    // Archived cafés don't count anywhere on the overview.
+    const archives = await listArchives();
+    const shops = shopsRes.rows
+      .filter((s) => !archives.has(s.id))
+      .map((s) => ({ ...s, ...deriveShopState(s) }));
 
     const pendingShops = shops
       .filter((s) => s.state === "pending")

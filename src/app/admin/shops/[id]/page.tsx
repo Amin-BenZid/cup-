@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import {
+  Archive,
+  ArchiveRestore,
   ArrowLeft,
   Ban,
   Check,
@@ -67,6 +69,8 @@ type Shop = {
   has_created_order: boolean | null
   days_left: number
   is_trial: boolean
+  archived?: boolean
+  archived_at?: string | null
 }
 
 type Order = {
@@ -141,6 +145,34 @@ export default function ShopDetailPage() {
     void reload()
   }
 
+  async function setArchived(action: 'archive' | 'restore') {
+    setBusy(action)
+    const r = await adminFetch<{ archived_at?: string; status?: string }>(`/api/admin/shops/${id}/archive`, {
+      method: 'POST',
+      body: { action },
+    })
+    setBusy(null)
+    if (!r.ok) {
+      toast('error', r.data.error ?? 'Failed')
+      return
+    }
+    toast('success', action === 'archive' ? 'Café archived — baristas are blocked' : 'Café restored')
+    refreshBadges()
+    void reload()
+  }
+
+  function askArchive() {
+    if (!shop) return
+    setConfirm({
+      title: `Archive ${shop.name}?`,
+      description:
+        'Baristas are blocked right away and the café is hidden from your lists and totals. All data is kept — you can restore it, or delete it forever from the archive.',
+      label: 'Archive',
+      danger: true,
+      run: () => setArchived('archive'),
+    })
+  }
+
   if (!id) return null
 
   return (
@@ -166,7 +198,13 @@ export default function ShopDetailPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate max-w-full">{shop.name}</h1>
-                  <StateBadge state={shop.state} trial={shop.is_trial} />
+                  {shop.archived ? (
+                    <Pill className="bg-zinc-800 text-white">
+                      <Archive className="w-3 h-3" /> Archived
+                    </Pill>
+                  ) : (
+                    <StateBadge state={shop.state} trial={shop.is_trial} />
+                  )}
                   {isLocked(shop) && (
                     <Pill className="bg-red-100 text-red-700">
                       <Lock className="w-3 h-3" /> Login locked
@@ -201,8 +239,26 @@ export default function ShopDetailPage() {
             </div>
           </div>
 
+          {/* Archived banner */}
+          {shop.archived && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-3 mb-5">
+              <div className="flex-1 text-sm text-zinc-700">
+                <span className="font-medium text-zinc-900">Archived{shop.archived_at ? ` on ${fmtDate(shop.archived_at)}` : ''}.</span>{' '}
+                Baristas are blocked and the café is hidden from your lists. All data is still here.
+              </div>
+              <div className="flex gap-2">
+                <Button variant="secondary" loading={busy === 'restore'} onClick={() => setArchived('restore')}>
+                  <ArchiveRestore className="w-4 h-4" /> Restore
+                </Button>
+                <Button variant="danger" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="w-4 h-4" /> Delete forever
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Primary status action */}
-          {shop.state === 'pending' && (
+          {!shop.archived && shop.state === 'pending' && (
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 mb-5">
               <div className="flex-1 text-sm text-amber-900">
                 <span className="font-medium">Waiting for approval.</span> Signed up {timeAgo(shop.created_at)}. Their 15-day trial is already running.
@@ -245,6 +301,7 @@ export default function ShopDetailPage() {
                 })
               }
               onPatch={patch}
+              onRestore={() => setArchived('restore')}
               onDisable={() =>
                 setConfirm({
                   title: `Disable ${shop.name}?`,
@@ -265,6 +322,8 @@ export default function ShopDetailPage() {
               shop={shop}
               busy={busy}
               onPatch={patch}
+              onArchive={askArchive}
+              onRestore={() => setArchived('restore')}
               onDelete={() => setDeleteOpen(true)}
             />
           )}
@@ -341,7 +400,7 @@ export default function ShopDetailPage() {
           shop={shop}
           onClose={() => setDeleteOpen(false)}
           onDeleted={() => {
-            toast('success', `${shop.name} deleted`)
+            toast('success', `${shop.name} deleted forever`)
             refreshBadges()
             router.replace('/admin/shops')
           }}
@@ -362,12 +421,14 @@ function OverviewTab({
   busy,
   onExtend,
   onPatch,
+  onRestore,
   onDisable,
 }: {
   data: Detail
   busy: string | null
   onExtend: (m: number) => void
   onPatch: (body: Record<string, unknown>, msg: string, key?: string) => Promise<boolean>
+  onRestore: () => void
   onDisable: () => void
 }) {
   const { shop, stats, reviewStats, messages } = data
@@ -444,6 +505,15 @@ function OverviewTab({
         </Card>
 
         <Card title="Status">
+          {shop.archived ? (
+            <>
+              <div className="text-sm text-zinc-600 mb-3">Archived. Restore it to bring back its previous status.</div>
+              <Button className="w-full" loading={busy === 'restore'} onClick={onRestore}>
+                <ArchiveRestore className="w-4 h-4" /> Restore café
+              </Button>
+            </>
+          ) : (
+          <>
           <div className="text-sm text-zinc-600 mb-3">
             {shop.status === 'active' && 'Active. Baristas can log in and take orders while the trial or subscription is valid.'}
             {shop.status === 'disabled' && 'Disabled. Baristas are blocked until you enable the café.'}
@@ -457,6 +527,8 @@ function OverviewTab({
             <Button variant="success" className="w-full" loading={busy === 'approve'} onClick={() => onPatch({ status: 'active' }, 'Café enabled', 'approve')}>
               <Check className="w-4 h-4" /> {shop.status === 'pending' ? 'Approve' : 'Enable café'}
             </Button>
+          )}
+          </>
           )}
         </Card>
       </div>
@@ -479,11 +551,15 @@ function EditTab({
   shop,
   busy,
   onPatch,
+  onArchive,
+  onRestore,
   onDelete,
 }: {
   shop: Shop
   busy: string | null
   onPatch: (body: Record<string, unknown>, msg: string, key?: string) => Promise<boolean>
+  onArchive: () => void
+  onRestore: () => void
   onDelete: () => void
 }) {
   const [form, setForm] = useState({
@@ -592,7 +668,7 @@ function EditTab({
                 <Unlock className="w-3.5 h-3.5" /> Unlock
               </Button>
             </div>
-            {shop.status !== 'pending' && (
+            {!shop.archived && shop.status !== 'pending' && (
               <div className="flex items-center justify-between gap-3 text-sm pt-1">
                 <span className="text-zinc-600">Send back to “pending approval”</span>
                 <Button size="sm" variant="ghost" loading={busy === 'pending'} onClick={() => onPatch({ status: 'pending' }, 'Set to pending', 'pending')}>
@@ -604,12 +680,33 @@ function EditTab({
         </Card>
 
         <Card title={<span className="text-red-700">Danger zone</span>} className="border-red-200">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-zinc-600">Delete the café with all its orders, reviews and messages. This can’t be undone.</p>
-            <Button variant="danger" onClick={onDelete}>
-              <Trash2 className="w-4 h-4" /> Delete
-            </Button>
-          </div>
+          {shop.archived ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-zinc-600">Bring the café back with the status it had before archiving.</p>
+                <Button loading={busy === 'restore'} onClick={onRestore}>
+                  <ArchiveRestore className="w-4 h-4" /> Restore
+                </Button>
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100">
+                <p className="text-sm text-zinc-600">
+                  Delete the café and everything linked to it: orders, customer notifications, reviews, messages, history and logo. This can’t be undone.
+                </p>
+                <Button variant="danger" onClick={onDelete}>
+                  <Trash2 className="w-4 h-4" /> Delete forever
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-zinc-600">
+                Archive the café: baristas are blocked and it’s hidden from your lists. Data is kept. Once archived you can delete it forever.
+              </p>
+              <Button variant="danger" loading={busy === 'archive'} onClick={onArchive}>
+                <Archive className="w-4 h-4" /> Archive
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
     </div>
@@ -689,7 +786,7 @@ function DeleteDialog({ open, shop, onClose, onDeleted }: { open: boolean; shop:
 
   async function run() {
     setBusy(true)
-    const r = await adminFetch(`/api/admin/shops/${shop.id}`, { method: 'DELETE', body: { confirm: typed } })
+    const r = await adminFetch(`/api/admin/shops/${shop.id}`, { method: 'DELETE', body: { confirm: typed.trim() } })
     setBusy(false)
     if (!r.ok) return toast('error', r.data.error ?? 'Failed')
     onClose()
@@ -697,10 +794,19 @@ function DeleteDialog({ open, shop, onClose, onDeleted }: { open: boolean; shop:
   }
 
   return (
-    <Modal open={open} onClose={busy ? () => {} : onClose} title={`Delete ${shop.name}?`} description="All orders, reviews, messages and history for this café are deleted permanently.">
+    <Modal open={open} onClose={busy ? () => {} : onClose} title={`Delete ${shop.name} forever?`} description="The café, its orders, customer notifications, reviews, support messages, history and logo are deleted permanently. This can’t be undone.">
       <div className="px-5 pb-5 space-y-3">
         <Field label={`Type the café code “${shop.code}” to confirm`}>
-          <input className={inputCls} value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus />
+          <input
+            className={inputCls}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoFocus
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
         </Field>
         <div className="flex gap-2">
           <Button className="flex-1" onClick={onClose} disabled={busy}>
@@ -708,7 +814,7 @@ function DeleteDialog({ open, shop, onClose, onDeleted }: { open: boolean; shop:
           </Button>
           <button
             onClick={run}
-            disabled={typed !== shop.code || busy}
+            disabled={typed.trim() !== shop.code || busy}
             className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-500 disabled:opacity-40"
           >
             {busy ? 'Deleting…' : 'Delete forever'}

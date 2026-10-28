@@ -38,6 +38,7 @@ type Shop = {
   trial_ends_at: string | null
   subscription_ends_at: string | null
   paid_current_month: boolean | null
+  archived?: boolean
 }
 
 type Filter = 'attention' | 'trial' | 'paying' | 'expired' | 'unpaid' | 'all'
@@ -56,7 +57,7 @@ export default function BillingPage() {
   const [pending, setPending] = useState<{ shop: Shop; months: number } | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const shops = useMemo(() => (data?.shops ?? []).filter((s) => s.status !== 'pending'), [data])
+  const shops = useMemo(() => (data?.shops ?? []).filter((s) => s.status !== 'pending' && !s.archived), [data])
 
   const groups = useMemo(() => {
     const paying = shops.filter((s) => s.status === 'active' && !s.is_trial)

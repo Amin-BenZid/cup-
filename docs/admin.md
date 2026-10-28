@@ -21,5 +21,11 @@ Requires iOS 16.4+. Alerts: new café to approve, new support message (max 1 per
 - Login: 5 failures per IP per 15 min → blocked. Every sign-in and admin action is logged (Activity log → Admin & security).
 - Mutating admin requests from another origin are rejected (403).
 
+## Archive & delete cafés
+- **Archive** (café page → Edit & access → Danger zone): status → `disabled`, so baristas are blocked at once (login and existing sessions). The café is hidden from lists, totals and billing (Cafés → Archived filter shows it). Data is kept. Record in `global_settings.shop_archive:<id>` = `{ archived_at, previous_status }`.
+- **Restore**: puts back `previous_status` and removes the record. Status can't be changed while archived (409).
+- **Delete forever**: only for archived cafés, confirmed by typing the café code. Deletes explicitly (no reliance on cascades): push subscriptions of its orders, reviews, orders, support messages, shop history, logo files (`logos/<id>/*`), `admin_notify_throttle:support:<id>`, the shop row, then the archive record. If it stops halfway, pressing delete again finishes it. Logged as `shop_deleted` with counts.
+- Code in `src/lib/shop-archive.ts`, API `POST /api/admin/shops/[id]/archive` and `DELETE /api/admin/shops/[id]`.
+
 ## Storage (no schema changes)
-Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`.
+Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`, `shop_archive:<shopId>`.

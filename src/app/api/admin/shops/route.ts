@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
 import { deriveShopState } from "@/lib/admin-stats";
 import { MONTHLY_PRICE_TND } from "@/lib/config";
+import { listArchives } from "@/lib/shop-archive";
 
 type ShopRow = {
   id: string;
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  const [shopsRes, statsRes] = await Promise.all([
+  const [shopsRes, statsRes, archives] = await Promise.all([
     supabaseAdmin
       .from("shops")
       .select(
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
       )
       .order("created_at", { ascending: false }),
     supabaseAdmin.rpc("admin_shop_stats"),
+    listArchives(),
   ]);
 
   if (shopsRes.error) {
@@ -66,6 +68,7 @@ export async function GET(req: NextRequest) {
     const st = statMap.get(s.id);
 
     const { state, days_left: daysLeft, is_trial } = deriveShopState(s);
+    const archive = archives.get(s.id) ?? null;
     const stats = {
       total: Number(st?.orders_total ?? 0),
       last7: Number(st?.orders_7d ?? 0),
@@ -76,10 +79,12 @@ export async function GET(req: NextRequest) {
       rating_count: Number(st?.rating_count ?? 0),
     };
 
-    totalOrders += stats.total;
-    ordersToday += stats.today;
-    ratingSum += stats.rating * stats.rating_count;
-    ratingCount += stats.rating_count;
+    if (!archive) {
+      totalOrders += stats.total;
+      ordersToday += stats.today;
+      ratingSum += stats.rating * stats.rating_count;
+      ratingCount += stats.rating_count;
+    }
 
     return {
       ...s,
@@ -87,10 +92,15 @@ export async function GET(req: NextRequest) {
       raw_status: s.status,
       is_trial,
       days_left: daysLeft,
+      archived: !!archive,
+      archived_at: archive?.archived_at ?? null,
       locked: !!s.locked_until && new Date(s.locked_until).getTime() > now,
       stats,
     };
   });
+
+  // Archived cafés are listed (for the Archived filter) but never counted.
+  const live = shops.filter((s) => !s.archived);
 
   return NextResponse.json(
     {
@@ -98,15 +108,15 @@ export async function GET(req: NextRequest) {
       globalStats: {
         totalOrders,
         ordersToday,
-        totalShops: shops.length,
-        activeShops: shops.filter((s) => s.status === "active").length,
-        expiringSoon: shops.filter(
+        totalShops: live.length,
+        activeShops: live.filter((s) => s.status === "active").length,
+        expiringSoon: live.filter(
           (s) => s.status === "active" && s.days_left <= 7,
         ).length,
         totalReviews: ratingCount,
-        pending: shops.filter((s) => s.status === "pending").length,
-        payingShops: shops.filter((s) => s.status === "active" && !s.is_trial).length,
-        mrr: shops.filter((s) => s.status === "active" && !s.is_trial).length * MONTHLY_PRICE_TND,
+        pending: live.filter((s) => s.status === "pending").length,
+        payingShops: live.filter((s) => s.status === "active" && !s.is_trial).length,
+        mrr: live.filter((s) => s.status === "active" && !s.is_trial).length * MONTHLY_PRICE_TND,
         avgRating: ratingCount ? (ratingSum / ratingCount).toFixed(1) : "0.0",
       },
     },
