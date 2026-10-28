@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, KeyRound } from 'lucide-react'
 import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
+import { typeShopCode } from '@/lib/shop-code'
 
 export default function SetupPage() {
   const t = useT()
@@ -109,7 +110,10 @@ export default function SetupPage() {
               <input
                 type="text"
                 value={code}
-                onChange={(e) => setCode(e.target.value.toLowerCase().trim())}
+                onChange={(e) => setCode(typeShopCode(e.target.value))}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 placeholder={t('setup.codePlaceholder')}
                 className="w-full px-4 py-3 rounded-xl bg-white border border-stone-200 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 outline-none text-sm transition font-mono"
               />

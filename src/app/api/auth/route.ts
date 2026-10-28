@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { hashPin, verifyPin } from "@/lib/pin";
+import { normalizeShopCode } from "@/lib/shop-code";
 import { SHOP_COOKIE, SHOP_MAX_AGE, createShopToken } from "@/lib/shop-auth";
 
 function setSessionCookie(res: NextResponse, shopId: string) {
@@ -18,7 +19,7 @@ function setSessionCookie(res: NextResponse, shopId: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const code = (body?.code ?? "").toString().trim().toLowerCase();
+    const code = normalizeShopCode((body?.code ?? "").toString());
     const pin = (body?.pin ?? "").toString().trim();
 
     if (!code || !pin) {
@@ -28,13 +29,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: shop, error } = await supabaseAdmin
-      .from("shops")
-      .select(
-        "id, name, status, code, pin_hash, trial_ends_at, subscription_ends_at, login_attempts, locked_until",
-      )
-      .eq("code", code)
-      .maybeSingle();
+    const findShop = (c: string) =>
+      supabaseAdmin
+        .from("shops")
+        .select(
+          "id, name, status, code, pin_hash, trial_ends_at, subscription_ends_at, login_attempts, locked_until",
+        )
+        .eq("code", c)
+        .maybeSingle();
+
+    let { data: shop, error } = await findShop(code);
+    // "my coffee " typed with a stray space at the end becomes "my-coffee-":
+    // if that isn't a real code, try it without the dashes at the edges.
+    const bare = code.replace(/^-+|-+$/g, "");
+    if (!error && !shop && bare && bare !== code) {
+      ({ data: shop, error } = await findShop(bare));
+    }
 
     if (error || !shop) {
       return NextResponse.json(
