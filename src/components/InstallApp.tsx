@@ -49,7 +49,6 @@ if (typeof window !== 'undefined') {
   })
   // The one-tap prompt needs the service worker (it also gives an offline page).
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {})
-  readHandoff()
 }
 
 /* ------------------------------------------------------------- handoff */
@@ -64,6 +63,10 @@ const HANDOFF_PARAM = 'add'
 const REAL_BROWSER_KEY = 'beep-real-browser'
 let autoGuide = false
 let realBrowser = false
+
+// Must run after the declarations above (calling it earlier hits them before
+// they exist, and the try/catch would hide that).
+if (typeof window !== 'undefined') readHandoff()
 
 function readHandoff() {
   try {
