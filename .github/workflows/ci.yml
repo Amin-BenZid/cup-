@@ -5,6 +5,8 @@
 #
 # Needs repo secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
 # Re-deploy by hand: Actions → CI → Run workflow (on main).
+# The tests run here; the production build itself runs on Vercel (its env vars
+# never leave Vercel).
 name: CI
 
 on:
@@ -103,16 +105,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull production settings and env from Vercel
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build for production
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
       - name: Deploy
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          # Vercel builds on its own servers with the project's env vars
+          # (including Sensitive ones, which can't be downloaded here).
+          url=$(vercel deploy --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
           {
             echo "## 🚀 Deployed to production"
