@@ -27,7 +27,7 @@ export async function GET(
     }
 
     return NextResponse.json(
-      { order: result.order, shop: result.shop, topic: orderTopic(id) },
+      { order: result.order, shop: result.shop, queue: result.queue, topic: orderTopic(id) },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (e: unknown) {

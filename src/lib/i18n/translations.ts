@@ -113,8 +113,8 @@ export const translations = {
     "login.footer": "Gardez cet onglet ouvert pendant votre service",
 
     // Staff notifications
-    "staffNotif.title": "Recevez les messages de Beep",
-    "staffNotif.body": "Activez les notifications pour être prévenu quand l’équipe Beep vous répond ou publie une annonce.",
+    "staffNotif.title": "Recevez les messages du support",
+    "staffNotif.body": "Activez les notifications pour être prévenu quand le support vous répond ou quand Beep publie une annonce.",
     "staffNotif.enable": "Activer les notifications",
     "staffNotif.done": "Notifications activées",
 
@@ -276,6 +276,22 @@ export const translations = {
     "cust.poweredBy": "Propulsé par Beep",
     "cust.waitingFor": "En attente depuis",
     "cust.readyIn": "Prêt en",
+    "queue.left": "restant (estimation)",
+    "queue.range": "Environ %low–%high min",
+    "queue.rangeOne": "Environ %n min",
+    "queue.anyMoment": "D’un instant à l’autre",
+    "queue.almost": "Presque prêt",
+    "queue.longer": "Un peu plus long que d’habitude, merci pour votre patience.",
+    "queue.lastServed": "Dernière servie",
+    "queue.justNow": "à l’instant",
+    "queue.agoMin": "il y a %n min",
+    "queue.noneYet": "Aucune pour l’instant",
+    "queue.ahead": "Avant vous",
+    "queue.youreNext": "Vous êtes le prochain !",
+    "queue.ordersSub": "en préparation",
+    "queue.you": "Vous",
+    "queue.basedOn": "Estimation basée sur les %n dernières commandes de ce commerce",
+    "queue.rough": "Estimation approximative, elle s’affine à chaque commande servie",
 
     // Notifications
     "notif.title": "Soyez notifié quand c'est prêt",
@@ -621,8 +637,8 @@ export const translations = {
     "login.footer": "أبقِ هذه الصفحة مفتوحة خلال نوبتك",
 
     // Staff notifications
-    "staffNotif.title": "استقبل رسائل Beep",
-    "staffNotif.body": "فعّل الإشعارات لتعرف عندما يرد عليك فريق Beep أو ينشر إعلاناً.",
+    "staffNotif.title": "استقبل رسائل الدعم",
+    "staffNotif.body": "فعّل الإشعارات لتعرف عندما يرد عليك الدعم أو عندما تنشر Beep إعلاناً.",
     "staffNotif.enable": "تفعيل الإشعارات",
     "staffNotif.done": "تم تفعيل الإشعارات",
 
@@ -779,6 +795,22 @@ export const translations = {
     "cust.poweredBy": "بدعم من Beep",
     "cust.waitingFor": "في الانتظار منذ",
     "cust.readyIn": "جاهز خلال",
+    "queue.left": "متبقٍ (تقديري)",
+    "queue.range": "حوالي %low–%high د",
+    "queue.rangeOne": "حوالي %n د",
+    "queue.anyMoment": "في أي لحظة",
+    "queue.almost": "على وشك الجاهزية",
+    "queue.longer": "يستغرق وقتاً أطول قليلاً من المعتاد، شكراً لصبرك.",
+    "queue.lastServed": "آخر طلب جاهز",
+    "queue.justNow": "الآن",
+    "queue.agoMin": "منذ %n د",
+    "queue.noneYet": "لا يوجد بعد",
+    "queue.ahead": "قبلك",
+    "queue.youreNext": "أنت التالي!",
+    "queue.ordersSub": "قيد التحضير",
+    "queue.you": "أنت",
+    "queue.basedOn": "تقدير مبني على آخر %n طلبات في هذا المتجر",
+    "queue.rough": "تقدير تقريبي، يصبح أدق مع كل طلب يتم تقديمه",
 
     // Notifications
     "notif.title": "أشعرني عندما يصبح جاهزاً",
@@ -1125,8 +1157,8 @@ export const translations = {
     "login.footer": "Keep this tab open during your shift",
 
     // Staff notifications
-    "staffNotif.title": "Get messages from Beep",
-    "staffNotif.body": "Turn on notifications to know when the Beep team replies to you or posts an announcement.",
+    "staffNotif.title": "Get messages from support",
+    "staffNotif.body": "Turn on notifications to know when support replies to you or Beep posts an announcement.",
     "staffNotif.enable": "Turn on notifications",
     "staffNotif.done": "Notifications are on",
 
@@ -1285,6 +1317,22 @@ export const translations = {
     "cust.poweredBy": "Powered by Beep",
     "cust.waitingFor": "Waiting for",
     "cust.readyIn": "Ready in",
+    "queue.left": "left (estimate)",
+    "queue.range": "About %low–%high min",
+    "queue.rangeOne": "About %n min",
+    "queue.anyMoment": "Any moment now",
+    "queue.almost": "Almost there",
+    "queue.longer": "Taking a little longer than usual, thanks for your patience.",
+    "queue.lastServed": "Last served",
+    "queue.justNow": "just now",
+    "queue.agoMin": "%n min ago",
+    "queue.noneYet": "None yet",
+    "queue.ahead": "Ahead of you",
+    "queue.youreNext": "You're next!",
+    "queue.ordersSub": "being made",
+    "queue.you": "You",
+    "queue.basedOn": "Based on this shop's last %n orders",
+    "queue.rough": "Rough estimate, it gets sharper with every order served",
 
     // Notifications
     "notif.title": "Get notified when it's ready",

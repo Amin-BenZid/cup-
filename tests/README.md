@@ -17,6 +17,7 @@ page and attached as the `ci-report` artifact. Paste it to Claude to debug.
 | Suite id | What it covers |
 |---|---|
 | `unit-install` | Add to Home Screen: phone/browser detection (14 user agents) |
+| `unit-queue` | Wait-time estimate: defaults, rush throughput, outliers, quiet gaps, recent-vs-old |
 | `auth` | Admin login, 2FA, sessions, origin checks, rate limits |
 | `code` | Shop code login with spaces / caps |
 | `archive` | Archive, restore, delete forever (and nothing else deleted) |
@@ -25,6 +26,7 @@ page and attached as the `ci-report` artifact. Paste it to Claude to debug.
 | `live` | Live orders over realtime |
 | `push` | Admin push notifications |
 | `i18n` | Translated error codes, customer push in their language |
+| `queue` | Customer queue: last served, orders ahead (forgotten + other shops ignored), estimate, live ping, no ids leaked |
 | `staff-push` | Staff phones: support replies + broadcasts in their language, pruning, delete |
 | `ui-states` | Browser: archived / paused / deleted / expired screens |
 | `ui-install` | Browser: Add to Home Screen on iPhone, Android, in-app |

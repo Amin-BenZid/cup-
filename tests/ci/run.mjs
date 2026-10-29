@@ -185,6 +185,7 @@ function record(r) {
 
 const SUITES = [
   { id: 'unit-install', title: 'Unit · Add to Home Screen platform detection', cmd: 'node', args: ['tests/unit/install-platform.test.ts'], needsApp: false },
+  { id: 'unit-queue', title: 'Unit · wait-time estimate', cmd: 'node', args: ['tests/unit/queue-estimate.test.ts'], needsApp: false },
   { id: 'auth', title: 'Admin security (login, 2FA, sessions, origin checks)', cmd: 'node', args: ['tests/e2e/auth.test.mjs'] },
   { id: 'code', title: 'Shop code login (spaces, caps)', cmd: 'node', args: ['tests/e2e/code.test.mjs'] },
   { id: 'archive', title: 'Archive / restore / delete forever', cmd: 'node', args: ['tests/e2e/archive.test.mjs'] },
@@ -193,6 +194,7 @@ const SUITES = [
   { id: 'live', title: 'Live orders (realtime)', cmd: 'node', args: ['tests/e2e/live.test.mjs'] },
   { id: 'push', title: 'Admin push notifications', cmd: 'node', args: ['tests/e2e/push.test.mjs'], needsPush: true },
   { id: 'i18n', title: 'Translations: error codes + customer push language', cmd: 'node', args: ['tests/e2e/i18n.test.mjs'], needsPush: true },
+  { id: 'queue', title: 'Customer queue (last served, ahead, estimate, live refresh)', cmd: 'node', args: ['tests/e2e/queue.test.mjs'] },
   { id: 'staff-push', title: 'Staff notifications (support replies, broadcasts)', cmd: 'node', args: ['tests/e2e/staff-push.test.mjs'], needsPush: true },
   { id: 'ui-states', title: 'UI · shop states (archived, paused, deleted, expired)', cmd: PY, args: ['tests/ui/shop_states.py'], timeoutMs: 420_000, ui: true },
   { id: 'ui-install', title: 'UI · Add to Home Screen (iPhone, Android, in-app)', cmd: PY, args: ['tests/ui/install.py'], timeoutMs: 300_000, ui: true },

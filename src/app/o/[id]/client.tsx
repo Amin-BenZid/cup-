@@ -23,6 +23,8 @@ import { setBadge, clearBadge } from "@/lib/badge";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { getFont, getPalette, paletteVars, type Shop } from "@/lib/themes";
 import { useLiveTopic } from "@/lib/realtime-client";
+import QueueCard, { mergeQueue, type QueueState } from "@/components/QueueCard";
+import type { OrderQueue } from "@/lib/order-queue";
 
 // The game is below the fold and heavy — keep it out of the first JS payload.
 const CatchBeans = dynamic(() => import("@/components/CatchBeans"), {
@@ -42,6 +44,8 @@ type Props = {
   orderId: string;
   initialOrder?: Order | null;
   initialShop?: Shop | null;
+  /** Queue position + estimate (server render, while preparing). */
+  initialQueue?: OrderQueue | null;
   /** Live channel for this order (from the server render). */
   topic?: string | null;
 };
@@ -50,6 +54,7 @@ export default function CustomerOrderClient({
   orderId,
   initialOrder,
   initialShop,
+  initialQueue,
   topic: initialTopic,
 }: Props) {
   const t = useT();
@@ -68,6 +73,10 @@ export default function CustomerOrderClient({
     () => !!hasInitial && initialOrder?.status === "ready",
   );
   const [topic, setTopic] = useState<string | null>(initialTopic ?? null);
+  // Server-rendered estimate: rendered moments ago, so no clock correction.
+  const [queue, setQueue] = useState<QueueState | null>(
+    initialQueue ? { q: initialQueue, skew: 0 } : null,
+  );
   const [ackNow, setAcknowledged] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [enableState, setEnableState] = useState<
@@ -230,6 +239,10 @@ export default function CustomerOrderClient({
         setLoading(false);
         if (json.shop) setShop(json.shop as Shop);
         if (typeof json.topic === "string") setTopic(json.topic);
+        if (json.queue) {
+          const q = json.queue as OrderQueue;
+          setQueue({ q, skew: Date.parse(q.now) - Date.now() });
+        }
 
         try {
           localStorage.setItem("cup-active-order", orderId);
@@ -285,6 +298,24 @@ export default function CustomerOrderClient({
   const onOrderPing = useCallback(() => pollRef.current(), []);
   const live = useLiveTopic(topic, onOrderPing);
 
+  // Someone else's order moved: refresh position + estimate. Spread the
+  // refetches out a little so a shop's whole queue doesn't hit at once.
+  const queueTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onQueuePing = useCallback(() => {
+    if (queueTimer.current) clearTimeout(queueTimer.current);
+    queueTimer.current = setTimeout(
+      () => pollRef.current(),
+      300 + Math.floor(Math.random() * 1200),
+    );
+  }, []);
+  useLiveTopic(queue?.q.topic ?? null, onQueuePing);
+  useEffect(
+    () => () => {
+      if (queueTimer.current) clearTimeout(queueTimer.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
@@ -298,6 +329,13 @@ export default function CustomerOrderClient({
 
         const updated = json.order as Order;
         setOrder(updated);
+        const nextQueue = (json.queue ?? null) as OrderQueue | null;
+        if (nextQueue) {
+          const skew = Date.parse(nextQueue.now) - Date.now();
+          setQueue((prev) => mergeQueue(prev, { q: nextQueue, skew }));
+        } else {
+          setQueue(null);
+        }
         if (typeof json.topic === "string") setTopic(json.topic);
 
         try {
@@ -797,30 +835,36 @@ export default function CustomerOrderClient({
                   </p>
                 </div>
 
-                {/* Progress */}
-                <div className="pt-3 max-w-xs mx-auto">
-                  <div className="flex items-center justify-between text-[11px] font-medium">
-                    <span>{t("cust.received")}</span>
-                    <span>{t("cust.preparingStep")}</span>
-                    <span style={{ color: "var(--text-muted)" }}>
-                      {t("cust.readyStep")}
-                    </span>
+                {/* Live queue: countdown, last served, orders ahead */}
+                {queue ? (
+                  <div className="pt-2">
+                    <QueueCard state={queue} createdAt={order.created_at} />
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span
-                      className="h-1 flex-1 rounded-full"
-                      style={{ background: "var(--primary)" }}
-                    />
-                    <span
-                      className="h-1 flex-1 rounded-full"
-                      style={{ background: "var(--primary)" }}
-                    />
-                    <span
-                      className="h-1 flex-1 rounded-full"
-                      style={{ background: "var(--border)" }}
-                    />
+                ) : (
+                  <div className="pt-3 max-w-xs mx-auto">
+                    <div className="flex items-center justify-between text-[11px] font-medium">
+                      <span>{t("cust.received")}</span>
+                      <span>{t("cust.preparingStep")}</span>
+                      <span style={{ color: "var(--text-muted)" }}>
+                        {t("cust.readyStep")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <span
+                        className="h-1 flex-1 rounded-full"
+                        style={{ background: "var(--primary)" }}
+                      />
+                      <span
+                        className="h-1 flex-1 rounded-full"
+                        style={{ background: "var(--primary)" }}
+                      />
+                      <span
+                        className="h-1 flex-1 rounded-full"
+                        style={{ background: "var(--border)" }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Live elapsed timer */}
                 <div

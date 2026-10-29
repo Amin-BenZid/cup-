@@ -85,7 +85,7 @@ export default function DashboardPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   const [chatOpen, setSupportOpen] = useState(false);
-  // Opened from a "New message from Beep" notification (?support=1).
+  // Opened from a "New message from support" notification (?support=1).
   const fromNotification = useSyncExternalStore(
     noopSubscribe,
     () => new URLSearchParams(window.location.search).get("support") === "1",
@@ -443,7 +443,9 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setSupportOpen(true)}
-              className="relative inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-lg bg-stone-900 text-amber-50 hover:bg-stone-800 active:scale-[0.97] transition text-sm font-medium"
+              className={`relative flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900 transition px-3 py-2 rounded-lg hover:bg-stone-100 ${
+                supportOpen ? "bg-stone-100 text-stone-900" : ""
+              }`}
               title={t("support.button")}
               aria-label={t("support.button")}
             >

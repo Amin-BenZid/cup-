@@ -28,6 +28,7 @@ export default async function CustomerOrderPage({
         orderId={id}
         initialOrder={result.order}
         initialShop={result.shop as unknown as Shop | null}
+        initialQueue={result.queue}
         topic={orderTopic(id)}
       />
     )

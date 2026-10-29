@@ -17,7 +17,7 @@ type Sub = { endpoint: string; expirationTime?: number | null; keys: { p256dh: s
 export type ShopDevice = { subscription: Sub; locale: string; created_at: string; last_sent_at: string | null };
 
 const TEXT = {
-  support: { fr: "Nouveau message de Beep", ar: "رسالة جديدة من Beep", en: "New message from Beep" },
+  support: { fr: "Nouveau message du support", ar: "رسالة جديدة من الدعم", en: "New message from support" },
   broadcast: { fr: "Annonce Beep", ar: "إعلان من Beep", en: "Beep announcement" },
 } as const;
 

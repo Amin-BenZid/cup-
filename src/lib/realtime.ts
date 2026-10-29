@@ -69,9 +69,17 @@ export function shopOrdersTopic(shopId: string) {
   return `ords-${tag(`shop:${shopId}`)}`;
 }
 
-/** An order changed: wake the customer's page and the shop's dashboard. */
+/**
+ * Topic every waiting customer of one shop listens on, so their queue
+ * position and estimate refresh when someone else's order moves.
+ */
+export function shopQueueTopic(shopId: string) {
+  return `q-${tag(`queue:${shopId}`)}`;
+}
+
+/** An order changed: wake the customer's page, the shop's dashboard and the queue. */
 export function pingOrder(orderId: string, shopId: string | null) {
   const topics = [orderTopic(orderId)];
-  if (shopId) topics.push(shopOrdersTopic(shopId));
+  if (shopId) topics.push(shopOrdersTopic(shopId), shopQueueTopic(shopId));
   return pingTopics(topics, { kind: "order" });
 }
