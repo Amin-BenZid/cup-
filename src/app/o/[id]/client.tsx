@@ -12,6 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import NotificationSetup from "@/components/NotificationSetup";
+import { InstallAutoGuide } from "@/components/InstallApp";
 import { useStored } from "@/hooks/useStored";
 import Logo from "@/components/Logo";
 import BrandLogo from "@/components/BrandLogo";
@@ -932,6 +933,7 @@ export default function CustomerOrderClient({
 
             {/* Notifications prompt */}
             {!acknowledged && <NotificationSetup orderId={orderId} />}
+            {!acknowledged && <InstallAutoGuide variant="customer" />}
 
             {/* GAME */}
             {!acknowledged && shop?.game !== "none" && (

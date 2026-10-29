@@ -381,6 +381,7 @@ Gotcha: the mock DB reset keeps `admin_session_version` (the app caches it 15 s 
 
 ## 10. Known issues / gotchas
 - **iPhone "Add to Home Screen" guide** (`components/InstallApp.tsx`, `lib/install-platform.ts`): Safari's bar differs by iOS version (`ui`: classic = Share button, ios26 = ••• on the right, ios27 = ☰ Page Menu on the left) **and** by a Safari setting (Compact / Bottom / Top) a page can't read, so the guide has a "Screen looks different?" switch. When a new iOS changes the bar again, add a `ui` value + steps + arrow position there.
+- **In-app viewers / Code Scanner handoff**: the iPhone Code Scanner (and Instagram, WhatsApp…) open pages in a mini browser with no "Add to Home Screen"; the Code Scanner one looks exactly like Safari to the page. The guide offers one tap to the real browser: `x-safari-https://…?add=1` on iPhone, `intent://…;package=com.android.chrome;S.browser_fallback_url=…` on Android. A page loaded with `?add=1` marks `sessionStorage.beep-real-browser`, opens the guide by itself (`<InstallAutoGuide>` on `/o/[id]` and the dashboard) and drops `?add=1` from the address. Copy-link and manual steps stay as the fallback.
 
 Fixed on 2026-10-25 (first pass): shop routes are guarded with `requireShop`, `/pending` uses the `/status` endpoint, the stale-order threshold is in seconds, and customize autosave uses a key-order-insensitive `sameJson` (this also stopped a save loop).
 

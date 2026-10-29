@@ -19,6 +19,7 @@ UA={
  'ios17':'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
  'insta':'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 337.0.3.23.54 (iPhone14,5; iOS 17_5; fr_FR)',
  'android':'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+ 'androidFb':'Mozilla/5.0 (Linux; Android 14; SM-A546B Build/UP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/470.0.0.43.109;]',
  'samsung':'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36',
 }
 FAKE_BIP = """
@@ -56,11 +57,31 @@ with sync_playwright() as p:
     ok('iOS27: then Share', pg.get_by_text('Tap “Share”').count()==1)
     ok('iOS27: switch shows ☰ selected', pg.get_by_role('button', name='☰ on the left').get_attribute('aria-pressed')=='true')
     pg.screenshot(path=SHOTS+'/in_guide_ios27_en.png')
+    h=pg.get_by_test_id('scanner-handoff')
+    ok('iOS27: Code Scanner hint with one-tap Safari link', h.count()==1 and (h.locator('a').get_attribute('href') or '').startswith('x-safari-http') and 'add=1' in (h.locator('a').get_attribute('href') or ''), h.count())
     pg.get_by_role('button', name='••• on the right').click(); pg.wait_for_timeout(200)
     ok('switch → •••: steps change', pg.get_by_text('Tap ••• at the bottom right').count()==1 and pg.get_by_text('Tap ☰ on the left', exact=False).count()==0)
     pg.get_by_role('button', name='Share button').click(); pg.wait_for_timeout(200)
     ok('switch → Share button: one-tap Share step + web-app step', pg.get_by_text('Tap the Share button at the bottom of the screen').count()==1 and pg.get_by_text('Open as Web App', exact=False).count()==1)
     pg.screenshot(path=SHOTS+'/in_guide_ios27_switched.png'); ctx.close()
+
+    # Handed over to real Safari (?add=1): guide opens by itself, no scanner hint, URL cleaned
+    ctx,pg=staff(UA['ios27'],'en')
+    pg.goto(B+'/barista/dashboard?add=1'); pg.wait_for_timeout(2000)
+    ok('handoff: guide opens by itself', pg.get_by_text('Tap ☰ on the left of the address bar, at the bottom').count()==1)
+    ok('handoff: no scanner hint once in Safari', pg.get_by_test_id('scanner-handoff').count()==0)
+    ok('handoff: ?add=1 removed from the address', 'add=1' not in pg.url, pg.url)
+    pg.screenshot(path=SHOTS+'/in_guide_handoff.png')
+    pg.reload(); pg.wait_for_timeout(1500)
+    ok('handoff: reload does not reopen it', pg.get_by_text('Tap ☰ on the left of the address bar, at the bottom').count()==0)
+    ctx.close()
+
+    # Android Facebook in-app: one-tap Chrome intent
+    ctx,pg=staff(UA['androidFb'],'en')
+    pg.get_by_role('button', name='Add to Home Screen').first.click(); pg.wait_for_timeout(500)
+    href=pg.get_by_test_id('open-in-browser').get_attribute('href') or ''
+    ok('Android in-app: Open in Chrome intent', href.startswith('intent://') and 'package=com.android.chrome' in href and 'add%3D1' in href and 'add=1' in href, href)
+    ctx.close()
 
     # iPhone iOS 17 — Arabic
     ctx,pg=staff(UA['ios17'],'ar')
@@ -72,6 +93,7 @@ with sync_playwright() as p:
     ctx,pg=staff(UA['insta'])
     pg.get_by_role('button', name='Ajouter à l’écran d’accueil').click(); pg.wait_for_timeout(500)
     ok('Instagram: open in Safari first', pg.get_by_text('Ouvrez d’abord dans votre navigateur').count()==1 and pg.get_by_text('Copier le lien').count()==1)
+    ok('Instagram: one-tap Ouvrir dans Safari', (pg.get_by_test_id('open-in-browser').get_attribute('href') or '').startswith('x-safari-http'))
     pg.screenshot(path=SHOTS+'/in_guide_insta.png'); ctx.close()
 
     # Android Chrome with the native prompt → one tap

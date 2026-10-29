@@ -6,6 +6,7 @@ import {
   ArrowUp,
   Bell,
   Check,
+  Compass,
   Copy,
   Download,
   Ellipsis,
@@ -48,6 +49,51 @@ if (typeof window !== 'undefined') {
   })
   // The one-tap prompt needs the service worker (it also gives an offline page).
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {})
+  readHandoff()
+}
+
+/* ------------------------------------------------------------- handoff */
+
+// Scanning a QR with the iPhone Code Scanner (or tapping a link in Instagram,
+// WhatsApp…) opens the page in a mini browser where "Add to Home Screen"
+// doesn't exist, and that viewer looks exactly like Safari to a web page.
+// The guide offers one tap that hands the page to the real browser with
+// ?add=1; the page then knows it's in the real browser and opens the guide
+// by itself.
+const HANDOFF_PARAM = 'add'
+const REAL_BROWSER_KEY = 'beep-real-browser'
+let autoGuide = false
+let realBrowser = false
+
+function readHandoff() {
+  try {
+    if (new URLSearchParams(window.location.search).get(HANDOFF_PARAM) === '1') {
+      autoGuide = true
+      realBrowser = true
+      sessionStorage.setItem(REAL_BROWSER_KEY, '1')
+    } else if (sessionStorage.getItem(REAL_BROWSER_KEY) === '1') {
+      realBrowser = true
+    }
+  } catch {}
+}
+
+function handoffUrl(): URL {
+  const u = new URL(window.location.href)
+  u.searchParams.set(HANDOFF_PARAM, '1')
+  u.hash = ''
+  return u
+}
+
+/** Link that opens this page in Safari, from any iOS in-app viewer. */
+export function safariHref(): string {
+  return handoffUrl().href.replace(/^http(s?):/, (_, s) => `x-safari-http${s}:`)
+}
+
+/** Link that opens this page in Chrome, from an Android in-app viewer. */
+export function chromeHref(): string {
+  const u = handoffUrl()
+  const scheme = u.protocol.replace(':', '')
+  return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(u.href)};end`
 }
 
 function subscribe(cb: () => void) {
@@ -291,6 +337,7 @@ function InstallGuide({
 }) {
   const t = useT()
   const [copied, setCopied] = useState(false)
+  const { canPrompt, promptInstall } = useInstall()
   // iPhone Safari's bar depends on the iOS version AND a Safari setting
   // (Compact / Bottom / Top) that a web page can't read, so the person can
   // switch to what they actually see.
@@ -367,6 +414,37 @@ function InstallGuide({
           </button>
         </div>
 
+        {/* Maybe in the Code Scanner / Camera viewer: one tap to real Safari. */}
+        {iphoneSafari && !realBrowser && (
+          <div className="mx-5 mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 space-y-2" data-testid="scanner-handoff">
+            <p className="text-sm font-semibold leading-snug">{t('install.scanner.title')}</p>
+            <p className="text-xs text-stone-600 leading-snug">{t('install.scanner.body')}</p>
+            <a
+              href={safariHref()}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-stone-900 text-amber-50 text-sm font-semibold active:scale-[0.99]"
+            >
+              <Compass className="w-4 h-4" />
+              {t('install.openSafari')}
+            </a>
+          </div>
+        )}
+
+        {/* In-app browser: hand the page to the real browser in one tap. */}
+        {openInBrowser && (
+          <div className="px-5 pt-4 space-y-2">
+            <a
+              href={openInBrowser === 'safari' ? safariHref() : chromeHref()}
+              data-testid="open-in-browser"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-stone-900 text-amber-50 text-[15px] font-semibold active:scale-[0.99]"
+            >
+              <Compass className="w-5 h-5" />
+              {openInBrowser === 'safari' ? t('install.openSafari') : t('install.openChrome')}
+            </a>
+            <p className="text-xs text-stone-500 text-center leading-snug">{t('install.openAuto')}</p>
+            <p className="text-xs font-semibold text-stone-500 pt-2">{t('install.inapp.fallback')}</p>
+          </div>
+        )}
+
         <ol className="px-5 py-4 space-y-3">
           {steps.map((s, i) => (
             <li key={i} className="flex items-center gap-3">
@@ -409,6 +487,18 @@ function InstallGuide({
         )}
 
         <div className="px-5 pb-5 space-y-2">
+          {canPrompt && !openInBrowser && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (await promptInstall()) onClose()
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-400 text-stone-900 text-sm font-semibold"
+            >
+              <Download className="w-4 h-4" />
+              {t('install.installNow')}
+            </button>
+          )}
           {openInBrowser && (
             <button
               onClick={copyLink}
@@ -424,6 +514,47 @@ function InstallGuide({
         </div>
       </div>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------ auto guide */
+
+const autoSnapshot = () => autoGuide
+
+/**
+ * Put once on a page. When the page was just handed over from an in-app
+ * viewer (?add=1), it opens the right guide right away, so the person only
+ * has the browser's own taps left.
+ */
+export function InstallAutoGuide({ variant }: { variant: Variant }) {
+  const { platform, installed } = useInstall()
+  const show = useSyncExternalStore(subscribe, autoSnapshot, () => false)
+
+  // Drop ?add=1 from the address once the page is up, so a reload or a
+  // shared link doesn't reopen the guide. (Home Screen icon uses the
+  // manifest's start_url, not this address.)
+  useEffect(() => {
+    if (!show) return
+    const id = setTimeout(() => {
+      try {
+        const u = new URL(window.location.href)
+        u.searchParams.delete(HANDOFF_PARAM)
+        window.history.replaceState(window.history.state, '', u.pathname + u.search + u.hash)
+      } catch {}
+    }, 0)
+    return () => clearTimeout(id)
+  }, [show])
+
+  if (!show || !platform || installed || platform.kind === 'desktop') return null
+  return (
+    <InstallGuide
+      platform={platform}
+      variant={variant}
+      onClose={() => {
+        autoGuide = false
+        emit()
+      }}
+    />
   )
 }
 

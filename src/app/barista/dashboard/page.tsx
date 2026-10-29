@@ -27,7 +27,7 @@ import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import PhonePrompt, { phonePromptSnoozed } from "@/components/PhonePrompt";
-import { InstallCard } from "@/components/InstallApp";
+import { InstallAutoGuide, InstallCard } from "@/components/InstallApp";
 import StaffNotifications from "@/components/StaffNotifications";
 import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
 import { useStored } from "@/hooks/useStored";
@@ -566,6 +566,7 @@ export default function DashboardPage() {
 
         {/* One card at a time: the phone number first, then the install. */}
         {shop && !askPhone && <InstallCard shopId={shop.id} />}
+        <InstallAutoGuide variant="staff" />
         {shop && !askPhone && <StaffNotifications shopId={shop.id} />}
 
         {shop && showOnboarding && (
