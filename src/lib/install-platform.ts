@@ -3,7 +3,10 @@
  * against real user agents.
  *
  *   installed     already running from the Home Screen: show nothing
- *   ios-safari    Safari on iPhone/iPad (newUi = iOS 26+, Share is under •••)
+ *   ios-safari    Safari on iPhone/iPad. `ui` = what the bar looks like:
+ *                 classic (≤18: Share button at the bottom), ios26 (Share is
+ *                 under ••• on the right), ios27 (Share is under the ☰ Page
+ *                 Menu on the left of the address bar)
  *   ios-browser   Chrome / Firefox / Edge on iPhone (iOS 16.4+ can add too)
  *   ios-inapp     Instagram, Facebook, TikTok… in-app browser: can't add,
  *                 the page must be opened in Safari first
@@ -12,9 +15,11 @@
  *   android-inapp in-app browser on Android: open in Chrome first
  *   desktop       computer; only offered when the browser has its own prompt
  */
+export type IosSafariUi = "classic" | "ios26" | "ios27";
+
 export type InstallPlatform =
   | { kind: "installed" }
-  | { kind: "ios-safari"; ipad: boolean; newUi: boolean }
+  | { kind: "ios-safari"; ipad: boolean; ui: IosSafariUi }
   | { kind: "ios-browser"; browser: "chrome" | "firefox" | "edge" | "other" }
   | { kind: "ios-inapp" }
   | { kind: "android" }
@@ -45,7 +50,8 @@ export function detectInstallPlatform(env: {
     // Real Safari has "Version/x" and "Safari/"; other WebViews usually don't.
     if (!/Version\/\d+/.test(ua) || !/Safari\//.test(ua)) return { kind: "ios-inapp" };
     const major = Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0);
-    return { kind: "ios-safari", ipad: /iPad/.test(ua) || ipadAsMac, newUi: major >= 26 };
+    const ui: IosSafariUi = major >= 27 ? "ios27" : major >= 26 ? "ios26" : "classic";
+    return { kind: "ios-safari", ipad: /iPad/.test(ua) || ipadAsMac, ui };
   }
 
   if (/Android/i.test(ua)) {

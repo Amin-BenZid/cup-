@@ -15,6 +15,7 @@ http('PATCH',f"{PG}/rest/v1/shops?id=eq.{s['id']}",{'status':'active','phone':'+
 order=http('POST',f"{PG}/rest/v1/orders",{'shop_id':s['id'],'order_number':'42','status':'preparing'})[0]
 UA={
  'ios26':'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
+ 'ios27':'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.1 Mobile/15E148 Safari/604.1',
  'ios17':'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
  'insta':'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 337.0.3.23.54 (iPhone14,5; iOS 17_5; fr_FR)',
  'android':'Mozilla/5.0 (Linux; Android 14; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
@@ -47,6 +48,19 @@ with sync_playwright() as p:
     pg.reload(); pg.wait_for_timeout(1500)
     ok('Later is remembered', pg.get_by_text('Installez Beep sur ce téléphone').count()==0)
     ctx.close()
+
+    # iPhone iOS 27 — English: ☰ Page Menu on the left, then the switch
+    ctx,pg=staff(UA['ios27'],'en')
+    pg.get_by_role('button', name='Add to Home Screen').first.click(); pg.wait_for_timeout(500)
+    ok('iOS27: guide starts with ☰ on the left', pg.get_by_text('Tap ☰ on the left of the address bar, at the bottom').count()==1)
+    ok('iOS27: then Share', pg.get_by_text('Tap “Share”').count()==1)
+    ok('iOS27: switch shows ☰ selected', pg.get_by_role('button', name='☰ on the left').get_attribute('aria-pressed')=='true')
+    pg.screenshot(path=SHOTS+'/in_guide_ios27_en.png')
+    pg.get_by_role('button', name='••• on the right').click(); pg.wait_for_timeout(200)
+    ok('switch → •••: steps change', pg.get_by_text('Tap ••• at the bottom right').count()==1 and pg.get_by_text('Tap ☰ on the left', exact=False).count()==0)
+    pg.get_by_role('button', name='Share button').click(); pg.wait_for_timeout(200)
+    ok('switch → Share button: one-tap Share step + web-app step', pg.get_by_text('Tap the Share button at the bottom of the screen').count()==1 and pg.get_by_text('Open as Web App', exact=False).count()==1)
+    pg.screenshot(path=SHOTS+'/in_guide_ios27_switched.png'); ctx.close()
 
     # iPhone iOS 17 — Arabic
     ctx,pg=staff(UA['ios17'],'ar')

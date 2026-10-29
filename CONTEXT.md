@@ -380,6 +380,7 @@ English-only admin with shell (`components/admin/AdminShell.tsx`, sidebar + iPho
 Gotcha: the mock DB reset keeps `admin_session_version` (the app caches it 15 s in memory; resetting it caused false 401s).
 
 ## 10. Known issues / gotchas
+- **iPhone "Add to Home Screen" guide** (`components/InstallApp.tsx`, `lib/install-platform.ts`): Safari's bar differs by iOS version (`ui`: classic = Share button, ios26 = ••• on the right, ios27 = ☰ Page Menu on the left) **and** by a Safari setting (Compact / Bottom / Top) a page can't read, so the guide has a "Screen looks different?" switch. When a new iOS changes the bar again, add a `ui` value + steps + arrow position there.
 
 Fixed on 2026-10-25 (first pass): shop routes are guarded with `requireShop`, `/pending` uses the `/status` endpoint, the stale-order threshold is in seconds, and customize autosave uses a key-order-insensitive `sameJson` (this also stopped a save loop).
 

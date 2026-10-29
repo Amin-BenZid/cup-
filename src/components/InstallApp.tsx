@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
 import type { TranslationKey } from '@/lib/i18n/translations'
-import { detectInstallPlatform, type InstallPlatform } from '@/lib/install-platform'
+import { detectInstallPlatform, type InstallPlatform, type IosSafariUi } from '@/lib/install-platform'
 import { storageChanged, useSnoozed } from '@/hooks/useStored'
 
 /* ------------------------------------------------------------------ state */
@@ -170,10 +170,16 @@ function Chip({ children }: { children: React.ReactNode }) {
   )
 }
 
-function stepsFor(p: InstallPlatform, variant: Variant, t: (k: TranslationKey) => string): {
+function stepsFor(
+  p: InstallPlatform,
+  variant: Variant,
+  t: (k: TranslationKey) => string,
+  /** iPhone Safari: what the person says their bar looks like (overrides detection). */
+  iosUi?: IosSafariUi,
+): {
   steps: Step[]
   /** Where the button to tap is on screen, so the arrow can point at it. */
-  point: 'bottom-center' | 'bottom-right' | 'top-right' | null
+  point: 'bottom-center' | 'bottom-left' | 'bottom-right' | 'top-right' | null
   openInBrowser?: 'safari' | 'chrome'
 } {
   const addRow: Step = { icon: <SquarePlus className="w-5 h-5" />, text: t('install.ios.add') }
@@ -181,8 +187,22 @@ function stepsFor(p: InstallPlatform, variant: Variant, t: (k: TranslationKey) =
     variant === 'customer' ? [{ icon: <Bell className="w-5 h-5" />, text: t('install.customer.notify') }] : []
 
   switch (p.kind) {
-    case 'ios-safari':
-      if (p.newUi && !p.ipad) {
+    case 'ios-safari': {
+      const ui = p.ipad ? 'classic' : (iosUi ?? p.ui)
+      if (ui === 'ios27') {
+        // iOS 27: ☰ "Page Menu" on the left of the address bar → Share.
+        return {
+          point: 'bottom-left',
+          steps: [
+            { icon: <Menu className="w-5 h-5" />, text: t('install.ios27.menu') },
+            { icon: <Share className="w-5 h-5" />, text: t('install.ios26.share') },
+            addRow,
+            { icon: <Check className="w-5 h-5" />, text: t('install.ios26.confirm') },
+            ...notify,
+          ],
+        }
+      }
+      if (ui === 'ios26') {
         return {
           point: 'bottom-right',
           steps: [
@@ -199,10 +219,11 @@ function stepsFor(p: InstallPlatform, variant: Variant, t: (k: TranslationKey) =
         steps: [
           { icon: <Share className="w-5 h-5" />, text: p.ipad ? t('install.ipad.share') : t('install.ios.share') },
           addRow,
-          { icon: <Check className="w-5 h-5" />, text: t('install.ios.confirm') },
+          { icon: <Check className="w-5 h-5" />, text: p.ui === 'classic' ? t('install.ios.confirm') : t('install.ios26.confirm') },
           ...notify,
         ],
       }
+    }
     case 'ios-browser':
       return {
         point: 'top-right',
@@ -270,10 +291,16 @@ function InstallGuide({
 }) {
   const t = useT()
   const [copied, setCopied] = useState(false)
-  const { steps, point, openInBrowser } = stepsFor(platform, variant, t)
+  // iPhone Safari's bar depends on the iOS version AND a Safari setting
+  // (Compact / Bottom / Top) that a web page can't read, so the person can
+  // switch to what they actually see.
+  const [iosUi, setIosUi] = useState<IosSafariUi | undefined>(undefined)
+  const iphoneSafari = platform.kind === 'ios-safari' && !platform.ipad
+  const shownUi = platform.kind === 'ios-safari' ? (iosUi ?? platform.ui) : undefined
+  const { steps, point, openInBrowser } = stepsFor(platform, variant, t, iosUi)
   // Keep the browser's bar visible: card at the top when the button to tap is
   // at the bottom of the screen, and the other way round.
-  const cardAtTop = point === 'bottom-center' || point === 'bottom-right'
+  const cardAtTop = point === 'bottom-center' || point === 'bottom-right' || point === 'bottom-left'
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -292,7 +319,9 @@ function InstallGuide({
   const arrowPos =
     point === 'bottom-center'
       ? 'bottom-3 left-1/2 -translate-x-1/2'
-      : point === 'bottom-right'
+      : point === 'bottom-left'
+        ? 'bottom-3 left-14'
+        : point === 'bottom-right'
         ? 'bottom-3 right-5'
         : point === 'top-right'
           ? 'top-3 right-4'
@@ -349,6 +378,35 @@ function InstallGuide({
             </li>
           ))}
         </ol>
+
+        {iphoneSafari && (
+          <div className="px-5 pb-4 -mt-1 space-y-2" data-testid="ios-ui-switch">
+            <p className="text-xs text-stone-500">{t('install.ui.different')}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ['ios27', <Menu key="i" className="w-4 h-4" />, t('install.ui.menuLeft')],
+                  ['ios26', <Ellipsis key="i" className="w-4 h-4" />, t('install.ui.moreRight')],
+                  ['classic', <Share key="i" className="w-4 h-4" />, t('install.ui.shareButton')],
+                ] as const
+              ).map(([ui, icon, label]) => (
+                <button
+                  key={ui}
+                  onClick={() => setIosUi(ui)}
+                  aria-pressed={shownUi === ui}
+                  className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-[11px] leading-tight transition ${
+                    shownUi === ui
+                      ? 'border-stone-900 bg-stone-900 text-amber-50'
+                      : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  {icon}
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="px-5 pb-5 space-y-2">
           {openInBrowser && (

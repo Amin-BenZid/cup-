@@ -3,6 +3,7 @@ let f = 0
 const ok = (n: string, got: unknown, want: unknown) => { const g = JSON.stringify(got), w = JSON.stringify(want); console.log(g === w ? 'PASS' : 'FAIL', n, g === w ? '' : `got ${g} want ${w}`); if (g !== w) f++ }
 const UA = {
   ios26: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
+  ios27: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.1 Mobile/15E148 Safari/604.1',
   ios17: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
   ipadMac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15',
   chromeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.54 Mobile/15E148 Safari/604.1',
@@ -16,9 +17,10 @@ const UA = {
   desktopChrome: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   macSafari: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15',
 }
-ok('iPhone iOS 26 Safari', d({ ua: UA.ios26 }), { kind: 'ios-safari', ipad: false, newUi: true })
-ok('iPhone iOS 17 Safari', d({ ua: UA.ios17 }), { kind: 'ios-safari', ipad: false, newUi: false })
-ok('iPad (desktop-mode UA)', d({ ua: UA.ipadMac, maxTouchPoints: 5 }), { kind: 'ios-safari', ipad: true, newUi: false })
+ok('iPhone iOS 27 Safari', d({ ua: UA.ios27 }), { kind: 'ios-safari', ipad: false, ui: 'ios27' })
+ok('iPhone iOS 26 Safari', d({ ua: UA.ios26 }), { kind: 'ios-safari', ipad: false, ui: 'ios26' })
+ok('iPhone iOS 17 Safari', d({ ua: UA.ios17 }), { kind: 'ios-safari', ipad: false, ui: 'classic' })
+ok('iPad (desktop-mode UA)', d({ ua: UA.ipadMac, maxTouchPoints: 5 }), { kind: 'ios-safari', ipad: true, ui: 'classic' })
 ok('Chrome on iPhone', d({ ua: UA.chromeIos }), { kind: 'ios-browser', browser: 'chrome' })
 ok('Firefox on iPhone', d({ ua: UA.firefoxIos }), { kind: 'ios-browser', browser: 'firefox' })
 ok('Instagram on iPhone', d({ ua: UA.instaIos }), { kind: 'ios-inapp' })
