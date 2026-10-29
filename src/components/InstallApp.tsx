@@ -88,12 +88,12 @@ function handoffUrl(): URL {
 }
 
 /** Link that opens this page in Safari, from any iOS in-app viewer. */
-export function safariHref(): string {
+function safariHref(): string {
   return handoffUrl().href.replace(/^http(s?):/, (_, s) => `x-safari-http${s}:`)
 }
 
 /** Link that opens this page in Chrome, from an Android in-app viewer. */
-export function chromeHref(): string {
+function chromeHref(): string {
   const u = handoffUrl()
   const scheme = u.protocol.replace(':', '')
   return `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(u.href)};end`
@@ -156,7 +156,7 @@ type Variant = 'staff' | 'customer'
  * it has one (Android Chrome, Edge…); otherwise it opens a picture guide for
  * this exact phone and browser.
  */
-export function InstallButton({
+function InstallButton({
   variant = 'staff',
   className = '',
   label,

@@ -30,11 +30,3 @@ export function clearBadge() {
     nav.clearAppBadge().catch(() => {})
   } catch {}
 }
-
-/**
- * True if the current browser supports app badging.
- */
-export function supportsBadge(): boolean {
-  if (typeof navigator === 'undefined') return false
-  return 'setAppBadge' in navigator
-}

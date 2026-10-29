@@ -6,8 +6,8 @@
  *   tile corner radius 28
  */
 
-export const BRAND_INK = '#1d1916'
-export const BRAND_CREAM = '#faf7f2'
+const BRAND_INK = '#1d1916'
+const BRAND_CREAM = '#faf7f2'
 
 function Mark({ color }: { color: string }) {
   return (
@@ -49,43 +49,5 @@ export default function BrandLogo({
       <rect width="100" height="100" rx="28" fill={bg} />
       <Mark color={fg} />
     </svg>
-  )
-}
-
-/** The bare signal, no tile (for the wordmark lockup). */
-export function BrandMark({ size = 32, color = 'currentColor', className = '' }: { size?: number; color?: string; className?: string }) {
-  // Cropped to the mark's own bounds so it lines up with text.
-  return (
-    <svg
-      viewBox="29 27.5 41.5 41.5"
-      width={size}
-      height={size}
-      aria-hidden="true"
-      className={className}
-      style={{ display: 'block', flexShrink: 0 }}
-    >
-      <Mark color={color} />
-    </svg>
-  )
-}
-
-/** Full lockup: signal + "beep" wordmark. */
-export function BrandWordmark({ height = 24, className = '' }: { height?: number; className?: string }) {
-  return (
-    <span className={`inline-flex items-center ${className}`} style={{ gap: height * 0.45 }} aria-label="Beep">
-      <BrandMark size={height * 0.9} />
-      <span
-        aria-hidden="true"
-        style={{
-          fontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif',
-          fontWeight: 700,
-          fontSize: height,
-          letterSpacing: '-0.045em',
-          lineHeight: 1,
-        }}
-      >
-        beep
-      </span>
-    </span>
   )
 }

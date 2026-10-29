@@ -8,11 +8,11 @@ import { deleteSetting, getSetting, listSettings, setSetting } from "@/lib/setti
  * Stored in global_settings `pin_reset_request:<shopId>`.
  */
 
-export const PIN_RESET_PREFIX = "pin_reset_request:";
+const PIN_RESET_PREFIX = "pin_reset_request:";
 /** A new request for the same café within this window reuses the old one. */
 export const PIN_RESET_COOLDOWN_MS = 30 * 60 * 1000;
 /** Requests older than this are ignored. */
-export const PIN_RESET_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const PIN_RESET_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** `refs`: every reference shown to the café for this request (newest last). */
 export type PinResetRequest = {

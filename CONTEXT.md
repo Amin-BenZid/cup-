@@ -1,6 +1,6 @@
 # Beep (formerly Cup; repo virtual-buzzer) — Project Context
 
-> **Renamed 2026-10-27: Cup → Beep**, logo option 2 "Ping" (a dot sending one signal). Mark = `components/BrandLogo.tsx` (inline SVG; also `BrandMark`, `BrandWordmark`), icons in `public/` (`icon-192/512`, `apple-icon`, `logo.png`, `badge-96.png`) and `app/icon.png`. Colours ink `#1d1916`, cream `#faf7f2`. Internal keys (`cup-*` localStorage, cookie names, repo name) were left as-is on purpose so nobody gets logged out. The rest of this doc still says "Cup" for history.
+> **Renamed 2026-10-27: Cup → Beep**, logo option 2 "Ping" (a dot sending one signal). Mark = `components/BrandLogo.tsx` (inline SVG), icons in `public/` (`icon-192/512`, `apple-icon`, `logo.png`, `badge-96.png`) and `app/icon.png`. Colours ink `#1d1916`, cream `#faf7f2`. Internal keys (`cup-*` localStorage, cookie names, repo name) were left as-is on purpose so nobody gets logged out. The rest of this doc still says "Cup" for history.
 
 > Reference doc for future work. Written from a full read of the codebase on 2026-10-25 (HEAD `4735f55`), updated after the known-issues cleanup (branch `chore/cleanup-known-issues`).
 > If code and this doc disagree, the code wins. Update this file when you change routes, tables or flows.
@@ -161,7 +161,7 @@ is_trial  = trial valid AND subscription not valid
 | `/admin/live` | `app/admin/live/page.tsx` | Live cross-shop feed of the last 50 orders, filter by shop, search by shop name or order number, "Xs ago". | `GET /api/admin/live` | 4 s (visible) |
 | `/admin/reviews` | `app/admin/reviews/page.tsx` | Last 100 reviews across shops, rating filter (1/2/3), search | `GET /api/admin/reviews` | – |
 | `/admin/support` | `app/admin/support/page.tsx` | Support inbox grouped by shop, opening a thread marks it read, reply as admin | `GET/POST/PATCH /api/admin/support` | – |
-| `/admin/broadcast` | `app/admin/broadcast/page.tsx` | Toggle and edit the global banner shown on barista dashboards, view broadcast history, and edit the support contact (email/phone shown on `/expired`). | `GET/PATCH /api/broadcast`, `GET/PATCH /api/admin/contact` | – |
+| `/admin/broadcast` | `app/admin/broadcast/page.tsx` | Toggle and edit the global banner shown on barista dashboards, view broadcast history. The support contact (email/phone shown on `/expired`) is edited in `/admin/settings`. | `GET/PATCH /api/broadcast` | – |
 | (error) | `app/error.tsx` | Error boundary. POSTs `{message, stack, url}` to `/api/log-error` and shows a retry button. | | |
 | (404) | `app/not-found.tsx` | Translated "not found" | | |
 | manifest | `app/manifest.ts` | Global PWA manifest "Cup", start `/` | | |
@@ -268,7 +268,6 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 | GET | `/api/admin/live` | last 50 orders across shops with `shops(name, logo_url)` |
 | GET | `/api/admin/reviews` | last 100 reviews with the shop name and logo |
 | GET / POST / PATCH | `/api/admin/support` | GET: last 100 messages and `unread` (barista → admin). POST `{shop_id, message}` as admin. PATCH `{shop_id}` marks the barista messages read. |
-| GET / PATCH | `/api/admin/contact` | read and update `global_settings.support_contact` `{email ≤120, phone ≤40}` |
 | PATCH | `/api/broadcast` | admin. `{active, message}` upserts `global_settings.broadcast` and inserts `broadcast_history` (if a message is present). |
 
 ---
@@ -320,13 +319,12 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 | `SupportModal.tsx` | Barista ↔ admin chat (polls 5 s, marks read) |
 | `ui/ConfirmDialog.tsx` | Confirm modal (default/danger variants, loading). Used by admin shop detail. |
 | `ui/Modal.tsx` | Generic modal, used by `ConfirmDialog` (the dashboard has its own local one) |
-| `ui/SearchBar.tsx` | Search input (admin home) |
 | `ui/Toast.tsx` | Toast stack (`ToastItem`, `ToastKind`). Used with `hooks/useToasts`. |
 
 ### `src/lib`
 | File | Purpose |
 |---|---|
-| `admin-auth.ts` | Admin cookie sign/verify, `isAdminAuthed()`, `ADMIN_COOKIE`, `ADMIN_MAX_AGE` |
+| `admin-auth.ts` | Admin cookie sign/verify, `requireAdmin()` |
 | `shop-auth.ts` | Shop cookie sign/verify, `getShopSession`, `requireShopAuth`, `requireShop`, `SHOP_COOKIE`, `SHOP_MAX_AGE` |
 | `pin.ts` | `hashPin` (v2 scrypt + salt + pepper), `verifyPin` (v2, v1w, legacy hex → `{ok, needsRehash}`). Node runtime only. |
 | `config.ts` | `MONTHLY_PRICE_TND`, `DEV_LAN_IP` (env-driven settings) |
@@ -334,7 +332,7 @@ Component `SupportModal` polls GET every 5 s while open and PATCHes (mark read) 
 | `rate-limit.ts` | `createRateLimiter(scope, max, windowMs)`, persisted in `global_settings` |
 | `supabase-admin.ts` | Service-role client (server only!) |
 | `send-push.ts` | `sendOrderReadyPush(orderId)`: VAPID config, sends to all subscriptions, prunes 404/410 |
-| `badge.ts` | `setBadge`, `clearBadge`, `supportsBadge` (App Badging API) |
+| `badge.ts` | `setBadge`, `clearBadge` (App Badging API) |
 | `themes.ts` | **Source of truth for the `Shop` client type.** `PALETTES` (stone [default], espresso, olive, clay, ink, cream, cozy [bean pattern]), `FONTS` (sans "Modern", serif "Editorial", display "Distinct"), `DEFAULT_THEME`, `getPalette`, `getFont`, `paletteVars` (`--bg --surface --surface-muted --border --text --text-muted --primary --primary-text --accent --accent-soft`) |
 | `i18n/translations.ts` | `Locale = fr|ar|en`, `LOCALES` (with `dir`), `DEFAULT_LOCALE='fr'`, `translations` dict, `TranslationKey = keyof translations.fr`, `formatTemplate()` |
 | `i18n/context.tsx` | `I18nProvider` (reads `cup-locale` after mount, sets `<html lang/dir>`, toggles `font-arabic` on body), `useI18n()`, `useT()`. `t(key, {var})` replaces `%var` and falls back to fr, then to the key. |
@@ -380,6 +378,7 @@ English-only admin with shell (`components/admin/AdminShell.tsx`, sidebar + iPho
 Gotcha: the mock DB reset keeps `admin_session_version` (the app caches it 15 s in memory; resetting it caused false 401s).
 
 ## 10. Known issues / gotchas
+- **Dead-code sweep (2026-10-29)**: removed `ui/SearchBar`, `/api/admin/contact` (replaced by `/api/admin/settings`), `BrandMark`/`BrandWordmark`, `supportsBadge`, the never-wired support realtime helpers (`pingSupport`, `shopSupportTopic`, `adminSupportTopic`; support chat polls), 120 unused translation keys ×3 languages (old admin panel, old logo editor, old setup screen), Next starter SVGs in `public/`, and the unused `@tailwindcss/turbopack` package. To re-check: `npx knip` (test files, `public/sw.js` and `scripts/` show as "unused" because they're run by path, not imported).
 - **iPhone "Add to Home Screen" guide** (`components/InstallApp.tsx`, `lib/install-platform.ts`): Safari's bar differs by iOS version (`ui`: classic = Share button, ios26 = ••• on the right, ios27 = ☰ Page Menu on the left) **and** by a Safari setting (Compact / Bottom / Top) a page can't read, so the guide has a "Screen looks different?" switch. When a new iOS changes the bar again, add a `ui` value + steps + arrow position there.
 - **In-app viewers / Code Scanner handoff**: the iPhone Code Scanner (and Instagram, WhatsApp…) open pages in a mini browser with no "Add to Home Screen"; the Code Scanner one looks exactly like Safari to the page. The guide offers one tap to the real browser: `x-safari-https://…?add=1` on iPhone, `intent://…;package=com.android.chrome;S.browser_fallback_url=…` on Android. A page loaded with `?add=1` marks `sessionStorage.beep-real-browser`, opens the guide by itself (`<InstallAutoGuide>` on `/o/[id]` and the dashboard) and drops `?add=1` from the address. Copy-link and manual steps stay as the fallback.
 

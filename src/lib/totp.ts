@@ -9,7 +9,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const STEP_SECONDS = 30;
 const DIGITS = 6;
 
-export function base32Encode(buf: Buffer): string {
+function base32Encode(buf: Buffer): string {
   let bits = 0;
   let value = 0;
   let out = "";
@@ -25,7 +25,7 @@ export function base32Encode(buf: Buffer): string {
   return out;
 }
 
-export function base32Decode(input: string): Buffer {
+function base32Decode(input: string): Buffer {
   const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, "");
   let bits = 0;
   let value = 0;
@@ -46,11 +46,11 @@ export function generateTotpSecret(): string {
   return base32Encode(crypto.randomBytes(20));
 }
 
-export function currentCounter(nowMs = Date.now()): number {
+function currentCounter(nowMs = Date.now()): number {
   return Math.floor(nowMs / 1000 / STEP_SECONDS);
 }
 
-export function totpAt(secretB32: string, counter: number): string {
+function totpAt(secretB32: string, counter: number): string {
   const key = base32Decode(secretB32);
   const msg = Buffer.alloc(8);
   msg.writeBigUInt64BE(BigInt(counter));

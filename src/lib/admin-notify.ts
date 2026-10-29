@@ -21,7 +21,7 @@ export type NotifyKind = "signup" | "support" | "billing" | "test";
 
 export type NotifyPrefs = { signup: boolean; support: boolean; billing: boolean };
 
-export const DEFAULT_PREFS: NotifyPrefs = { signup: true, support: true, billing: true };
+const DEFAULT_PREFS: NotifyPrefs = { signup: true, support: true, billing: true };
 
 export type AdminDevice = {
   subscription: PushSubscription;

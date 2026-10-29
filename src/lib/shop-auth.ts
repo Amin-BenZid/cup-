@@ -25,7 +25,7 @@ export function createShopToken(shopId: string): string {
   return `${payload}.${sign(payload)}`;
 }
 
-export function verifyShopToken(
+function verifyShopToken(
   token: string | undefined,
 ): { shopId: string } | null {
   if (!token) return null;

@@ -61,7 +61,7 @@ export async function createSessionToken(): Promise<string> {
   return `${payload}.${sign(payload)}`;
 }
 
-export async function verifySessionToken(
+async function verifySessionToken(
   token: string | undefined,
 ): Promise<boolean> {
   if (!token) return false;
@@ -85,7 +85,7 @@ export async function verifySessionToken(
   return Number(version) === current;
 }
 
-export async function isAdminAuthed(): Promise<boolean> {
+async function isAdminAuthed(): Promise<boolean> {
   const store = await cookies();
   return verifySessionToken(store.get(COOKIE_NAME)?.value);
 }
@@ -152,5 +152,3 @@ export function clientIp(req: Request): string {
   );
 }
 
-export const ADMIN_COOKIE = COOKIE_NAME;
-export const ADMIN_MAX_AGE = MAX_AGE_SECONDS;

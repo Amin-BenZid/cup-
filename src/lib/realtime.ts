@@ -20,16 +20,6 @@ function tag(input: string) {
   return crypto.createHmac("sha256", secret()).update(`rt:${input}`).digest("hex").slice(0, 24);
 }
 
-/** Topic the barista app of one shop listens on. */
-export function shopSupportTopic(shopId: string) {
-  return `sup-${tag(`shop:${shopId}`)}`;
-}
-
-/** Topic the admin app listens on (all shops). */
-export function adminSupportTopic() {
-  return `sup-${tag("admin")}`;
-}
-
 /** Fire-and-forget broadcast. Never throws; resolves within ~2.5 s. */
 export async function pingTopics(topics: string[], payload: Record<string, unknown> = {}) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -52,11 +42,6 @@ export async function pingTopics(topics: string[], payload: Record<string, unkno
   } catch (e) {
     console.error("[realtime] broadcast error:", e instanceof Error ? e.message : e);
   }
-}
-
-/** Notify both sides of a shop's support thread. */
-export function pingSupport(shopId: string, kind: "message" | "delivered" | "read") {
-  return pingTopics([shopSupportTopic(shopId), adminSupportTopic()], { kind });
 }
 
 /** Topic a customer's order page listens on. */
