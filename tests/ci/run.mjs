@@ -193,6 +193,7 @@ const SUITES = [
   { id: 'live', title: 'Live orders (realtime)', cmd: 'node', args: ['tests/e2e/live.test.mjs'] },
   { id: 'push', title: 'Admin push notifications', cmd: 'node', args: ['tests/e2e/push.test.mjs'], needsPush: true },
   { id: 'i18n', title: 'Translations: error codes + customer push language', cmd: 'node', args: ['tests/e2e/i18n.test.mjs'], needsPush: true },
+  { id: 'staff-push', title: 'Staff notifications (support replies, broadcasts)', cmd: 'node', args: ['tests/e2e/staff-push.test.mjs'], needsPush: true },
   { id: 'ui-states', title: 'UI · shop states (archived, paused, deleted, expired)', cmd: PY, args: ['tests/ui/shop_states.py'], timeoutMs: 420_000, ui: true },
   { id: 'ui-install', title: 'UI · Add to Home Screen (iPhone, Android, in-app)', cmd: PY, args: ['tests/ui/install.py'], timeoutMs: 300_000, ui: true },
   { id: 'ui-offline', title: 'UI · offline page', cmd: PY, args: ['tests/ui/offline.py'], timeoutMs: 120_000, ui: true },
@@ -217,7 +218,7 @@ async function main() {
     record({ id: 'typecheck', title: 'Typecheck (tsc)', status: tc.code === 0 ? 'pass' : 'fail', blocking: true, ms: tc.ms, passed: tc.code === 0 ? 1 : 0, failed: errs.slice(0, 30), errors: [], tail: errs.slice(0, 40).join('\n') })
   }
 
-  // 3. Lint: reported, not blocking yet (the codebase still has known findings).
+  // 3. Lint: errors block the deploy (warnings are only reported).
   {
     const jsonFile = path.join(OUT, 'logs', 'lint.json')
     const ln = await run('npx', ['eslint', 'src', '--format', 'json', '--output-file', jsonFile], { logName: 'lint', timeoutMs: 300_000 })
@@ -227,13 +228,13 @@ async function main() {
     } catch {}
     if (!files) {
       // ESLint itself crashed: never report that as green.
-      record({ id: 'lint', title: 'Lint (eslint) could not run', status: 'warn', blocking: false, ms: ln.ms, passed: 0, failed: ln.out.split('\n').filter(Boolean).slice(0, 5), errors: [], tail: '' })
+      record({ id: 'lint', title: 'Lint (eslint) could not run', status: 'fail', blocking: true, ms: ln.ms, passed: 0, failed: ln.out.split('\n').filter(Boolean).slice(0, 5), errors: [], tail: '' })
     } else {
       const items = files.flatMap((f) => f.messages.map((m) => ({ ...m, file: path.relative(ROOT, f.filePath) })))
       const errs = items.filter((m) => m.severity === 2)
       const warns = items.filter((m) => m.severity === 1)
       const fmt = (m) => `${m.file}:${m.line}  ${m.ruleId ?? ''}  ${m.message.split('\n')[0].slice(0, 120)}`
-      record({ id: 'lint', title: `Lint (eslint) · ${errs.length} errors, ${warns.length} warnings`, status: errs.length ? 'warn' : 'pass', blocking: false, ms: ln.ms, passed: errs.length ? 0 : 1, failed: errs.map(fmt), errors: [], tail: '' })
+      record({ id: 'lint', title: `Lint (eslint) · ${errs.length} errors, ${warns.length} warnings`, status: errs.length ? 'fail' : warns.length ? 'warn' : 'pass', blocking: errs.length > 0, ms: ln.ms, passed: errs.length ? 0 : 1, failed: errs.length ? errs.map(fmt) : warns.map(fmt), errors: [], tail: '' })
     }
   }
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
+import { useStored } from '@/hooks/useStored'
 
 type Bean = {
   id: number
@@ -25,7 +26,9 @@ export default function CatchBeans() {
   const [score, setScore] = useState(0)
   const [misses, setMisses] = useState(0)
   const [beans, setBeans] = useState<Bean[]>([])
-  const [best, setBest] = useState(0)
+  const [newBest, setBest] = useState(0)
+  const savedBest = Number(useStored(BEST_KEY) ?? '0') || 0
+  const best = Math.max(newBest, savedBest)
   const [cupX, setCupX] = useState(50)
 
   const beanId = useRef(0)
@@ -44,13 +47,10 @@ export default function CatchBeans() {
     playingRef.current = playing
   }, [playing])
 
+  // Keep the ref used inside the game loop in step with the saved best.
   useEffect(() => {
-    const saved = Number(localStorage.getItem(BEST_KEY) ?? '0')
-    if (!isNaN(saved)) {
-      setBest(saved)
-      bestRef.current = saved
-    }
-  }, [])
+    if (savedBest > bestRef.current) bestRef.current = savedBest
+  }, [savedBest])
 
   const moveCup = useCallback((clientX: number) => {
     const area = areaRef.current

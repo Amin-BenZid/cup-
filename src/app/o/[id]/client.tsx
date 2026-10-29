@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Coffee,
@@ -12,6 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import NotificationSetup from "@/components/NotificationSetup";
+import { useStored } from "@/hooks/useStored";
 import Logo from "@/components/Logo";
 import BrandLogo from "@/components/BrandLogo";
 import CozyPattern from "@/components/CozyPattern";
@@ -61,13 +62,23 @@ export default function CustomerOrderClient({
   const [error, setError] = useState(
     hasInitial && !initialOrder ? t("common.orderNotFound") : "",
   );
-  const [ringing, setRinging] = useState(false);
+  // A server-delivered order that's already ready rings from the start
+  // (unless it was acknowledged on this phone, see `acknowledged`).
+  const [ringing, setRinging] = useState(
+    () => !!hasInitial && initialOrder?.status === "ready",
+  );
   const [topic, setTopic] = useState<string | null>(initialTopic ?? null);
-  const [acknowledged, setAcknowledged] = useState(false);
+  const [ackNow, setAcknowledged] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [enableState, setEnableState] = useState<
     "idle" | "loading" | "ok" | "hidden"
   >("idle");
+  // Acknowledged on this phone earlier (saved), or just now.
+  const ackSaved = useStored(orderId ? `cup-ack-${orderId}` : null) === "1";
+  const acknowledged = ackNow || ackSaved;
+  // Once any tap has unlocked sound, the "enable sound" prompt goes away.
+  const soundPrompt =
+    audioUnlocked && enableState === "idle" ? "hidden" : enableState;
   const [staleDismissed, setStaleDismissed] = useState(false);
   const [staleCancelling, setStaleCancelling] = useState(false);
   const [staleError, setStaleError] = useState("");
@@ -172,24 +183,10 @@ export default function CustomerOrderClient({
     }
   }, [enableState, unlockAudio]);
 
-  // If another tap already unlocked the page, drop the prompt.
-  useEffect(() => {
-    if (!audioUnlocked) return;
-    setEnableState((s) => (s === "idle" ? "hidden" : s));
-  }, [audioUnlocked]);
-
   // ---------- initial load ----------
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
-
-    try {
-      const ack = localStorage.getItem(`cup-ack-${orderId}`);
-      if (ack === "1") {
-        setAcknowledged(true);
-        setRinging(false);
-      }
-    } catch {}
 
     // The server already delivered the order — only register the connection.
     if (hasInitial) {
@@ -200,10 +197,6 @@ export default function CustomerOrderClient({
         fetch(`/api/orders/${orderId}/connect`, { method: "POST" }).catch(
           () => {},
         );
-        try {
-          const ack = localStorage.getItem(`cup-ack-${orderId}`);
-          if (initialOrder.status === "ready" && ack !== "1") setRinging(true);
-        } catch {}
       }
       return;
     }
@@ -250,7 +243,7 @@ export default function CustomerOrderClient({
           const ack = localStorage.getItem(`cup-ack-${orderId}`);
           if (orderData.status === "ready" && ack !== "1") setRinging(true);
         } catch {}
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setError(t("common.loadFailed"));
           setLoading(false);
@@ -434,19 +427,12 @@ export default function CustomerOrderClient({
     };
   }, []);
 
-  const palette = useMemo(
-    () => getPalette(shop?.theme?.palette),
-    [shop?.theme?.palette],
-  );
-  const font = useMemo(() => getFont(shop?.theme?.font), [shop?.theme?.font]);
-
-  const themeVars = useMemo(() => {
-    const base = paletteVars(palette);
-    if (shop?.theme?.primary) {
-      (base as Record<string, string>)["--primary"] = shop.theme.primary;
-    }
-    return base;
-  }, [palette, shop?.theme?.primary]);
+  // Palettes and fonts come from fixed lists (same object each time), so
+  // these are cheap plain values.
+  const palette = getPalette(shop?.theme?.palette);
+  const font = getFont(shop?.theme?.font);
+  const themeVars: Record<string, string> = { ...(paletteVars(palette) as Record<string, string>) };
+  if (shop?.theme?.primary) themeVars["--primary"] = shop.theme.primary;
 
   useEffect(() => {
     if (typeof document === "undefined" || !font) return;
@@ -675,17 +661,17 @@ export default function CustomerOrderClient({
 
             {/* ENABLE SOUND — shown whenever audio is still locked, including
                 when the app opens directly on an already-ready order. */}
-            {enableState !== "hidden" && !acknowledged && (
+            {soundPrompt !== "hidden" && !acknowledged && (
               <div
                 className="rounded-2xl border px-4 py-3.5 space-y-1 transition-colors duration-300"
                 style={{
                   borderColor:
-                    enableState === "ok" ? "#a7f3d0" : "var(--border)",
+                    soundPrompt === "ok" ? "#a7f3d0" : "var(--border)",
                   background:
-                    enableState === "ok" ? "#ecfdf5" : "var(--surface)",
+                    soundPrompt === "ok" ? "#ecfdf5" : "var(--surface)",
                 }}
               >
-                {enableState === "ok" ? (
+                {soundPrompt === "ok" ? (
                   <div
                     className="flex items-center justify-center gap-2 text-sm font-semibold py-0.5"
                     style={{ color: "#047857" }}
@@ -697,11 +683,11 @@ export default function CustomerOrderClient({
                   <>
                     <button
                       onClick={handleEnableSound}
-                      disabled={enableState === "loading"}
+                      disabled={soundPrompt === "loading"}
                       className="w-full text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition disabled:opacity-70"
                       style={{ color: "var(--text)" }}
                     >
-                      {enableState === "loading" ? (
+                      {soundPrompt === "loading" ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           {t("cust.enableSound")}

@@ -80,6 +80,17 @@ self.addEventListener('notificationclick', function (event) {
         for (const c of clientList) {
           if (c.url === url && 'focus' in c) return c.focus()
         }
+        // Same part of the app already open (staff dashboard, admin, an
+        // order): bring that window to the page instead of opening another.
+        const section = new URL(url).pathname.split('/')[1]
+        for (const c of clientList) {
+          if (new URL(c.url).pathname.split('/')[1] === section && 'navigate' in c) {
+            try {
+              const nav = await c.navigate(url)
+              return (nav || c).focus()
+            } catch (e) {}
+          }
+        }
         if (clients.openWindow) return clients.openWindow(url)
       })(),
     ])

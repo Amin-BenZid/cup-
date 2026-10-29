@@ -1,9 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n/context'
 import { CustomerInstall } from '@/components/InstallApp'
+import { useStored } from '@/hooks/useStored'
+
+const noopSubscribe = () => () => {}
+function readPermission(): NotificationPermission | 'unsupported' {
+  const ok = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+  return ok ? Notification.permission : 'unsupported'
+}
 
 const DISMISS_KEY = 'notif-banner-dismissed'
 
@@ -22,35 +29,18 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
   // Dismissal is per order: a new coffee should ask again.
   const dismissKey = `${DISMISS_KEY}-${orderId}`
 
-  const [visible, setVisible] = useState(false)
-  const [status, setStatus] = useState<
-    'idle' | 'granted' | 'denied' | 'working'
-  >('idle')
+  // What the browser allows right now ('unsupported' on the server and on
+  // browsers without web push, e.g. iPhone before Add to Home Screen).
+  const permission = useSyncExternalStore(noopSubscribe, readPermission, () => 'unsupported' as const)
+  const dismissedBefore = useStored(dismissKey) === '1'
+  // Result of tapping "Enable" (idle until then).
+  const [action, setStatus] = useState<'idle' | 'granted' | 'denied' | 'working'>('idle')
+  const [closed, setClosed] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const supportsSW = 'serviceWorker' in navigator
-    const supportsPush = 'PushManager' in window
-    const supportsNotif = 'Notification' in window
-    const permission = supportsNotif ? Notification.permission : 'unsupported'
-
-    if (!supportsSW || !supportsPush || !supportsNotif) return
-
-    if (permission === 'granted') {
-      setStatus('granted')
-      return
-    }
-    if (permission === 'denied') {
-      setStatus('denied')
-      return
-    }
-
-    if (localStorage.getItem(dismissKey) === '1') return
-
-    setVisible(true)
-  }, [orderId, dismissKey])
+  const status =
+    action !== 'idle' ? action : permission === 'granted' ? 'granted' : permission === 'denied' ? 'denied' : 'idle'
+  const visible = permission === 'default' && !dismissedBefore && !closed
 
   // Register the service worker once.
   useEffect(() => {
@@ -104,7 +94,8 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
     return () => {
       cancelled = true
     }
-  }, [orderId])
+    // Re-sent when the language changes, so the "ready" alert uses it.
+  }, [orderId, locale])
 
   async function enable() {
     setError('')
@@ -146,7 +137,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
       }
 
       setStatus('granted')
-      setVisible(false)
+      setClosed(true)
     } catch {
       setError(t('notif.error.save'))
       setStatus('idle')
@@ -220,7 +211,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
             <button
               onClick={() => {
                 localStorage.setItem(dismissKey, '1')
-                setVisible(false)
+                setClosed(true)
               }}
               className="text-xs px-2 py-1.5 hover:opacity-70 transition"
               style={{ color: 'var(--text-muted, #78716c)' }}
@@ -233,7 +224,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
         <button
           onClick={() => {
             localStorage.setItem(dismissKey, '1')
-            setVisible(false)
+            setClosed(true)
           }}
           className="w-6 h-6 rounded-md hover:bg-stone-100 flex items-center justify-center shrink-0"
           aria-label={t('common.dismiss')}

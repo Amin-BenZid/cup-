@@ -19,6 +19,7 @@ import {
 import { useT } from '@/lib/i18n/context'
 import type { TranslationKey } from '@/lib/i18n/translations'
 import { detectInstallPlatform, type InstallPlatform } from '@/lib/install-platform'
+import { storageChanged, useSnoozed } from '@/hooks/useStored'
 
 /* ------------------------------------------------------------------ state */
 
@@ -54,6 +55,12 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb)
 }
 
+// Detected once per page load, so every read returns the same object.
+let detected: InstallPlatform | null = null
+function platformSnapshot(): InstallPlatform {
+  return (detected ??= detect())
+}
+
 function detect(): InstallPlatform {
   const standalone =
     window.matchMedia?.('(display-mode: standalone)').matches ||
@@ -67,15 +74,11 @@ function detect(): InstallPlatform {
 
 /** Platform + whether the browser's own one-tap prompt is available. */
 export function useInstall() {
-  const [platform, setPlatform] = useState<InstallPlatform | null>(null)
+  // The server render knows nothing about the browser: null there and during
+  // hydration, the detected platform right after.
+  const platform = useSyncExternalStore(subscribe, platformSnapshot, () => null)
   const canPrompt = useSyncExternalStore(subscribe, () => !!deferred, () => false)
   const justInstalled = useSyncExternalStore(subscribe, () => installedNow, () => false)
-
-  useEffect(() => {
-    // Read the browser only after mount (the server render knows nothing).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPlatform(detect())
-  }, [])
 
   const installed = justInstalled || platform?.kind === 'installed'
   // Something we can offer: the native prompt, or steps for a phone.
@@ -375,16 +378,9 @@ export function InstallCard({ shopId }: { shopId: string }) {
   const t = useT()
   const { available, canPrompt, platform } = useInstall()
   const key = `install-card-later:${shopId}`
-  const [hidden, setHidden] = useState(true)
-
-  useEffect(() => {
-    let snoozed = false
-    try {
-      snoozed = Date.now() - Number(localStorage.getItem(key) ?? 0) < SNOOZE_MS
-    } catch {}
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHidden(snoozed)
-  }, [key])
+  const snoozed = useSnoozed(key, SNOOZE_MS)
+  const [closed, setClosed] = useState(false)
+  const hidden = snoozed || closed
 
   // On a computer, only when the browser itself can install it.
   if (hidden || !available || !platform || (platform.kind === 'desktop' && !canPrompt)) return null
@@ -411,7 +407,8 @@ export function InstallCard({ shopId }: { shopId: string }) {
             try {
               localStorage.setItem(key, String(Date.now()))
             } catch {}
-            setHidden(true)
+            storageChanged()
+            setClosed(true)
           }}
           className="text-xs text-stone-500 hover:text-stone-900 underline underline-offset-2 shrink-0"
         >

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
+import { notifyShopSupport } from '@/lib/shop-notify'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireAdmin } from '@/lib/admin-auth'
 import { logAdminEvent } from '@/lib/admin-audit'
@@ -51,6 +52,8 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   await logAdminEvent(req, 'support_reply', { shop_id })
+  // Ping the shop's staff phones (those that turned notifications on).
+  after(() => notifyShopSupport(shop_id, message).then(() => {}))
   return NextResponse.json({ message: data })
 }
 

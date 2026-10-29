@@ -14,6 +14,7 @@ import {
 import BrandLogo from "@/components/BrandLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
+import { useStored } from "@/hooks/useStored";
 import { formatTemplate } from "@/lib/i18n/translations";
 
 type Status = "pending" | "active" | "disabled" | "deleted" | "unknown";
@@ -22,18 +23,11 @@ export default function PendingPage() {
   const t = useT();
   const router = useRouter();
   const [status, setStatus] = useState<Status>("pending");
-  const [shopName, setShopName] = useState("");
-  const [shopId, setShopId] = useState<string | null>(null);
+  const shopName = useStored("shop_name") ?? "";
+  const shopId = useStored("shop_id");
 
   useEffect(() => {
-    const id = localStorage.getItem("shop_id");
-    const name = localStorage.getItem("shop_name");
-    if (!id) {
-      router.replace("/setup");
-      return;
-    }
-    setShopId(id);
-    setShopName(name ?? "");
+    if (!localStorage.getItem("shop_id")) router.replace("/setup");
   }, [router]);
 
   useEffect(() => {

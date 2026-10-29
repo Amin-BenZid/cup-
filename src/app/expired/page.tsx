@@ -8,6 +8,7 @@ import BrandLogo from '@/components/BrandLogo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import SupportModal from '@/components/SupportModal'
 import { useT } from '@/lib/i18n/context'
+import { useStored } from '@/hooks/useStored'
 import { clearShopStorage, fetchAccess, screenFor, type AccessState } from '@/lib/shop-access-client'
 
 type Contact = { email: string; phone: string }
@@ -41,7 +42,9 @@ function AccountUnavailable() {
   const [shown, setShown] = useState<Shown | null>(params.get('state') === 'deleted' ? 'deleted' : null)
   const [reason, setReason] = useState<'trial' | 'subscription'>('trial')
   const [shopId, setShopId] = useState<string | null>(null)
-  const [shopName, setShopName] = useState('')
+  const [serverName, setShopName] = useState('')
+  const savedName = useStored('shop_name')
+  const shopName = serverName || savedName || ''
   const [contact, setContact] = useState<Contact>({ email: '', phone: '' })
   const [loggingOut, setLoggingOut] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
@@ -85,15 +88,18 @@ function AccountUnavailable() {
   }, [router])
 
   useEffect(() => {
-    setShopName(localStorage.getItem('shop_name') ?? '')
     if (params.get('state') === 'deleted') clearShopStorage()
-    void refresh()
+    // First check right away, then every 30 s.
+    const first = setTimeout(() => void refresh(), 0)
     const interval = setInterval(() => void refresh(), 30_000)
     fetch('/api/support-contact', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => j && setContact({ email: j.email ?? '', phone: j.phone ?? '' }))
       .catch(() => {})
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(first)
+      clearInterval(interval)
+    }
   }, [refresh, params])
 
   // The in-app chat only exists while the café exists and isn't closed.
@@ -112,9 +118,12 @@ function AccountUnavailable() {
 
   useEffect(() => {
     if (!canChat) return
-    void checkUnread()
+    const first = setTimeout(() => void checkUnread(), 0)
     const interval = setInterval(checkUnread, 15000)
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(first)
+      clearInterval(interval)
+    }
   }, [canChat, checkUnread])
 
   async function logout() {

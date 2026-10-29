@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -34,6 +34,7 @@ import Logo from '@/components/Logo'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useT } from '@/lib/i18n/context'
 import { handleAccessDenied } from '@/lib/shop-access-client'
+import { useStored } from '@/hooks/useStored'
 
 type TabId = 'branding' | 'theme' | 'game' | 'messages'
 type DeviceId = 'phone' | 'desktop'
@@ -65,7 +66,7 @@ function CustomizeContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [shopId, setShopId] = useState<string | null>(null)
+  const shopId = useStored('shop_id')
   const [shop, setShop] = useState<Shop | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -89,20 +90,26 @@ function CustomizeContent() {
   const [game, setGame] = useState<string>('catch-beans')
   const [messages, setMessages] = useState<ShopMessages>({})
 
+  // Latest translator for the one-time load below (switching language must not
+  // reload the shop and wipe unsaved edits).
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
+
   useEffect(() => {
     const id = localStorage.getItem('shop_id')
     if (!id) {
       router.replace('/barista')
       return
     }
-    setShopId(id)
 
     ;(async () => {
       const res = await fetch(`/api/shops/${id}`, { cache: 'no-store' })
       if ((res.status === 401 || res.status === 403) && (await handleAccessDenied(router))) return
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(t('cz.error.load'))
+        setError(tRef.current('cz.error.load'))
         setLoading(false)
         return
       }
@@ -140,7 +147,7 @@ function CustomizeContent() {
         }
         setShop(json.shop)
         setSavedAt(Date.now())
-      } catch (e) {
+      } catch {
         setError(t('setup.error.network'))
       } finally {
         setSaving(false)
@@ -739,7 +746,6 @@ function CustomerPreview({
   preparing,
   ready,
   game,
-  labelOrder,
   labelYourOrder,
   labelWhileWait,
   labelPickup,

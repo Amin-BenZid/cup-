@@ -44,14 +44,14 @@ export default function LogoUploader({
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const pinchRef = useRef<{ dist: number; scale: number } | null>(null)
 
-  function reset() {
+  const reset = useCallback(() => {
     if (preview) URL.revokeObjectURL(preview)
     setPreview(null)
     setScale(1)
     setOffset({ x: 0, y: 0 })
     setShowCrop(false)
     setError('')
-  }
+  }, [preview])
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -196,7 +196,7 @@ export default function LogoUploader({
     } finally {
       setUploading(false)
     }
-  }, [preview, scale, offset, shopId, onUploaded, router, t])
+  }, [preview, scale, offset, shopId, onUploaded, router, t, reset])
 
   useEffect(() => {
     return () => {

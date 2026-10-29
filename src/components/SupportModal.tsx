@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Send, LifeBuoy, Loader2, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { X, Send, MessageCircle, Loader2, AlertCircle } from "lucide-react";
 import { useT } from "@/lib/i18n/context";
 
 type Message = {
@@ -28,11 +28,18 @@ export default function SupportModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function load() {
+  // The parent passes a new callback each render; read the latest from a ref
+  // so the polling below isn't restarted every time.
+  const onAccessLostRef = useRef(onAccessLost);
+  useEffect(() => {
+    onAccessLostRef.current = onAccessLost;
+  }, [onAccessLost]);
+
+  const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/support?shop_id=${shopId}`);
       if (res.status === 401 || res.status === 403) {
-        onAccessLost?.();
+        onAccessLostRef.current?.();
         return;
       }
       if (res.ok) {
@@ -44,10 +51,11 @@ export default function SupportModal({
     } finally {
       setLoading(false);
     }
-  }
+  }, [shopId]);
 
   useEffect(() => {
-    load();
+    // Load right away, then refresh every 5 s.
+    const first = setTimeout(load, 0);
 
     // Mark admin messages as read
     fetch("/api/support", {
@@ -63,11 +71,12 @@ export default function SupportModal({
     document.body.style.overflow = "hidden";
 
     return () => {
+      clearTimeout(first);
       clearInterval(interval);
       // UNLOCK BACKGROUND SCROLL
       document.body.style.overflow = "";
     };
-  }, [shopId]);
+  }, [shopId, load]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -116,7 +125,7 @@ export default function SupportModal({
       >
         <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <LifeBuoy className="w-5 h-5 text-stone-400" />
+            <MessageCircle className="w-5 h-5 text-stone-500" />
             <h2 className="text-lg font-semibold">{t("support.title")}</h2>
           </div>
           <button

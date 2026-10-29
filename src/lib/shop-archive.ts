@@ -127,7 +127,9 @@ export async function deleteShopCompletely(shopId: string): Promise<DeleteReport
   }
 
   // 4. Settings that belong to the shop (archive record last, below).
-  for (const key of [`admin_notify_throttle:support:${shopId}`, `pin_reset_request:${shopId}`]) {
+  // Staff phones registered for notifications (see lib/shop-notify.ts).
+  const deviceKeys = (await listSettings(`shop_push:${shopId}:`)).map((r) => r.key)
+  for (const key of [`admin_notify_throttle:support:${shopId}`, `pin_reset_request:${shopId}`, ...deviceKeys]) {
     await deleteSetting(key).catch(() => {});
     report.settings++;
   }

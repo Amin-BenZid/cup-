@@ -105,7 +105,7 @@ export default function BaristaLogin() {
       localStorage.setItem('shop_name', json.shop.name)
       localStorage.setItem('shop_code', json.shop.code)
       router.push('/barista/dashboard')
-    } catch (e) {
+    } catch {
       setError(t('setup.error.network'))
     } finally {
       setLoading(false)

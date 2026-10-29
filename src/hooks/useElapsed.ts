@@ -9,34 +9,28 @@ import { useEffect, useState } from 'react'
  */
 export function useElapsed(startIso: string | null, endIso?: string | null) {
   const [elapsed, setElapsed] = useState<number | null>(null)
+  const start = startIso ? new Date(startIso).getTime() : NaN
+  const valid = Number.isFinite(start)
 
   useEffect(() => {
-    if (!startIso) {
-      setElapsed(null)
-      return
-    }
-    const start = new Date(startIso).getTime()
-    if (!Number.isFinite(start)) {
-      setElapsed(null)
-      return
-    }
-
+    if (!valid) return
     const end = endIso ? new Date(endIso).getTime() : null
     const compute = () => {
       const now = end ?? Date.now()
       setElapsed(Math.max(0, Math.floor((now - start) / 1000)))
     }
-
-    compute()
-
-    // If there's an end, we don't need to keep ticking
-    if (end) return
-
+    // First value right away (as a timer callback), then every second unless
+    // there's an end time.
+    const first = setTimeout(compute, 0)
+    if (end) return () => clearTimeout(first)
     const id = setInterval(compute, 1000)
-    return () => clearInterval(id)
-  }, [startIso, endIso])
+    return () => {
+      clearTimeout(first)
+      clearInterval(id)
+    }
+  }, [valid, start, endIso])
 
-  return elapsed
+  return valid ? elapsed : null
 }
 
 /** Formats seconds as "3m 12s" / "45s" / "1h 3m" */

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
+import { notifyAllShopsBroadcast } from '@/lib/shop-notify'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireAdmin } from '@/lib/admin-auth'
 import { logAdminEvent } from '@/lib/admin-audit'
@@ -46,6 +47,18 @@ export async function PATCH(req: NextRequest) {
 
   const value = { active, message }
 
+  // What was live before, so re-saving the same message doesn't notify twice.
+  const { data: before } = await supabaseAdmin
+    .from('global_settings')
+    .select('value')
+    .eq('key', 'broadcast')
+    .maybeSingle()
+  let prev = before?.value ?? null
+  if (typeof prev === 'string') {
+    try { prev = JSON.parse(prev) } catch { prev = null }
+  }
+  const isNew = active && !!message && !(prev?.active && prev?.message === message)
+
   const { error } = await supabaseAdmin
     .from('global_settings')
     .upsert(
@@ -67,5 +80,7 @@ export async function PATCH(req: NextRequest) {
   }
   
   await logAdminEvent(req, active ? 'broadcast_on' : 'broadcast_off', { message })
+  // Ping every shop's staff phones about a new announcement.
+  if (isNew) after(() => notifyAllShopsBroadcast(message).then(() => {}))
   return NextResponse.json({ ok: true, broadcast: value })
 }

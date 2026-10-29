@@ -35,4 +35,4 @@ Requires iOS 16.4+. Alerts: new café to approve, new support message (max 1 per
 - Stored in `global_settings.pin_reset_request:<shopId>`. Code: `src/lib/pin-reset.ts`, `POST /api/auth/forgot`, `src/components/ForgotPin.tsx`.
 
 ## Storage (no schema changes)
-Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`, `shop_archive:<shopId>`, `pin_reset_request:<shopId>`, `rl:pin_forgot:<hash>`.
+Everything new lives in `global_settings`: `admin_session_version`, `admin_totp`, `admin_totp_pending`, `admin_audit`, `admin_notify_prefs`, `admin_push:<hash>` (devices), `admin_notify_throttle:<key>`, `rl:admin_login:<hash>`, `shop_archive:<shopId>`, `pin_reset_request:<shopId>`, `rl:pin_forgot:<hash>`, `shop_push:<shopId>:<hash>` (staff phones for support/broadcast notifications).

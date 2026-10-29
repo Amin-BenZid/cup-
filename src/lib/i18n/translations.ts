@@ -112,6 +112,12 @@ export const translations = {
     "login.setupLink": "Créez-en un",
     "login.footer": "Gardez cet onglet ouvert pendant votre service",
 
+    // Staff notifications
+    "staffNotif.title": "Recevez les messages de Beep",
+    "staffNotif.body": "Activez les notifications pour être prévenu quand l’équipe Beep vous répond ou publie une annonce.",
+    "staffNotif.enable": "Activer les notifications",
+    "staffNotif.done": "Notifications activées",
+
     // Add to Home Screen
     "install.button": "Ajouter à l’écran d’accueil",
     "install.title": "Ajouter à l’écran d’accueil",
@@ -122,7 +128,7 @@ export const translations = {
     "install.customer.hint": "Sur iPhone, ajoutez cette page à l’écran d’accueil pour être prévenu quand votre commande est prête.",
     "install.customer.notify": "Ouvrez Beep depuis l’écran d’accueil et activez les notifications",
     "install.card.title": "Installez Beep sur ce téléphone",
-    "install.card.body": "Votre tableau de bord en un tap, en plein écran, comme une vraie appli.",
+    "install.card.body": "Votre tableau de bord en un tap, en plein écran, et les messages de l’équipe Beep en notification.",
     "install.ios.share": "Touchez le bouton Partager en bas de l’écran",
     "install.ipad.share": "Touchez le bouton Partager en haut à droite",
     "install.ios26.more": "Touchez ••• en bas à droite",
@@ -614,6 +620,12 @@ export const translations = {
     "login.setupLink": "أنشئ واحداً",
     "login.footer": "أبقِ هذه الصفحة مفتوحة خلال نوبتك",
 
+    // Staff notifications
+    "staffNotif.title": "استقبل رسائل Beep",
+    "staffNotif.body": "فعّل الإشعارات لتعرف عندما يرد عليك فريق Beep أو ينشر إعلاناً.",
+    "staffNotif.enable": "تفعيل الإشعارات",
+    "staffNotif.done": "تم تفعيل الإشعارات",
+
     // Add to Home Screen
     "install.button": "أضف إلى الشاشة الرئيسية",
     "install.title": "أضف إلى الشاشة الرئيسية",
@@ -624,7 +636,7 @@ export const translations = {
     "install.customer.hint": "على iPhone، أضف هذه الصفحة إلى الشاشة الرئيسية لتصلك التنبيه عندما يجهز طلبك.",
     "install.customer.notify": "افتح Beep من الشاشة الرئيسية وفعّل الإشعارات",
     "install.card.title": "ثبّت Beep على هذا الهاتف",
-    "install.card.body": "لوحة التحكم بلمسة واحدة، بملء الشاشة مثل تطبيق حقيقي.",
+    "install.card.body": "لوحة التحكم بلمسة واحدة، بملء الشاشة، ورسائل فريق Beep كإشعارات.",
     "install.ios.share": "اضغط على زر المشاركة أسفل الشاشة",
     "install.ipad.share": "اضغط على زر المشاركة أعلى اليمين",
     "install.ios26.more": "اضغط على ••• أسفل اليمين",
@@ -1112,6 +1124,12 @@ export const translations = {
     "login.setupLink": "Set one up",
     "login.footer": "Keep this tab open during your shift",
 
+    // Staff notifications
+    "staffNotif.title": "Get messages from Beep",
+    "staffNotif.body": "Turn on notifications to know when the Beep team replies to you or posts an announcement.",
+    "staffNotif.enable": "Turn on notifications",
+    "staffNotif.done": "Notifications are on",
+
     // Add to Home Screen
     "install.button": "Add to Home Screen",
     "install.title": "Add to Home Screen",
@@ -1122,7 +1140,7 @@ export const translations = {
     "install.customer.hint": "On iPhone, add this page to your Home Screen to get the alert when your order is ready.",
     "install.customer.notify": "Open Beep from your Home Screen and turn on notifications",
     "install.card.title": "Install Beep on this phone",
-    "install.card.body": "Your dashboard in one tap, full screen, like a real app.",
+    "install.card.body": "Your dashboard in one tap, full screen, and messages from the Beep team as notifications.",
     "install.ios.share": "Tap the Share button at the bottom of the screen",
     "install.ipad.share": "Tap the Share button at the top right",
     "install.ios26.more": "Tap ••• at the bottom right",

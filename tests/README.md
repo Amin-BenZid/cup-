@@ -25,9 +25,12 @@ page and attached as the `ci-report` artifact. Paste it to Claude to debug.
 | `live` | Live orders over realtime |
 | `push` | Admin push notifications |
 | `i18n` | Translated error codes, customer push in their language |
+| `staff-push` | Staff phones: support replies + broadcasts in their language, pruning, delete |
 | `ui-states` | Browser: archived / paused / deleted / expired screens |
 | `ui-install` | Browser: Add to Home Screen on iPhone, Android, in-app |
 | `ui-offline` | Browser: offline page from the service worker |
+
+Lint is blocking: any ESLint error fails the run (warnings are only reported).
 
 Needs Node 22.18+ (runs the `.ts` unit test directly), Python 3 with
 `pip install playwright && python -m playwright install chromium`, and

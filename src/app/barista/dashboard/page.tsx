@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { useLiveTopic } from "@/lib/realtime-client";
@@ -20,7 +20,6 @@ import {
   Palette as PaletteIcon,
   Gamepad2,
   MessageCircle,
-  LifeBuoy,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -29,11 +28,15 @@ import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import PhonePrompt, { phonePromptSnoozed } from "@/components/PhonePrompt";
 import { InstallCard } from "@/components/InstallApp";
+import StaffNotifications from "@/components/StaffNotifications";
 import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
+import { useStored } from "@/hooks/useStored";
 import { apiErrorText } from "@/lib/i18n/api-error";
 import { useT } from "@/lib/i18n/context";
 import { useElapsed, formatElapsed } from "@/hooks/useElapsed";
 import { DEV_LAN_IP } from "@/lib/config";
+
+const noopSubscribe = () => () => {};
 
 type Order = {
   id: string;
@@ -58,8 +61,14 @@ export default function DashboardPage() {
   const t = useT();
   const router = useRouter();
 
-  const [shopId, setShopId] = useState<string | null>(null);
-  const [shop, setShop] = useState<ShopInfo | null>(null);
+  const shopId = useStored("shop_id");
+  const cachedName = useStored("shop_name");
+  const [fetchedShop, setShop] = useState<ShopInfo | null>(null);
+  // The saved name shows instantly; the server's copy replaces it once loaded.
+  const shop = useMemo<ShopInfo | null>(
+    () => fetchedShop ?? (shopId && cachedName ? { id: shopId, name: cachedName } : null),
+    [fetchedShop, shopId, cachedName],
+  );
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersTopic, setOrdersTopic] = useState<string | null>(null);
 
@@ -75,7 +84,20 @@ export default function DashboardPage() {
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
 
-  const [supportOpen, setSupportOpen] = useState(false);
+  const [chatOpen, setSupportOpen] = useState(false);
+  // Opened from a "New message from Beep" notification (?support=1).
+  const fromNotification = useSyncExternalStore(
+    noopSubscribe,
+    () => new URLSearchParams(window.location.search).get("support") === "1",
+    () => false,
+  );
+  const [notificationHandled, setNotificationHandled] = useState(false);
+  const supportOpen = chatOpen || (fromNotification && !notificationHandled);
+  const closeSupport = () => {
+    setSupportOpen(false);
+    setNotificationHandled(true);
+    if (fromNotification) window.history.replaceState(null, "", "/barista/dashboard");
+  };
   const [unreadSupport, setUnreadSupport] = useState(0);
 
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -90,10 +112,6 @@ export default function DashboardPage() {
       router.replace("/barista");
       return;
     }
-    setShopId(id);
-
-    const cachedName = localStorage.getItem("shop_name");
-    if (cachedName) setShop({ id, name: cachedName });
 
     (async () => {
       try {
@@ -288,7 +306,7 @@ export default function DashboardPage() {
       setQrOrder(created);
       setNextVersion((v) => v + 1);
       void loadOrders(shopId);
-    } catch (e) {
+    } catch {
       setToast(t("setup.error.network"));
     } finally {
       setCreating(false);
@@ -323,7 +341,7 @@ export default function DashboardPage() {
       } else {
         void loadOrders(shopId);
       }
-    } catch (e) {
+    } catch {
       setOrders(before);
       setToast(t("setup.error.network"));
     } finally {
@@ -425,12 +443,16 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setSupportOpen(true)}
-              className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition relative"
+              className="relative inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-lg bg-stone-900 text-amber-50 hover:bg-stone-800 active:scale-[0.97] transition text-sm font-medium"
               title={t("support.button")}
+              aria-label={t("support.button")}
             >
-              <LifeBuoy className="w-5 h-5" />
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("support.button")}</span>
               {unreadSupport > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                <span className="absolute -top-1.5 -end-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-[18px] text-center border-2 border-white tabular-nums">
+                  {unreadSupport > 9 ? "9+" : unreadSupport}
+                </span>
               )}
             </button>
 
@@ -542,6 +564,7 @@ export default function DashboardPage() {
 
         {/* One card at a time: the phone number first, then the install. */}
         {shop && !askPhone && <InstallCard shopId={shop.id} />}
+        {shop && !askPhone && <StaffNotifications shopId={shop.id} />}
 
         {shop && showOnboarding && (
           <OnboardingChecklist
@@ -819,9 +842,9 @@ export default function DashboardPage() {
       {supportOpen && shopId && (
         <SupportModal
           shopId={shopId}
-          onClose={() => setSupportOpen(false)}
+          onClose={closeSupport}
           onAccessLost={() => {
-            setSupportOpen(false);
+            closeSupport();
             void handleAccessDenied(router);
           }}
         />

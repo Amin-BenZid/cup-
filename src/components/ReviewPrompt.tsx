@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Check, Loader2, Frown, Smile, Heart } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
+import { useStored } from '@/hooks/useStored'
 
 type Rating = 1 | 2 | 3
 
@@ -13,17 +14,11 @@ export default function ReviewPrompt({ orderId }: { orderId: string }) {
   const [rating, setRating] = useState<Rating | null>(null)
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [justSubmitted, setSubmitted] = useState(false)
+  // Already reviewed on this phone (earlier visit)?
+  const reviewedBefore = useStored(STORAGE_KEY + orderId) === '1'
+  const submitted = justSubmitted || reviewedBefore
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      if (localStorage.getItem(STORAGE_KEY + orderId) === '1') {
-        setSubmitted(true)
-      }
-    } catch {}
-  }, [orderId])
 
   async function submit() {
     if (!rating) return

@@ -32,7 +32,8 @@ export default function BroadcastBanner() {
   }
 
   useEffect(() => {
-    load()
+    // First check right away, then poll while visible.
+    const first = setTimeout(load, 0)
 
     // Poll while visible (Supabase realtime was removed for security).
     const id = setInterval(() => {
@@ -44,6 +45,7 @@ export default function BroadcastBanner() {
     document.addEventListener('visibilitychange', onVisible)
 
     return () => {
+      clearTimeout(first)
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVisible)
     }

@@ -15,6 +15,7 @@ import {
   type Locale,
   type TranslationKey,
 } from './translations'
+import { storageChanged, useHydrated, useStored } from '@/hooks/useStored'
 
 const STORAGE_KEY = 'cup-locale'
 
@@ -28,29 +29,14 @@ type Ctx = {
 
 const I18nContext = createContext<Ctx | null>(null)
 
-function readStoredLocale(): Locale | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY)
-    if (v === 'fr' || v === 'ar' || v === 'en') return v
-  } catch {}
-  return null
-}
-
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // Always start with the default (fr). This matches the server render.
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
-  const [ready, setReady] = useState(false)
-
-  // After mount, read the stored value (if any)
-  useEffect(() => {
-    const stored = readStoredLocale()
-    if (stored && stored !== locale) {
-      setLocaleState(stored)
-    }
-    setReady(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // The server render and hydration use the default (fr); right after, the
+  // saved language takes over. A choice made in this tab wins over both.
+  const stored = useStored(STORAGE_KEY)
+  const ready = useHydrated()
+  const [chosen, setChosen] = useState<Locale | null>(null)
+  const storedLocale: Locale | null = stored === 'fr' || stored === 'ar' || stored === 'en' ? stored : null
+  const locale: Locale = chosen ?? storedLocale ?? DEFAULT_LOCALE
 
   const dir = useMemo(
     () => LOCALES.find((l) => l.id === locale)?.dir ?? 'ltr',
@@ -72,10 +58,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [locale, dir])
 
   const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l)
+    setChosen(l)
     try {
       window.localStorage.setItem(STORAGE_KEY, l)
     } catch {}
+    storageChanged()
   }, [])
 
   const t = useCallback(
