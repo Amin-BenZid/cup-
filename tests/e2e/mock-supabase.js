@@ -54,7 +54,11 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('[]')
     }
     if (url.pathname === '/__reset' && req.method === 'POST') {
+      // Keep the admin session version: the app caches it in memory for 15 s,
+      // and a reset that sent it back to 0 would revoke the next suite's login.
+      const keep = (db.global_settings || []).filter((r) => r.key === 'admin_session_version')
       for (const k of Object.keys(db)) db[k] = []
+      db.global_settings = keep
       storage.clear(); global.bc = []; global.rm = []
       res.writeHead(200); return res.end('{}')
     }
