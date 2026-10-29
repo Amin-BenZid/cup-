@@ -14,6 +14,8 @@ function setSessionCookie(res: NextResponse, shopId: string) {
     maxAge: SHOP_MAX_AGE,
     path: "/",
   });
+  // A new login forgets any "your shop was deleted" marker.
+  res.cookies.set({ name: "shop_deleted", value: "", maxAge: 0, path: "/" });
 }
 
 export async function POST(req: NextRequest) {

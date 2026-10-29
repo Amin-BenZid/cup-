@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getShopSession, SHOP_COOKIE } from "@/lib/shop-auth";
 import { getShopAccess } from "@/lib/shop-access";
 
 const NO_STORE = { "Cache-Control": "no-store" };
+/** Set when a deleted shop's session is dropped, so a reload still says why. */
+const DELETED_MARKER = "shop_deleted";
 
 /**
  * Who is signed in and what they can do right now. `state` drives which
@@ -12,7 +15,11 @@ const NO_STORE = { "Cache-Control": "no-store" };
 export async function GET() {
   const session = await getShopSession();
   if (!session) {
-    return NextResponse.json({ shop: null, active: false, state: "signed_out" }, { status: 401, headers: NO_STORE });
+    const gone = (await cookies()).get(DELETED_MARKER)?.value === "1";
+    return NextResponse.json(
+      { shop: null, active: false, state: gone ? "deleted" : "signed_out" },
+      { status: 401, headers: NO_STORE },
+    );
   }
 
   const access = await getShopAccess(session.shopId);
@@ -27,6 +34,15 @@ export async function GET() {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 0,
+      path: "/",
+    });
+    res.cookies.set({
+      name: DELETED_MARKER,
+      value: "1",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 600,
       path: "/",
     });
     return res;
