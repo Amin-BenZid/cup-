@@ -1,3 +1,36 @@
+// Beep service worker: push notifications + a small offline page.
+
+// Take over right away when a new version ships (nothing is cached, so it's safe).
+self.addEventListener('install', function () {
+  self.skipWaiting()
+})
+self.addEventListener('activate', function (event) {
+  event.waitUntil(self.clients.claim())
+})
+
+// Page loads only (never API calls or live updates): if the network is down,
+// show a friendly page instead of the browser's error. Browsers also need
+// this to offer the one-tap "Install app" prompt.
+const OFFLINE_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Beep</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#faf7f2;color:#1c1917;font:16px/1.5 system-ui,-apple-system,sans-serif;text-align:center;padding:24px}
+.c{max-width:320px}.l{width:56px;height:56px;border-radius:16px;background:#1d1916;margin:0 auto 16px}h1{font-size:20px;margin:0 0 8px}p{margin:4px 0;color:#78716c}
+button{margin-top:18px;border:0;border-radius:14px;background:#1c1917;color:#fefce8;font-weight:600;padding:12px 22px;font-size:15px}</style></head>
+<body><div class="c"><div class="l"></div><h1>Pas de connexion · No connection</h1><p>Vérifiez internet puis réessayez.</p><p dir="rtl">لا يوجد اتصال. تحقق من الإنترنت ثم أعد المحاولة.</p><p>Check your internet and try again.</p>
+<button onclick="location.reload()">↻</button></div></body></html>`
+
+self.addEventListener('fetch', function (event) {
+  const req = event.request
+  if (req.mode !== 'navigate' || req.method !== 'GET') return
+  event.respondWith(
+    fetch(req).catch(function () {
+      return new Response(OFFLINE_HTML, {
+        status: 503,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+      })
+    })
+  )
+})
+
 self.addEventListener('push', function (event) {
   let data = {}
   try {

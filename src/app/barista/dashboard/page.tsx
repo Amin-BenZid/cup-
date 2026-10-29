@@ -28,6 +28,7 @@ import SupportModal from "@/components/SupportModal";
 import BroadcastBanner from "@/components/BroadcastBanner";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import PhonePrompt, { phonePromptSnoozed } from "@/components/PhonePrompt";
+import { InstallCard } from "@/components/InstallApp";
 import { clearShopStorage, handleAccessDenied } from "@/lib/shop-access-client";
 import { apiErrorText } from "@/lib/i18n/api-error";
 import { useT } from "@/lib/i18n/context";
@@ -538,6 +539,9 @@ export default function DashboardPage() {
         {shop && askPhone && (
           <PhonePrompt shopId={shop.id} onDone={() => setAskPhone(false)} />
         )}
+
+        {/* One card at a time: the phone number first, then the install. */}
+        {shop && !askPhone && <InstallCard shopId={shop.id} />}
 
         {shop && showOnboarding && (
           <OnboardingChecklist

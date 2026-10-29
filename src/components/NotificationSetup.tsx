@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n/context'
+import { CustomerInstall } from '@/components/InstallApp'
 
 const DISMISS_KEY = 'notif-banner-dismissed'
 
@@ -26,21 +27,9 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
     'idle' | 'granted' | 'denied' | 'working'
   >('idle')
   const [error, setError] = useState('')
-  const [showIosHint, setShowIosHint] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-
-    const ua = navigator.userAgent
-    const isIOS =
-      /iPad|iPhone|iPod/.test(ua) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true
-
-    setShowIosHint(isIOS && !isStandalone)
 
     const supportsSW = 'serviceWorker' in navigator
     const supportsPush = 'PushManager' in window
@@ -168,23 +157,20 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
 
   if (status === 'denied') {
     return (
-      <p
-        className="text-[12px] leading-snug"
-        style={{ color: 'var(--text-muted, #78716c)' }}
-      >
-        {t('notif.blocked')}
-      </p>
+      <div className="space-y-2">
+        <p
+          className="text-[12px] leading-snug"
+          style={{ color: 'var(--text-muted, #78716c)' }}
+        >
+          {t('notif.blocked')}
+        </p>
+        <CustomerInstall />
+      </div>
     )
   }
   if (!visible) {
-    return showIosHint ? (
-      <p
-        className="text-[15px] leading-snug"
-        style={{ color: 'var(--text-muted, #78716c)' }}
-      >
-        {t('notif.iosHint')}
-      </p>
-    ) : null
+    // iPhone (not on the Home Screen yet) lands here: alerts need the install.
+    return <CustomerInstall />
   }
 
   return (
@@ -256,14 +242,7 @@ export default function NotificationSetup({ orderId }: { orderId: string }) {
         </button>
       </div>
 
-      {showIosHint && (
-        <p
-          className="text-[15px] leading-snug px-1"
-          style={{ color: 'var(--text-muted, #78716c)' }}
-        >
-          {t('notif.iosHint')}
-        </p>
-      )}
+      <CustomerInstall />
     </div>
   )
 }
