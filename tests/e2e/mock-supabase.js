@@ -44,6 +44,22 @@ function match(row, col, expr) {
 
 const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns'])
 
+// PostgREST embeds: select=...,shops(name,logo_url) joins the parent row via
+// <singular>_id, like real Supabase (one level, column aliases ignored).
+function embed(rows, select) {
+  const rels = select ? [...select.matchAll(/(\w+)(?:!\w+)?\(([^()]*)\)/g)] : []
+  if (!rels.length) return rows
+  return rows.map((r) => {
+    const o = { ...r }
+    for (const [, rel, cols] of rels) {
+      const hit = (db[rel] || []).find((x) => x.id === r[rel.replace(/s$/, '') + '_id'])
+      const names = cols.split(',').map((c) => c.trim().split(':').pop()).filter(Boolean)
+      o[rel] = !hit ? null : names.includes('*') ? { ...hit } : Object.fromEntries(names.map((c) => [c, hit[c] ?? null]))
+    }
+    return o
+  })
+}
+
 const server = http.createServer((req, res) => {
   let body = ''
   req.on('data', (c) => (body += c))
@@ -112,7 +128,7 @@ const server = http.createServer((req, res) => {
       let out = rows.filter(sel)
       const lim = url.searchParams.get('limit'), off = Number(url.searchParams.get('offset') || 0)
       const total = out.length
-      out = out.slice(off, lim ? off + Number(lim) : undefined)
+      out = embed(out.slice(off, lim ? off + Number(lim) : undefined), url.searchParams.get('select'))
       return send(200, out, prefer.includes('count=exact') ? { 'Content-Range': `0-${Math.max(0, out.length - 1)}/${total}` } : {})
     }
     const payload = body ? JSON.parse(body) : null
