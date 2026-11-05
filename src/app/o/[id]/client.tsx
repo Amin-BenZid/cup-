@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import NotificationSetup from "@/components/NotificationSetup";
 import { InstallAutoGuide } from "@/components/InstallApp";
+import { LockScreenPlayer, lockScreenTitle } from "@/lib/lock-screen";
 import { useStored } from "@/hooks/useStored";
 import Logo from "@/components/Logo";
 import BrandLogo from "@/components/BrandLogo";
@@ -94,6 +95,10 @@ export default function CustomerOrderClient({
   const [staleError, setStaleError] = useState("");
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Lock-screen player (Now Playing card + ring while locked), see lib/lock-screen.ts
+  const lockRef = useRef<LockScreenPlayer | null>(null);
+  const lockMetaRef = useRef<{ title: string; artist: string; artwork: string | null } | null>(null);
+  const [lockOn, setLockOn] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -180,9 +185,20 @@ export default function CustomerOrderClient({
     }
   }, []);
 
+  // Must run inside the tap itself (before any await), or iOS refuses to play.
+  const startLockScreen = useCallback(() => {
+    const meta = lockMetaRef.current;
+    if (!meta || !LockScreenPlayer.supported()) return;
+    const player = (lockRef.current ??= new LockScreenPlayer());
+    void player.start(meta).then((ok) => {
+      if (ok) setLockOn(true);
+    });
+  }, []);
+
   const handleEnableSound = useCallback(async () => {
     if (enableState === "loading") return;
     setEnableState("loading");
+    startLockScreen();
     const ok = await unlockAudio();
     if (ok) {
       setEnableState("ok");
@@ -191,7 +207,7 @@ export default function CustomerOrderClient({
     } else {
       setEnableState("idle");
     }
-  }, [enableState, unlockAudio]);
+  }, [enableState, unlockAudio, startLockScreen]);
 
   // ---------- initial load ----------
   useEffect(() => {
@@ -351,8 +367,10 @@ export default function CustomerOrderClient({
 
     pollRef.current = () => void poll();
 
+    // With the lock-screen player running the page stays alive while the
+    // phone is locked, so keep checking then too.
     const interval = setInterval(() => {
-      if (document.visibilityState === "visible") poll();
+      if (document.visibilityState === "visible" || lockRef.current?.active) poll();
     }, live ? 20_000 : 4_000);
 
     const onVisible = () => {
@@ -381,6 +399,20 @@ export default function CustomerOrderClient({
     };
   }, [audioUnlocked, unlockAudio]);
 
+  // iOS only starts media from a finished tap (touchend / click), not from
+  // pointerdown, so the lock-screen player listens to those, on any tap,
+  // until it's running.
+  useEffect(() => {
+    if (lockOn) return;
+    const onTap = () => startLockScreen();
+    document.addEventListener("click", onTap, true);
+    document.addEventListener("touchend", onTap, true);
+    return () => {
+      document.removeEventListener("click", onTap, true);
+      document.removeEventListener("touchend", onTap, true);
+    };
+  }, [lockOn, startLockScreen]);
+
   // ---------- keep the context alive after backgrounding ----------
   useEffect(() => {
     const onVis = () => {
@@ -405,7 +437,10 @@ export default function CustomerOrderClient({
       return;
     }
 
-    void startAudio();
+    // The lock-screen player keeps ringing with the screen locked; Web Audio
+    // would be paused by iOS there.
+    if (lockRef.current?.active) lockRef.current.ring();
+    else void startAudio();
 
     const buzz = () => {
       if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
@@ -429,14 +464,50 @@ export default function CustomerOrderClient({
       }
       if (navigator.vibrate) navigator.vibrate(0);
       stopAudio();
+      lockRef.current?.quiet();
     };
-  }, [ringing, acknowledged, audioUnlocked, startAudio, stopAudio, t]);
+  }, [ringing, acknowledged, audioUnlocked, lockOn, startAudio, stopAudio, t]);
 
   useEffect(() => {
     return () => {
       stopAudio();
+      lockRef.current?.destroy();
+      lockRef.current = null;
     };
   }, [stopAudio]);
+
+  // ---------- lock-screen card: title, shop, logo ----------
+  // Kept up to date even before it starts (the first tap reads it), and
+  // refreshed every 30 s so "ready in ~N min" counts down on the lock screen.
+  const lockStatus = order?.status;
+  const lockNumber = order?.order_number;
+  const lockShopName = shop?.name ?? t("common.shopFallback");
+  const lockLogo = shop?.logo_url ?? null;
+  const lockEtaAt = queue?.q.eta_at ?? null;
+  const lockSkew = queue?.skew ?? 0;
+  useEffect(() => {
+    if (!lockNumber || !lockStatus) return;
+    if (lockStatus === "done" || acknowledged) {
+      lockMetaRef.current = null;
+      lockRef.current?.stop();
+      return;
+    }
+    const apply = () => {
+      const eta = lockEtaAt
+        ? Math.ceil((Date.parse(lockEtaAt) - (Date.now() + lockSkew)) / 60000)
+        : null;
+      const meta = {
+        title: lockScreenTitle(t, lockStatus, lockNumber, eta),
+        artist: lockShopName,
+        artwork: lockLogo,
+      };
+      lockMetaRef.current = meta;
+      lockRef.current?.update(meta);
+    };
+    apply();
+    const id = setInterval(apply, 30_000);
+    return () => clearInterval(id);
+  }, [lockStatus, lockNumber, lockShopName, lockLogo, lockEtaAt, lockSkew, acknowledged, lockOn, t]);
 
   // ---------- wake lock ----------
   useEffect(() => {
