@@ -14,7 +14,8 @@ import {
 import NotificationSetup from "@/components/NotificationSetup";
 import { InstallAutoGuide } from "@/components/InstallApp";
 import { LockScreenPlayer, lockScreenTitle } from "@/lib/lock-screen";
-import { useStored } from "@/hooks/useStored";
+import SoundSheet from "@/components/SoundSheet";
+import { storageChanged, useHydrated, useStored } from "@/hooks/useStored";
 import Logo from "@/components/Logo";
 import BrandLogo from "@/components/BrandLogo";
 import CozyPattern from "@/components/CozyPattern";
@@ -87,6 +88,10 @@ export default function CustomerOrderClient({
   // Acknowledged on this phone earlier (saved), or just now.
   const ackSaved = useStored(orderId ? `cup-ack-${orderId}` : null) === "1";
   const acknowledged = ackNow || ackSaved;
+  // "Turn on alerts" sheet: "Later" is remembered per order.
+  const hydrated = useHydrated();
+  const sheetLaterKey = orderId ? `cup-sound-later-${orderId}` : null;
+  const sheetLater = useStored(sheetLaterKey) === "1";
   // Once any tap has unlocked sound, the "enable sound" prompt goes away.
   const soundPrompt =
     audioUnlocked && enableState === "idle" ? "hidden" : enableState;
@@ -388,11 +393,15 @@ export default function CustomerOrderClient({
   // ---------- unlock on the first interaction ----------
   useEffect(() => {
     if (audioUnlocked) return;
-    const onFirst = () => {
+    const onFirst = (e: Event) => {
+      // Taps inside the alerts sheet are handled by its own buttons ("Later"
+      // must not turn sound on, and must not close the sheet under the finger).
+      if ((e.target as Element | null)?.closest?.('[data-testid="sound-sheet"]')) return;
       void unlockAudio();
     };
-    document.addEventListener("pointerdown", onFirst, { once: true });
-    document.addEventListener("keydown", onFirst, { once: true });
+    // Removed by the cleanup once sound is unlocked.
+    document.addEventListener("pointerdown", onFirst);
+    document.addEventListener("keydown", onFirst);
     return () => {
       document.removeEventListener("pointerdown", onFirst);
       document.removeEventListener("keydown", onFirst);
@@ -404,7 +413,11 @@ export default function CustomerOrderClient({
   // until it's running.
   useEffect(() => {
     if (lockOn) return;
-    const onTap = () => startLockScreen();
+    const onTap = (e: Event) => {
+      // "Later" on the alerts sheet must not start the sound.
+      if ((e.target as Element | null)?.closest?.("[data-lock-skip]")) return;
+      startLockScreen();
+    };
     document.addEventListener("click", onTap, true);
     document.addEventListener("touchend", onTap, true);
     return () => {
@@ -1005,6 +1018,31 @@ export default function CustomerOrderClient({
             {/* Notifications prompt */}
             {!acknowledged && <NotificationSetup orderId={orderId} />}
             {!acknowledged && <InstallAutoGuide variant="customer" />}
+            {hydrated &&
+              !sheetLater &&
+              !acknowledged &&
+              order.status !== "done" &&
+              soundPrompt !== "hidden" &&
+              !(lockOn && enableState === "idle") && (
+                <SoundSheet
+                  orderNumber={order.order_number}
+                  shopName={shop?.name ?? t("common.shopFallback")}
+                  logo={{
+                    url: shop?.logo_url ?? null,
+                    scale: shop?.logo_scale,
+                    offsetX: shop?.logo_offset_x,
+                    offsetY: shop?.logo_offset_y,
+                  }}
+                  state={soundPrompt === "loading" ? "loading" : soundPrompt === "ok" ? "ok" : "idle"}
+                  onEnable={handleEnableSound}
+                  onLater={() => {
+                    try {
+                      if (sheetLaterKey) localStorage.setItem(sheetLaterKey, "1");
+                    } catch {}
+                    storageChanged();
+                  }}
+                />
+              )}
 
             {/* GAME */}
             {!acknowledged && shop?.game !== "none" && (

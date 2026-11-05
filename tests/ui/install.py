@@ -133,6 +133,7 @@ with sync_playwright() as p:
     # Like real iPhone Safari before installing: no push / notification API.
     ctx.add_init_script("localStorage.setItem('cup-locale','fr'); delete window.PushManager; delete window.Notification;")
     pg=ctx.new_page(); pg.goto(B+'/o/'+order['id']); pg.wait_for_timeout(2500)
+    if pg.get_by_test_id('sound-sheet').count(): pg.get_by_role('button', name='Plus tard').click(); pg.wait_for_timeout(300)
     ok('Customer iPhone: hint + button', pg.get_by_text('Sur iPhone, ajoutez cette page', exact=False).count()==1)
     pg.screenshot(path=SHOTS+'/in_customer_ios.png', full_page=True)
     pg.get_by_role('button', name='Ajouter à l’écran d’accueil').click(); pg.wait_for_timeout(500)

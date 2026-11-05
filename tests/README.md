@@ -31,7 +31,7 @@ page and attached as the `ci-report` artifact. Paste it to Claude to debug.
 | `staff-push` | Staff phones: support replies + broadcasts in their language, pruning, delete |
 | `ui-states` | Browser: archived / paused / deleted / expired screens |
 | `ui-install` | Browser: Add to Home Screen on iPhone, Android, in-app |
-| `ui-lock` | Browser: lock-screen player — tap starts the silent loop, card shows order/shop/logo, ready switches title + rings, Got it clears it, French text |
+| `ui-lock` | Browser: alerts sheet on QR scan (preview, Turn on alerts, Later remembered and silent) + lock-screen player — tap starts the silent loop, card shows order/shop/logo, ready switches title + rings, Got it clears it, French text |
 | `ui-offline` | Browser: offline page from the service worker |
 
 Lint is blocking: any ESLint error fails the run (warnings are only reported).

@@ -25,3 +25,12 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Order page: "turn on alerts" sheet slides up (components/SoundSheet.tsx) */
+@keyframes sheetUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-testid="sound-sheet"] > div { animation: none !important; }
+}
